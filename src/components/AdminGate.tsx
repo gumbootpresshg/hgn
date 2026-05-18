@@ -3,7 +3,7 @@
 import type { ReactNode } from "react"
 
 type AdminGateProps = {
-  children: ReactNode
+  children?: ReactNode
   title?: string
   eyebrow?: string
   description?: string
