@@ -1,0 +1,9 @@
+Suggested homepage addition:
+
+Import and place the DailyUseStrip component on src/app/page.tsx after the hero/front-page block:
+
+import DailyUseStrip from "@/components/DailyUseStrip";
+
+<DailyUseStrip />
+
+This patch package avoids replacing your whole homepage automatically, so it won't break current working layout.

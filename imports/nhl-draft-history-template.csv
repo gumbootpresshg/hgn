@@ -1,0 +1,5 @@
+draft_year,round,pick_in_round,overall_pick,player_name,position,drafted_by,amateur_team,amateur_league,nationality,nhl_games,nhl_goals,nhl_assists,nhl_points,current_team,status,puckscope_note
+2015,1,1,1,Connor McDavid,C,Edmonton Oilers,Erie Otters,OHL,Canada,0,0,0,0,Edmonton Oilers,active,Replace stat columns with current totals when importing.
+2015,1,2,2,Jack Eichel,C,Buffalo Sabres,Boston University,NCAA,United States,0,0,0,0,Vegas Golden Knights,active,Example row.
+2023,1,1,1,Connor Bedard,C,Chicago Blackhawks,Regina Pats,WHL,Canada,0,0,0,0,Chicago Blackhawks,active,Example row.
+2024,1,1,1,Macklin Celebrini,C,San Jose Sharks,Boston University,NCAA,Canada,0,0,0,0,San Jose Sharks,active,Example row.

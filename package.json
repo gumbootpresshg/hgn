@@ -1,0 +1,39 @@
+{
+  "name": "hgn-website-build",
+  "version": "0.46.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "import:wp:dry": "node scripts/import-wordpress-xml.mjs --dry",
+    "import:wp": "node scripts/import-wordpress-xml.mjs",
+    "import:wp:csv:dry": "node scripts/import-wordpress-csv.mjs --dry",
+    "import:wp:csv": "node scripts/import-wordpress-csv.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "latest",
+    "@types/leaflet": "latest",
+    "csv-parse": "latest",
+    "dotenv": "latest",
+    "fast-xml-parser": "latest",
+    "leaflet": "latest",
+    "lucide-react": "latest",
+    "next": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "sharp": "^0.34.5"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "autoprefixer": "latest",
+    "eslint": "latest",
+    "eslint-config-next": "latest",
+    "postcss": "latest",
+    "tailwindcss": "3.4.17",
+    "typescript": "latest"
+  }
+}
