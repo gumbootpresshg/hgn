@@ -52,7 +52,7 @@ export default function AdminGate({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }
 
-export { default as AdminGate }
+export { AdminGate }
 
 export function useAdminSession() {
   return {
