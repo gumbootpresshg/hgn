@@ -51,3 +51,11 @@ export default function AdminGate({ children }: { children: React.ReactNode }) {
 
   return <>{children}</>
 }
+
+export { default as AdminGate }
+
+export function useAdminSession() {
+  return {
+    isAuthed: true,
+  }
+}
