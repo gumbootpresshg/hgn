@@ -1,7 +1,5 @@
 "use client"
 
-import ColumnSelector from "@/components/admin/ColumnSelector"
-import { columnSlugFor } from "@/lib/column-options"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
@@ -41,8 +39,9 @@ export default function AdminArticlesPage() {
       })
       .eq("id", article.id)
 
-    if (error) setMessage(error.message)
-    else {
+    if (error) {
+      setMessage(error.message)
+    } else {
       setMessage(!currentlyFeatured ? "Article featured." : "Article unfeatured.")
       await load()
     }
@@ -50,10 +49,32 @@ export default function AdminArticlesPage() {
 
   return (
     <main className="mx-auto max-w-7xl space-y-8 px-6 py-10">
+      <Link href="/admin" className="text-sm font-semibold text-slate-600">
+        ← Back to Admin
+      </Link>
+
       <section className="rounded-3xl border bg-white p-8 shadow-sm">
         <p className="text-sm font-semibold tracking-[0.18em] text-hgnBlue">Admin</p>
         <h1 className="mt-3 text-4xl font-black tracking-tight">Articles</h1>
-        <p className="mt-3 text-slate-600">Manage stories and choose which articles are featured on the front page.</p>
+        <p className="mt-3 text-slate-600">
+          Manage stories, create drafts, publish articles, and choose which stories are featured on the front page.
+        </p>
+
+        <div className="mt-6 flex flex-wrap gap-3">
+          <Link
+            href="/admin/articles/new"
+            className="rounded-full bg-slate-950 px-5 py-3 text-sm font-black uppercase tracking-wide text-white"
+          >
+            Add Article
+          </Link>
+
+          <Link
+            href="/admin/content"
+            className="rounded-full border px-5 py-3 text-sm font-black uppercase tracking-wide"
+          >
+            Content Library
+          </Link>
+        </div>
       </section>
 
       {message ? <p className="rounded-2xl bg-slate-50 p-4 text-sm">{message}</p> : null}
@@ -70,22 +91,37 @@ export default function AdminArticlesPage() {
                     {featured ? "Featured" : article.status || "Article"}
                   </p>
                   <h2 className="mt-2 text-xl font-black">{article.title}</h2>
-                  <p className="mt-1 text-sm text-slate-600">{[article.category, article.section, article.author_name || article.author].filter(Boolean).join(" · ")}</p>
+                  <p className="mt-1 text-sm text-slate-600">
+                    {[article.category, article.section, article.author_name || article.author]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </p>
                 </div>
 
                 <div className="flex flex-wrap gap-2">
-                  <Link href={`/admin/articles/${article.id}`} className="rounded-full border px-4 py-2 text-xs font-black uppercase tracking-wide">
+                  <Link
+                    href={`/admin/articles/${article.id}`}
+                    className="rounded-full border px-4 py-2 text-xs font-black uppercase tracking-wide"
+                  >
                     Edit
                   </Link>
+
                   {article.slug ? (
-                    <Link href={`/articles/${article.slug}`} className="rounded-full border px-4 py-2 text-xs font-black uppercase tracking-wide">
+                    <Link
+                      href={`/articles/${article.slug}`}
+                      className="rounded-full border px-4 py-2 text-xs font-black uppercase tracking-wide"
+                    >
                       View
                     </Link>
                   ) : null}
 
                   <button
                     onClick={() => toggleFeatured(article)}
-                    className={featured ? "rounded-full bg-red-600 px-4 py-2 text-xs font-black uppercase tracking-wide text-white" : "rounded-full bg-slate-950 px-4 py-2 text-xs font-black uppercase tracking-wide text-white"}
+                    className={
+                      featured
+                        ? "rounded-full bg-red-600 px-4 py-2 text-xs font-black uppercase tracking-wide text-white"
+                        : "rounded-full bg-slate-950 px-4 py-2 text-xs font-black uppercase tracking-wide text-white"
+                    }
                   >
                     {featured ? "Unfeature" : "Feature"}
                   </button>
