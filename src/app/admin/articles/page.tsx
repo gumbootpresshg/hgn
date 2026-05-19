@@ -74,7 +74,7 @@ export default function AdminArticlesPage() {
                 </div>
 
                 <div className="flex flex-wrap gap-2">
-                  <Link href={`/admin/articles/${article.id}/edit`} className="rounded-full border px-4 py-2 text-xs font-black uppercase tracking-wide">
+                  <Link href={`/admin/articles/${article.id}`} className="rounded-full border px-4 py-2 text-xs font-black uppercase tracking-wide">
                     Edit
                   </Link>
                   {article.slug ? (
