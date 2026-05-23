@@ -89,6 +89,25 @@ export default function NewMarketplaceListing() {
         }
         if (extraPhotos.length) payload.additional_photos = extraPhotos;
       }
+
+      // If this is a vehicle/car/truck listing, append vehicle‑specific fields
+      if (
+        selectedCat === "vehicles" ||
+        selectedCat === "vehicle" ||
+        selectedCat === "cars" ||
+        selectedCat === "car" ||
+        selectedCat === "truck" ||
+        selectedCat.includes("vehicle") ||
+        selectedCat.includes("car") ||
+        selectedCat.includes("truck")
+      ) {
+        payload.make = f.get("make");
+        payload.model = f.get("model");
+        payload.year = f.get("year");
+        payload.mileage = f.get("mileage");
+        payload.transmission = f.get("transmission");
+        payload.colour = f.get("colour");
+      }
       const { error } = await supabase.from("classifieds").insert(payload);
       if (error) {
         const response = await fetch("/api/submit/classified", {
@@ -225,6 +244,54 @@ export default function NewMarketplaceListing() {
               <label>
                 Photo 4
                 <input name="photo4" type="file" accept="image/*" />
+              </label>
+            </div>
+          </>
+        )}
+
+        {/* Show vehicle/car/truck specific fields when the corresponding category is selected */}
+        {category && (
+          category.toLowerCase().includes("vehicle") ||
+          category.toLowerCase().includes("vehicles") ||
+          category.toLowerCase().includes("car") ||
+          category.toLowerCase().includes("cars") ||
+          category.toLowerCase().includes("truck") ||
+          category.toLowerCase().includes("trucks")
+        ) && (
+          <>
+            <div className="grid gap-4 md:grid-cols-2">
+              <label>
+                Make
+                <input name="make" placeholder="Ford" />
+              </label>
+              <label>
+                Model
+                <input name="model" placeholder="F-150" />
+              </label>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <label>
+                Year
+                <input name="year" type="number" min="1886" placeholder="2020" />
+              </label>
+              <label>
+                Mileage (km)
+                <input name="mileage" type="number" min="0" placeholder="123000" />
+              </label>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <label>
+                Transmission
+                <select name="transmission">
+                  <option value="Automatic">Automatic</option>
+                  <option value="Manual">Manual</option>
+                  <option value="CVT">CVT</option>
+                  <option value="Other">Other</option>
+                </select>
+              </label>
+              <label>
+                Colour
+                <input name="colour" placeholder="Red" />
               </label>
             </div>
           </>
