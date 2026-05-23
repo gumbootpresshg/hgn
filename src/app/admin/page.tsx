@@ -10,6 +10,7 @@ const sections = [
       { href: "/admin/obituaries", label: "Obituaries" },
       { href: "/admin/island-lens", label: "Island Lens" },
       { href: "/admin/polls", label: "Polls" },
+      { href: "/admin/horoscope", label: "Horoscope" },
     ],
   },
   {

@@ -129,11 +129,28 @@ export default function ArticleEditorPage() {
     const status = nextStatus || article.status || "draft";
     const slug = article.slug?.trim() || slugify(title);
     const category = article.category || "News";
+    // Prepare the body for saving. If the user hasn't entered any HTML tags,
+    // convert each newline into its own <p>...</p> paragraph. This lets
+    // editors type plain text and simply press Enter to start new
+    // paragraphs rather than manually inserting <p> tags.
+    const rawBody = article.body || ""
+    let processedBody: string
+    if (rawBody && !rawBody.match(/<[^>]+>/)) {
+      processedBody = rawBody
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .filter(Boolean)
+        .map((line) => `<p>${line}</p>`)
+        .join("")
+    } else {
+      processedBody = rawBody
+    }
+
     const payload = {
       title,
       slug,
       excerpt: article.excerpt || "",
-      body: article.body || "",
+      body: processedBody,
       author_name: titleCaseName(article.author_name || "Haida Gwaii News"),
       category,
       section: category,

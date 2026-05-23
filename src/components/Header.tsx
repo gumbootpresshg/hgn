@@ -159,6 +159,12 @@ export function Header() {
           { href: "/explore/live/power-outages", label: "Power Outages" },
         ],
       },
+      {
+        label: "Horoscope",
+        children: [
+          { href: "/horoscope", label: "Horoscope" },
+        ],
+      },
     ],
     [columns]
   )
@@ -212,6 +218,7 @@ export function Header() {
 
           <Link href="/events" className="shrink-0 whitespace-nowrap hover:text-hgnBlue">Events</Link>
           <Link href="/obituaries" className="shrink-0 whitespace-nowrap hover:text-hgnBlue">Obituaries</Link>
+          <Link href="/horoscope" className="shrink-0 whitespace-nowrap hover:text-hgnBlue">Horoscope</Link>
         </div>
       </nav>
     </>

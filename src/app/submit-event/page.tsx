@@ -36,8 +36,14 @@ export default function SubmitEventPage() {
     setMessage("")
     setSaving(true)
 
+    // Capture the form element before asynchronous work. During the
+    // Supabase request the component may unmount and `event.currentTarget`
+    // would become null. Storing it up front avoids trying to call reset()
+    // on a null value later on.
+    const formElement = event.currentTarget
+
     try {
-      const form = new FormData(event.currentTarget)
+      const form = new FormData(formElement)
       const title = String(form.get("title") || "").trim()
       const description = String(form.get("description") || "").trim()
       const location = String(form.get("location") || "").trim()
@@ -76,10 +82,13 @@ export default function SubmitEventPage() {
         updated_at: new Date().toISOString(),
       })
 
-      if (error) setMessage(error.message)
-      else {
+      if (error) {
+        setMessage(error.message)
+      } else {
         setMessage("Event submitted for review.")
-        event.currentTarget.reset()
+        // Use the captured form element to reset the form. Do not rely on
+        // event.currentTarget here because it may be null after async work.
+        formElement.reset()
         setAllDay(false)
       }
     } catch (error: any) {
