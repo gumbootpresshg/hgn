@@ -136,11 +136,12 @@ export default function ArticleEditorPage() {
     const rawBody = article.body || ""
     let processedBody: string
     if (rawBody && !rawBody.match(/<[^>]+>/)) {
+      // Explicitly type the 'line' parameter so that TypeScript doesn't infer it as 'any'.
       processedBody = rawBody
         .split(/\r?\n/)
-        .map((line) => line.trim())
+        .map((line: string) => line.trim())
         .filter(Boolean)
-        .map((line) => `<p>${line}</p>`)
+        .map((line: string) => `<p>${line}</p>`)
         .join("")
     } else {
       processedBody = rawBody
