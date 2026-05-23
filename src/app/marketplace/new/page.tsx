@@ -4,7 +4,21 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 
-const fallbackCats = ["Vehicles", "Rentals", "Jobs", "Services", "Equipment", "Firewood", "Fishing Gear", "Local Crafts", "Buy / Sell", "Community Notice"];
+// Default categories to display when no active categories are returned from Supabase.
+// Include "Real Estate" here so users have the option even if not configured in settings.
+const fallbackCats = [
+  "Vehicles",
+  "Rentals",
+  "Real Estate",
+  "Jobs",
+  "Services",
+  "Equipment",
+  "Firewood",
+  "Fishing Gear",
+  "Local Crafts",
+  "Buy / Sell",
+  "Community Notice",
+];
 const fallbackTowns = ["Masset", "Old Massett", "Port Clements", "Tlell", "Skidegate", "Daajing Giids", "Sandspit", "Other / Island-wide"];
 
 async function uploadListingPhoto(file: File | null) {
@@ -65,14 +79,22 @@ export default function NewMarketplaceListing() {
         payload.employment_type = f.get("employment_type");
         payload.rate_of_pay = f.get("rate_of_pay");
       }
-      // If a real estate or rental listing, append property details and extra photos
-      if (
-        selectedCat === "rentals" ||
-        selectedCat === "rental" ||
+      // If a real estate or rental listing, append property details and extra photos.  We support many
+      // synonyms to cover categories like "Realestate", "Properties", etc.  We treat anything with
+      // words like rental, property, estate, real estate, housing, land, home or apartment as a real estate listing.
+      const isRealEstate =
+        selectedCat.includes("rental") ||
+        selectedCat.includes("rentals") ||
         selectedCat.includes("real estate") ||
+        selectedCat.includes("realestate") ||
         selectedCat.includes("real-estate") ||
-        selectedCat.includes("housing")
-      ) {
+        selectedCat.includes("housing") ||
+        selectedCat.includes("property") ||
+        selectedCat.includes("estate") ||
+        selectedCat.includes("land") ||
+        selectedCat.includes("home") ||
+        selectedCat.includes("apartment");
+      if (isRealEstate) {
         payload.address = f.get("address");
         payload.property_type = f.get("property_type");
         payload.bedrooms = f.get("bedrooms");
@@ -90,17 +112,17 @@ export default function NewMarketplaceListing() {
         if (extraPhotos.length) payload.additional_photos = extraPhotos;
       }
 
-      // If this is a vehicle/car/truck listing, append vehicle‑specific fields
-      if (
-        selectedCat === "vehicles" ||
-        selectedCat === "vehicle" ||
-        selectedCat === "cars" ||
-        selectedCat === "car" ||
-        selectedCat === "truck" ||
+      // If this is a vehicle/car/truck/boat listing, append vehicle‑specific fields.  Support synonyms and plurals.
+      const isVehicleListing =
         selectedCat.includes("vehicle") ||
+        selectedCat.includes("vehicles") ||
         selectedCat.includes("car") ||
-        selectedCat.includes("truck")
-      ) {
+        selectedCat.includes("cars") ||
+        selectedCat.includes("truck") ||
+        selectedCat.includes("trucks") ||
+        selectedCat.includes("boat") ||
+        selectedCat.includes("boats");
+      if (isVehicleListing) {
         payload.make = f.get("make");
         payload.model = f.get("model");
         payload.year = f.get("year");
@@ -194,7 +216,22 @@ export default function NewMarketplaceListing() {
         )}
 
         {/* Show real estate / rental specific fields when the corresponding category is selected */}
-        {category && (category.toLowerCase().includes("rental") || category.toLowerCase().includes("real estate") || category.toLowerCase().includes("real-estate") || category.toLowerCase().includes("housing")) && (
+        {category && (() => {
+          const cat = category.toLowerCase();
+          return (
+            cat.includes("rental") ||
+            cat.includes("rentals") ||
+            cat.includes("real estate") ||
+            cat.includes("realestate") ||
+            cat.includes("real-estate") ||
+            cat.includes("housing") ||
+            cat.includes("property") ||
+            cat.includes("estate") ||
+            cat.includes("land") ||
+            cat.includes("home") ||
+            cat.includes("apartment")
+          );
+        })() && (
           <>
             <div className="grid gap-4 md:grid-cols-2">
               <label>
@@ -249,15 +286,20 @@ export default function NewMarketplaceListing() {
           </>
         )}
 
-        {/* Show vehicle/car/truck specific fields when the corresponding category is selected */}
-        {category && (
-          category.toLowerCase().includes("vehicle") ||
-          category.toLowerCase().includes("vehicles") ||
-          category.toLowerCase().includes("car") ||
-          category.toLowerCase().includes("cars") ||
-          category.toLowerCase().includes("truck") ||
-          category.toLowerCase().includes("trucks")
-        ) && (
+        {/* Show vehicle/car/truck/boat specific fields when the corresponding category is selected */}
+        {category && (() => {
+          const cat = category.toLowerCase();
+          return (
+            cat.includes("vehicle") ||
+            cat.includes("vehicles") ||
+            cat.includes("car") ||
+            cat.includes("cars") ||
+            cat.includes("truck") ||
+            cat.includes("trucks") ||
+            cat.includes("boat") ||
+            cat.includes("boats")
+          );
+        })() && (
           <>
             <div className="grid gap-4 md:grid-cols-2">
               <label>
