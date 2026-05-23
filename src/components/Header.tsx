@@ -218,7 +218,12 @@ export function Header() {
 
           <Link href="/events" className="shrink-0 whitespace-nowrap hover:text-hgnBlue">Events</Link>
           <Link href="/obituaries" className="shrink-0 whitespace-nowrap hover:text-hgnBlue">Obituaries</Link>
-          <Link href="/horoscope" className="shrink-0 whitespace-nowrap hover:text-hgnBlue">Horoscope</Link>
+          {/*
+            The Horoscopes link is already provided via the navItems dropdown above.
+            We omit a duplicate top-level link here to avoid showing "Horoscope"
+            twice in the header navigation. See navItems definition where the
+            Horoscope section includes a single child link.
+          */}
         </div>
       </nav>
     </>
