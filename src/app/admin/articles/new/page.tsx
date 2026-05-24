@@ -23,6 +23,7 @@ export default function NewArticlePage() {
   const [section, setSection] = useState("News");
   const [subcategory, setSubcategory] = useState("Local News");
   const [columnName, setColumnName] = useState("");
+  const [authorName, setAuthorName] = useState("Haida Gwaii News");
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -63,6 +64,7 @@ export default function NewArticlePage() {
       const baseSlug = slugify(title) || `article-${Date.now()}`;
       const slug = `${baseSlug}-${Date.now().toString().slice(-5)}`;
       const selectedColumnName = showColumnSelector ? columnName : "";
+      const cleanAuthorName = authorName.trim() || "Haida Gwaii News";
       const { data, error } = await supabase
         .from("articles")
         .insert({
@@ -76,7 +78,8 @@ export default function NewArticlePage() {
           status: "draft",
           body: "",
           excerpt: "",
-          author_name: "Haida Gwaii News",
+          author_name: cleanAuthorName,
+          author: cleanAuthorName,
           created_at: now,
           updated_at: now,
         })
@@ -119,6 +122,16 @@ export default function NewArticlePage() {
               onChange={(e) => setTitle(e.target.value)}
               required
               placeholder="Article title"
+              className="mt-2 w-full rounded-2xl border px-4 py-3"
+            />
+          </label>
+
+          <label className="block">
+            <span className="text-sm font-semibold">Author</span>
+            <input
+              value={authorName}
+              onChange={(e) => setAuthorName(e.target.value)}
+              placeholder="Author name"
               className="mt-2 w-full rounded-2xl border px-4 py-3"
             />
           </label>

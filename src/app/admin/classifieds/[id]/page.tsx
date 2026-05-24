@@ -43,7 +43,17 @@ export default function EditClassifiedPage() {
       bedrooms: item.bedrooms || null,
       bathrooms: item.bathrooms || null,
       square_feet: item.square_feet || null,
+      lot_size: item.lot_size || null,
+      property_type: item.property_type || null,
       property_address: item.property_address || null,
+      employment_type: item.employment_type || null,
+      rate_of_pay: item.rate_of_pay || null,
+      make: item.make || null,
+      model: item.model || null,
+      year: item.year || null,
+      mileage: item.mileage || null,
+      transmission: item.transmission || null,
+      colour: item.colour || null,
       map_url: item.map_url || null,
       admin_notes: item.admin_notes || null,
       is_featured: Boolean(item.is_featured),
@@ -65,7 +75,7 @@ export default function EditClassifiedPage() {
         <h1 className="text-4xl font-bold tracking-tight">Edit Classified</h1>
         {message ? <p className="mt-4 rounded-2xl bg-slate-100 p-4 text-sm">{message}</p> : null}
         <div className="mt-6 grid gap-4 md:grid-cols-2">
-          {["title","category","listing_type","town","location","price","contact_name","contact_email","phone","image_url","bedrooms","bathrooms","square_feet","property_address","map_url"].map((field) => (
+          {["title","category","listing_type","town","location","price","contact_name","contact_email","phone","image_url","employment_type","rate_of_pay","property_type","bedrooms","bathrooms","square_feet","lot_size","property_address","make","model","year","mileage","transmission","colour","map_url"].map((field) => (
             <Field key={field} label={field.replaceAll("_", " ")} value={item[field] || ""} onChange={(v) => patch(field, v)} />
           ))}
         </div>

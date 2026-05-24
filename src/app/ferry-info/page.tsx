@@ -23,7 +23,7 @@ export default function FerryInfoPage() {
               <a href={route.currentConditions} target="_blank" rel="noreferrer">Current conditions →</a>
               <a href={route.reverseConditions} target="_blank" rel="noreferrer">Reverse direction conditions →</a>
               <a href={route.schedule} target="_blank" rel="noreferrer">Schedule →</a>
-              <a href={route.notices} target="_blank" rel="noreferrer">Service notices →</a>
+              <a href={route.notices} target="_blank" rel="noreferrer">BC Ferries current conditions / notices →</a>
               <a href={`tel:${route.phone.replace(/[^0-9]/g, "")}`}>BC Ferries phone: {route.phone}</a>
             </div>
           </article>

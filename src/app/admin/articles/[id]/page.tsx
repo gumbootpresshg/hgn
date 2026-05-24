@@ -91,7 +91,14 @@ export default function ArticleEditorPage() {
     setLoading(true);
     const { data, error } = await supabase.from("articles").select("*").eq("id", id).single();
     if (error) setMessage(error.message);
-    else setArticle({ ...blankArticle, ...(data || {}) });
+    else {
+      const row = data || {};
+      setArticle({
+        ...blankArticle,
+        ...row,
+        author_name: row.author_name || row.author || blankArticle.author_name,
+      });
+    }
     setLoading(false);
   }
 
@@ -191,7 +198,8 @@ export default function ArticleEditorPage() {
       slug,
       excerpt: article.excerpt || "",
       body: processedBody,
-      author_name: titleCaseName(article.author_name || "Haida Gwaii News"),
+      author_name: titleCaseName(article.author_name || article.author || "Haida Gwaii News"),
+      author: titleCaseName(article.author_name || article.author || "Haida Gwaii News"),
       category,
       section: category,
       subcategory,

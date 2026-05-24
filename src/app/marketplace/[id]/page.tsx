@@ -66,7 +66,14 @@ export default async function MarketplaceListingPage({ params }: { params: Promi
             {item.condition ? <p><strong>Condition:</strong> {item.condition}</p> : null}
             {item.delivery_available ? <p><strong>Delivery:</strong> Available</p> : null}
             {item.year || item.make || item.model ? <p><strong>Vehicle/boat:</strong> {[item.year, item.make, item.model].filter(Boolean).join(" ")}</p> : null}
-            {item.bedrooms || item.bathrooms ? <p><strong>Property:</strong> {[item.bedrooms ? `${item.bedrooms} bed` : null, item.bathrooms ? `${item.bathrooms} bath` : null].filter(Boolean).join(" · ")}</p> : null}
+            {item.mileage ? <p><strong>Mileage / hours:</strong> {item.mileage}</p> : null}
+            {item.transmission ? <p><strong>Transmission:</strong> {item.transmission}</p> : null}
+            {item.colour ? <p><strong>Colour:</strong> {item.colour}</p> : null}
+            {item.employment_type ? <p><strong>Employment:</strong> {item.employment_type}</p> : null}
+            {item.rate_of_pay ? <p><strong>Rate of pay:</strong> {item.rate_of_pay}</p> : null}
+            {item.property_type ? <p><strong>Property type:</strong> {item.property_type}</p> : null}
+            {item.bedrooms || item.bathrooms ? <p><strong>Property:</strong> {[item.bedrooms ? `${item.bedrooms} bed` : null, item.bathrooms ? `${item.bathrooms} bath` : null, item.square_feet ? `${item.square_feet} sq. ft.` : null, item.lot_size ? `${item.lot_size} lot` : null].filter(Boolean).join(" · ")}</p> : null}
+            {item.property_address ? <p><strong>Address / area:</strong> {item.property_address}</p> : null}
           </div>
 
           <div className="mt-6 border-t pt-6">

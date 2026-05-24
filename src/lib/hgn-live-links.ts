@@ -5,7 +5,7 @@ export const ferryRoutes = [
     currentConditions: "https://www.bcferries.com/current-conditions/PPR-PSK",
     reverseConditions: "https://www.bcferries.com/current-conditions/PSK-PPR",
     schedule: "https://www.bcferries.com/routes-fares/schedules/seasonal/PR-SK",
-    notices: "https://www.bcferries.com/travel-boarding/travel-advisories",
+    notices: "https://www.bcferries.com/current-conditions",
     phone: "1-888-223-3779",
   },
   {
@@ -14,7 +14,7 @@ export const ferryRoutes = [
     currentConditions: "https://www.bcferries.com/current-conditions/PSK-ALF",
     reverseConditions: "https://www.bcferries.com/current-conditions/ALF-PSK",
     schedule: "https://www.bcferries.com/routes-fares/schedules/seasonal/ALF-PSK",
-    notices: "https://www.bcferries.com/travel-boarding/travel-advisories",
+    notices: "https://www.bcferries.com/current-conditions",
     phone: "1-888-223-3779",
   },
 ]
