@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import RichTextEditor from "@/components/admin/RichTextEditor";
 
 type Article = Record<string, any>;
 
@@ -127,15 +128,6 @@ export default function ArticleEditorPage() {
     }));
   }
 
-  function insertHtml(start: string, end = "") {
-    const textarea = document.getElementById("article-body") as HTMLTextAreaElement | null;
-    if (!textarea) return;
-    const before = article.body.slice(0, textarea.selectionStart);
-    const selected = article.body.slice(textarea.selectionStart, textarea.selectionEnd);
-    const after = article.body.slice(textarea.selectionEnd);
-    update("body", `${before}${start}${selected}${end}${after}`);
-    setTimeout(() => textarea.focus(), 0);
-  }
 
   async function uploadImage(file: File) {
     setUploading(true);
@@ -281,18 +273,11 @@ export default function ArticleEditorPage() {
           </div>
 
           <div className="hgn-card p-5">
-            <div className="mb-3 flex flex-wrap gap-2">
-              <button type="button" onClick={() => insertHtml("<p>", "</p>")} className="rounded-lg bg-slate-100 px-3 py-2 text-sm font-black">Paragraph</button>
-              <button type="button" onClick={() => insertHtml("<h2>", "</h2>")} className="rounded-lg bg-slate-100 px-3 py-2 text-sm font-black">Heading</button>
-              <button type="button" onClick={() => insertHtml("<strong>", "</strong>")} className="rounded-lg bg-slate-100 px-3 py-2 text-sm font-black">Bold</button>
-              <button type="button" onClick={() => insertHtml("<em>", "</em>")} className="rounded-lg bg-slate-100 px-3 py-2 text-sm font-black">Italic</button>
-              <button type="button" onClick={() => insertHtml('<blockquote>', "</blockquote>")} className="rounded-lg bg-slate-100 px-3 py-2 text-sm font-black">Quote</button>
-              <button type="button" onClick={() => insertHtml('<a href="https://">', "</a>")} className="rounded-lg bg-slate-100 px-3 py-2 text-sm font-black">Link</button>
+            <div className="mb-3">
+              <h2 className="text-2xl font-black text-hgnNavy">Article body</h2>
+              <p className="mt-1 text-sm text-slate-600">Write visually here. Paste from Word or Google Docs and paragraphs will stay as paragraphs.</p>
             </div>
-            <label>
-              Article body
-              <textarea id="article-body" value={article.body || ""} onChange={(e) => update("body", e.target.value)} rows={22} />
-            </label>
+            <RichTextEditor value={article.body || ""} onChange={(html) => update("body", html)} />
           </div>
 
           {preview && (
