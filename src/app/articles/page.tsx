@@ -14,6 +14,7 @@ type Article = {
   body?: string | null;
   author_name?: string | null;
   category?: string | null;
+  subcategory?: string | null
   image_url?: string | null;
   cover_image_url?: string | null;
   published_at?: string | null;
