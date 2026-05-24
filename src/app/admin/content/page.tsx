@@ -4,11 +4,9 @@ import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
 import { supabase } from "@/lib/supabase"
 
-type Article = Record<string, any>
 type Letter = Record<string, any>
 
 export default function AdminContentLibraryPage() {
-  const [articles, setArticles] = useState<Article[]>([])
   const [letters, setLetters] = useState<Letter[]>([])
   const [loading, setLoading] = useState(true)
   const [working, setWorking] = useState("")
@@ -18,17 +16,14 @@ export default function AdminContentLibraryPage() {
     setLoading(true)
     setMessage("")
 
-    const [articleRes, letterRes] = await Promise.all([
-      supabase.from("articles").select("*").order("created_at", { ascending: false }).limit(200),
-      supabase.from("letters_to_editor").select("*").order("created_at", { ascending: false }).limit(200),
-    ])
+    const { data, error } = await supabase
+      .from("letters_to_editor")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(200)
 
-    if (articleRes.error || letterRes.error) {
-      setMessage(articleRes.error?.message || letterRes.error?.message || "Could not load content.")
-    }
-
-    setArticles(articleRes.data || [])
-    setLetters(letterRes.data || [])
+    if (error) setMessage(error.message || "Could not load letters.")
+    setLetters(data || [])
     setLoading(false)
   }
 
@@ -36,8 +31,8 @@ export default function AdminContentLibraryPage() {
     load()
   }, [])
 
-  async function updateStatus(table: "articles" | "letters_to_editor", id: string, status: string) {
-    setWorking(`${table}:${id}`)
+  async function updateStatus(id: string, status: string) {
+    setWorking(id)
     setMessage("")
 
     const patch: Record<string, any> = {
@@ -45,49 +40,39 @@ export default function AdminContentLibraryPage() {
       updated_at: new Date().toISOString(),
     }
 
-    if (status === "published" || status === "approved") {
+    if (status === "approved" || status === "published") {
       patch.published_at = new Date().toISOString()
     }
 
-    const { error } = await supabase.from(table).update(patch).eq("id", id)
+    const { error } = await supabase.from("letters_to_editor").update(patch).eq("id", id)
 
-    if (error) {
-      setMessage(error.message)
-    } else {
-      await load()
-    }
+    if (error) setMessage(error.message)
+    else await load()
 
     setWorking("")
   }
 
-  async function deleteRow(table: "articles" | "letters_to_editor", id: string) {
-    const ok = window.confirm("Delete this item? This cannot be undone.")
+  async function deleteLetter(id: string) {
+    const ok = window.confirm("Delete this letter? This cannot be undone.")
     if (!ok) return
 
-    setWorking(`${table}:${id}`)
+    setWorking(id)
     setMessage("")
 
-    const { error } = await supabase.from(table).delete().eq("id", id)
+    const { error } = await supabase.from("letters_to_editor").delete().eq("id", id)
 
-    if (error) {
-      setMessage(error.message)
-    } else {
-      await load()
-    }
+    if (error) setMessage(error.message)
+    else await load()
 
     setWorking("")
   }
 
   const counts = useMemo(() => ({
-    articles: articles.length,
     letters: letters.length,
-    drafts:
-      articles.filter((x) => String(x.status || "").toLowerCase() === "draft").length +
-      letters.filter((x) => String(x.status || "").toLowerCase() === "draft").length,
-    live:
-      articles.filter((x) => isLiveArticle(x.status)).length +
-      letters.filter((x) => isLiveLetter(x.status)).length,
-  }), [articles, letters])
+    pending: letters.filter((x) => ["pending", "submitted", "new"].includes(String(x.status || "").toLowerCase())).length,
+    drafts: letters.filter((x) => String(x.status || "").toLowerCase() === "draft").length,
+    live: letters.filter((x) => isLiveLetter(x.status)).length,
+  }), [letters])
 
   return (
     <main className="mx-auto max-w-7xl space-y-8 px-6 py-10">
@@ -95,15 +80,15 @@ export default function AdminContentLibraryPage() {
         <p className="text-sm font-semibold uppercase tracking-[0.25em] text-slate-500">
           HGN Admin
         </p>
-        <h1 className="mt-3 text-4xl font-bold tracking-tight">Content Library</h1>
+        <h1 className="mt-3 text-4xl font-bold tracking-tight">Content / Submissions Hub</h1>
         <p className="mt-3 max-w-3xl text-slate-600">
-          This is where past articles and published letters should live for editor work:
-          edit, draft, publish, reject, or delete.
+          This page is now for letters and submission moderation. Articles are managed in one place only:
+          the main Article Manager.
         </p>
 
         <div className="mt-6 grid gap-3 sm:grid-cols-4">
-          <Stat label="Articles" value={counts.articles} />
           <Stat label="Letters" value={counts.letters} />
+          <Stat label="Pending" value={counts.pending} />
           <Stat label="Drafts" value={counts.drafts} />
           <Stat label="Live" value={counts.live} />
         </div>
@@ -112,11 +97,17 @@ export default function AdminContentLibraryPage() {
           <button onClick={load} className="rounded-full bg-slate-950 px-5 py-2 text-sm font-semibold text-white">
             Refresh
           </button>
+          <Link href="/admin/articles" className="rounded-full bg-hgnBlue px-5 py-2 text-sm font-semibold text-white">
+            Article Manager
+          </Link>
+          <Link href="/admin/articles/new" className="rounded-full bg-slate-100 px-5 py-2 text-sm font-semibold text-slate-700">
+            Add Article
+          </Link>
           <Link href="/admin/letters" className="rounded-full bg-slate-100 px-5 py-2 text-sm font-semibold text-slate-700">
             Letters editor
           </Link>
           <Link href="/admin/submissions" className="rounded-full bg-slate-100 px-5 py-2 text-sm font-semibold text-slate-700">
-            Submissions
+            Reader submissions
           </Link>
         </div>
 
@@ -127,85 +118,33 @@ export default function AdminContentLibraryPage() {
         ) : null}
       </section>
 
+      <section className="rounded-3xl border bg-white p-6 shadow-sm">
+        <h2 className="text-2xl font-bold">Article editing moved</h2>
+        <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
+          To avoid two different article editors, article editing, publishing, featuring, SEO, categories,
+          columns, and deletion now belong in <strong>/admin/articles</strong>. This page remains a moderation hub for letters and other submissions.
+        </p>
+        <div className="mt-5 flex flex-wrap gap-3">
+          <Link href="/admin/articles" className="rounded-full bg-slate-950 px-5 py-2 text-sm font-semibold text-white">
+            Open Article Manager
+          </Link>
+          <Link href="/admin/content/articles" className="rounded-full border px-5 py-2 text-sm font-semibold text-slate-700">
+            Old article tools, if needed
+          </Link>
+        </div>
+      </section>
+
       {loading ? (
-        <p className="rounded-2xl border bg-white p-6 text-slate-600">Loading content...</p>
+        <p className="rounded-2xl border bg-white p-6 text-slate-600">Loading letters...</p>
       ) : (
-        <>
-          <ArticleSection
-            articles={articles}
-            working={working}
-            onStatus={updateStatus}
-            onDelete={deleteRow}
-          />
-          <LetterSection
-            letters={letters}
-            working={working}
-            onStatus={updateStatus}
-            onDelete={deleteRow}
-          />
-        </>
+        <LetterSection
+          letters={letters}
+          working={working}
+          onStatus={updateStatus}
+          onDelete={deleteLetter}
+        />
       )}
     </main>
-  )
-}
-
-function ArticleSection({
-  articles,
-  working,
-  onStatus,
-  onDelete,
-}: {
-  articles: Article[]
-  working: string
-  onStatus: (table: "articles", id: string, status: string) => void
-  onDelete: (table: "articles", id: string) => void
-}) {
-  return (
-    <section className="space-y-3">
-      <h2 className="text-2xl font-bold">Articles</h2>
-      {articles.length === 0 ? (
-        <p className="rounded-2xl border bg-white p-5 text-sm text-slate-500">
-          No article rows found in the `articles` table.
-        </p>
-      ) : (
-        articles.map((article) => (
-          <article key={article.id} className="rounded-2xl border bg-white p-5 shadow-sm">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h3 className="text-lg font-bold">{article.title || "Untitled article"}</h3>
-                <p className="mt-1 text-sm text-slate-500">
-                  {article.category || "No category"} · {article.author || "No author"} · {article.slug || "No slug"}
-                </p>
-              </div>
-              <StatusBadge status={article.status || "draft"} />
-            </div>
-            <p className="mt-3 line-clamp-2 text-sm text-slate-600">
-              {article.excerpt || article.dek || article.body || article.content || "No preview text."}
-            </p>
-            <div className="mt-5 flex flex-wrap gap-2">
-              <Link
-                href={`/admin/content/articles/${article.id}`}
-                className="rounded-full bg-slate-800 px-4 py-2 text-xs font-bold uppercase tracking-wide text-white"
-              >
-                Edit
-              </Link>
-              <button disabled={working === `articles:${article.id}`} onClick={() => onStatus("articles", article.id, "published")} className="rounded-full bg-emerald-600 px-4 py-2 text-xs font-bold uppercase tracking-wide text-white disabled:opacity-50">
-                Publish
-              </button>
-              <button disabled={working === `articles:${article.id}`} onClick={() => onStatus("articles", article.id, "draft")} className="rounded-full bg-slate-200 px-4 py-2 text-xs font-bold uppercase tracking-wide text-slate-700 disabled:opacity-50">
-                Draft
-              </button>
-              <button disabled={working === `articles:${article.id}`} onClick={() => onStatus("articles", article.id, "archived")} className="rounded-full bg-amber-500 px-4 py-2 text-xs font-bold uppercase tracking-wide text-white disabled:opacity-50">
-                Archive
-              </button>
-              <button disabled={working === `articles:${article.id}`} onClick={() => onDelete("articles", article.id)} className="rounded-full bg-red-600 px-4 py-2 text-xs font-bold uppercase tracking-wide text-white disabled:opacity-50">
-                Delete
-              </button>
-            </div>
-          </article>
-        ))
-      )}
-    </section>
   )
 }
 
@@ -217,12 +156,12 @@ function LetterSection({
 }: {
   letters: Letter[]
   working: string
-  onStatus: (table: "letters_to_editor", id: string, status: string) => void
-  onDelete: (table: "letters_to_editor", id: string) => void
+  onStatus: (id: string, status: string) => void
+  onDelete: (id: string) => void
 }) {
   return (
     <section className="space-y-3">
-      <h2 className="text-2xl font-bold">Published / archived letters</h2>
+      <h2 className="text-2xl font-bold">Letters / published letter archive</h2>
       {letters.length === 0 ? (
         <p className="rounded-2xl border bg-white p-5 text-sm text-slate-500">
           No rows found in the `letters_to_editor` table. New unapproved letters are in `/admin/letters`.
@@ -247,18 +186,18 @@ function LetterSection({
                 href={`/admin/content/letters/${letter.id}`}
                 className="rounded-full bg-slate-800 px-4 py-2 text-xs font-bold uppercase tracking-wide text-white"
               >
-                Edit
+                Edit letter
               </Link>
-              <button disabled={working === `letters_to_editor:${letter.id}`} onClick={() => onStatus("letters_to_editor", letter.id, "approved")} className="rounded-full bg-emerald-600 px-4 py-2 text-xs font-bold uppercase tracking-wide text-white disabled:opacity-50">
+              <button disabled={working === letter.id} onClick={() => onStatus(letter.id, "approved")} className="rounded-full bg-emerald-600 px-4 py-2 text-xs font-bold uppercase tracking-wide text-white disabled:opacity-50">
                 Publish
               </button>
-              <button disabled={working === `letters_to_editor:${letter.id}`} onClick={() => onStatus("letters_to_editor", letter.id, "draft")} className="rounded-full bg-slate-200 px-4 py-2 text-xs font-bold uppercase tracking-wide text-slate-700 disabled:opacity-50">
+              <button disabled={working === letter.id} onClick={() => onStatus(letter.id, "draft")} className="rounded-full bg-slate-200 px-4 py-2 text-xs font-bold uppercase tracking-wide text-slate-700 disabled:opacity-50">
                 Draft
               </button>
-              <button disabled={working === `letters_to_editor:${letter.id}`} onClick={() => onStatus("letters_to_editor", letter.id, "archived")} className="rounded-full bg-amber-500 px-4 py-2 text-xs font-bold uppercase tracking-wide text-white disabled:opacity-50">
+              <button disabled={working === letter.id} onClick={() => onStatus(letter.id, "archived")} className="rounded-full bg-amber-500 px-4 py-2 text-xs font-bold uppercase tracking-wide text-white disabled:opacity-50">
                 Archive
               </button>
-              <button disabled={working === `letters_to_editor:${letter.id}`} onClick={() => onDelete("letters_to_editor", letter.id)} className="rounded-full bg-red-600 px-4 py-2 text-xs font-bold uppercase tracking-wide text-white disabled:opacity-50">
+              <button disabled={working === letter.id} onClick={() => onDelete(letter.id)} className="rounded-full bg-red-600 px-4 py-2 text-xs font-bold uppercase tracking-wide text-white disabled:opacity-50">
                 Delete
               </button>
             </div>
@@ -287,20 +226,15 @@ function statusClass(status: string) {
   if (value === "published" || value === "approved" || value === "live" || value === "active") {
     return "rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-emerald-700"
   }
-  if (value === "draft" || value === "pending") {
+  if (value === "draft" || value === "pending" || value === "submitted" || value === "new") {
     return "rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-600"
   }
   return "rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-amber-700"
 }
 
-function isLiveArticle(status: string | null | undefined) {
-  return ["published", "approved", "public", "live", "active"].includes(String(status || "").toLowerCase())
-}
-
 function isLiveLetter(status: string | null | undefined) {
   return ["approved", "published", "public", "live", "active"].includes(String(status || "").toLowerCase())
 }
-
 
 function formatDate(value?: string | null) {
   if (!value) return "No date"

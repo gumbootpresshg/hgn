@@ -19,3 +19,7 @@ alter table public.classifieds add column if not exists listing_type text;
 alter table public.classifieds add column if not exists photo_urls text[] default '{}';
 
 notify pgrst, 'reload schema';
+alter table public.classifieds add column if not exists contract_amount text;
+alter table public.classifieds add column if not exists application_deadline text;
+alter table public.classifieds add column if not exists how_to_apply text;
+notify pgrst, 'reload schema';

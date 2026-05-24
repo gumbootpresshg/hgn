@@ -95,7 +95,7 @@ export default function NewMarketplaceListing() {
         category: f.get("category"),
         location: f.get("location"),
         description: f.get("description"),
-        price: f.get("price"),
+        price: isJobCategory ? "" : f.get("price"),
         contact_name: f.get("contact_name"),
         contact_email: f.get("contact_email"),
         phone: f.get("phone"),
@@ -112,6 +112,9 @@ export default function NewMarketplaceListing() {
       if (isJobListing) {
         payload.employment_type = f.get("employment_type");
         payload.rate_of_pay = f.get("rate_of_pay");
+        payload.contract_amount = f.get("contract_amount");
+        payload.application_deadline = f.get("application_deadline");
+        payload.how_to_apply = f.get("how_to_apply");
       }
       // If a real estate or rental listing, append property details and extra photos
       if (isRealEstateListing) {
@@ -193,7 +196,10 @@ export default function NewMarketplaceListing() {
           </label>
         </div>
         <label>Description<textarea name="description" rows={7} required placeholder="Details, condition, pickup/delivery info..." /></label>
-        <div className="grid gap-4 md:grid-cols-2"><label>Price<input name="price" placeholder="$100 or Contact seller" /></label><label>Phone<input name="phone" type="tel" inputMode="tel" placeholder="250-000-0000" /></label></div>
+        <div className="grid gap-4 md:grid-cols-2">
+          {!isJobCategory ? <label>Price<input name="price" placeholder="$100 or Contact seller" /></label> : null}
+          <label>Phone<input name="phone" type="tel" inputMode="tel" placeholder="250-000-0000" /></label>
+        </div>
         <div className="grid gap-4 md:grid-cols-2">
           <label>
             Contact Name
@@ -221,6 +227,18 @@ export default function NewMarketplaceListing() {
             <label>
               Rate of pay (optional)
               <input name="rate_of_pay" placeholder="$25/hour" />
+            </label>
+            <label>
+              Contract amount / project budget (optional)
+              <input name="contract_amount" placeholder="$1,500 project" />
+            </label>
+            <label>
+              Application deadline (optional)
+              <input name="application_deadline" type="date" />
+            </label>
+            <label className="md:col-span-2">
+              How to apply (optional)
+              <textarea name="how_to_apply" rows={3} placeholder="Email resume, call, apply in person..." />
             </label>
           </div>
         )}

@@ -73,9 +73,25 @@ export default function HoroscopePage() {
           <p className="text-sm font-black uppercase tracking-[0.28em] text-white/70">Stars & sky</p>
           <h1 className="mt-3 text-5xl font-black tracking-tight md:text-6xl">Horoscope</h1>
           <p className="mt-4 max-w-2xl text-base leading-7 text-white/80">
-            The latest horoscope from Haida Gwaii News, with all twelve signs gathered in one place.
+            Explore all twelve signs, then read the latest island horoscope below.
           </p>
         </div>
+      </section>
+
+      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {zodiacSigns.map((item) => (
+          <div key={item.sign} className="rounded-3xl border bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+            <div className="flex items-center gap-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-950 text-2xl text-white">
+                {item.symbol}
+              </div>
+              <div>
+                <h3 className="text-lg font-black text-hgnNavy">{item.sign}</h3>
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{item.dates}</p>
+              </div>
+            </div>
+          </div>
+        ))}
       </section>
 
       {loading ? (
@@ -96,22 +112,6 @@ export default function HoroscopePage() {
       ) : (
         <p className="rounded-2xl border bg-white p-6">No horoscope has been published yet.</p>
       )}
-
-      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {zodiacSigns.map((item) => (
-          <div key={item.sign} className="rounded-3xl border bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-            <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-950 text-2xl text-white">
-                {item.symbol}
-              </div>
-              <div>
-                <h3 className="text-lg font-black text-hgnNavy">{item.sign}</h3>
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{item.dates}</p>
-              </div>
-            </div>
-          </div>
-        ))}
-      </section>
     </main>
   )
 }

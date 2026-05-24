@@ -119,21 +119,21 @@ export default function SubmitClassifiedPage() {
         imageUrl = await uploadPhoto(photo)
       }
 
-      const rawPrice = String(form.get("price") || "").replace(/[^0-9.]/g, "")
-      const priceAmount = rawPrice ? Number(rawPrice) : null
-      const autoApproved = Boolean(permissions?.verified_plus)
-      const now = new Date().toISOString()
-
       const isJob = categoryMatches(selectedCategory, jobCategoryKeywords)
       const isRealEstate = categoryMatches(selectedCategory, realEstateCategoryKeywords)
       const isVehicle = categoryMatches(selectedCategory, vehicleCategoryKeywords)
+
+      const rawPrice = isJob ? "" : String(form.get("price") || "").replace(/[^0-9.]/g, "")
+      const priceAmount = rawPrice ? Number(rawPrice) : null
+      const autoApproved = Boolean(permissions?.verified_plus)
+      const now = new Date().toISOString()
 
       const payload: Record<string, any> = {
         user_id: user.id,
         owner_email: user.email,
         title: String(form.get("title") || ""),
-        price: priceAmount ? String(priceAmount) : "",
-        price_amount: priceAmount,
+        price: isJob ? "" : priceAmount ? String(priceAmount) : "",
+        price_amount: isJob ? null : priceAmount,
         category: selectedCategory,
         listing_type: isRealEstate ? String(form.get("property_type") || selectedCategory) : isVehicle ? "vehicle" : isJob ? "job" : null,
         town: String(form.get("town") || ""),
@@ -151,6 +151,9 @@ export default function SubmitClassifiedPage() {
       if (isJob) {
         payload.employment_type = String(form.get("employment_type") || "")
         payload.rate_of_pay = String(form.get("rate_of_pay") || "")
+        payload.contract_amount = String(form.get("contract_amount") || "")
+        payload.application_deadline = String(form.get("application_deadline") || "")
+        payload.how_to_apply = String(form.get("how_to_apply") || "")
       }
 
       if (isRealEstate) {
@@ -254,7 +257,16 @@ export default function SubmitClassifiedPage() {
               <label className="text-sm font-bold">Rate of pay <span className="font-normal text-slate-500">optional</span>
                 <input name="rate_of_pay" placeholder="$25/hour, salary, negotiable" className="mt-2 w-full rounded-2xl border px-4 py-3" />
               </label>
+              <label className="text-sm font-bold">Contract amount / project budget <span className="font-normal text-slate-500">optional</span>
+                <input name="contract_amount" placeholder="$1,500 project, negotiable" className="mt-2 w-full rounded-2xl border px-4 py-3" />
+              </label>
+              <label className="text-sm font-bold">Application deadline <span className="font-normal text-slate-500">optional</span>
+                <input name="application_deadline" type="date" className="mt-2 w-full rounded-2xl border px-4 py-3" />
+              </label>
             </div>
+            <label className="mt-4 block text-sm font-bold">How to apply <span className="font-normal text-slate-500">optional</span>
+              <textarea name="how_to_apply" rows={3} placeholder="Email a resume, call, apply in person, etc." className="mt-2 w-full rounded-2xl border px-4 py-3" />
+            </label>
           </section>
         ) : null}
 
@@ -328,13 +340,15 @@ export default function SubmitClassifiedPage() {
           </section>
         ) : null}
 
-        <label className="text-sm font-bold">
-          Price
-          <div className="mt-2 flex overflow-hidden rounded-2xl border">
-            <span className="bg-slate-100 px-4 py-3 font-black text-slate-500">$</span>
-            <input name="price" inputMode="decimal" placeholder="0" className="min-w-0 flex-1 px-4 py-3 outline-none" />
-          </div>
-        </label>
+        {!isJobCategory ? (
+          <label className="text-sm font-bold">
+            Price
+            <div className="mt-2 flex overflow-hidden rounded-2xl border">
+              <span className="bg-slate-100 px-4 py-3 font-black text-slate-500">$</span>
+              <input name="price" inputMode="decimal" placeholder="0" className="min-w-0 flex-1 px-4 py-3 outline-none" />
+            </div>
+          </label>
+        ) : null}
 
         <label className="text-sm font-bold">
           Photo
