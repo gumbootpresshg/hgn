@@ -2,22 +2,29 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
-/**
- * Admin add article page
- *
- * Allows editors to quickly create a draft article. Upon submission the
- * article is created in the `articles` table with a generated slug and
- * the user is redirected to the full article editor (/admin/articles/[id]).
- */
+const sections = ["News", "Opinion", "Sports", "Community", "Business", "Obituaries"];
+
+const subcategoriesBySection: Record<string, string[]> = {
+  News: ["Local News", "Council", "Education", "Health", "Environment", "Public Safety"],
+  Opinion: ["Editorials", "On the Record", "Letters to the Editor", "Columns", "Guest Opinion"],
+  Sports: ["Local Sports", "Hockey", "Fishing", "Outdoor Recreation"],
+  Community: ["Community", "Arts & Culture", "Events", "Island Life"],
+  Business: ["Business", "Real Estate", "Tourism", "Jobs"],
+  Obituaries: ["Obituaries", "In Memoriam", "Celebration of Life"],
+};
+
 export default function NewArticlePage() {
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [section, setSection] = useState("News");
+  const [subcategory, setSubcategory] = useState("Local News");
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
+
+  const subcategoryOptions = useMemo(() => subcategoriesBySection[section] || [], [section]);
 
   function slugify(value: string) {
     return value
@@ -26,6 +33,11 @@ export default function NewArticlePage() {
       .replace(/['"]/g, "")
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-+|-+$/g, "");
+  }
+
+  function changeSection(value: string) {
+    setSection(value);
+    setSubcategory((subcategoriesBySection[value] || [""])[0]);
   }
 
   async function createArticle(e: React.FormEvent<HTMLFormElement>) {
@@ -39,7 +51,6 @@ export default function NewArticlePage() {
     try {
       const now = new Date().toISOString();
       const baseSlug = slugify(title) || `article-${Date.now()}`;
-      // Add a random suffix to ensure slug uniqueness
       const slug = `${baseSlug}-${Date.now().toString().slice(-5)}`;
       const { data, error } = await supabase
         .from("articles")
@@ -48,6 +59,7 @@ export default function NewArticlePage() {
           slug,
           section,
           category: section,
+          subcategory: subcategory || null,
           status: "draft",
           body: "",
           excerpt: "",
@@ -78,8 +90,7 @@ export default function NewArticlePage() {
         <p className="text-sm font-semibold tracking-[0.18em] text-hgnBlue">Admin</p>
         <h1 className="mt-3 text-4xl font-black tracking-tight">Add Article</h1>
         <p className="mt-3 text-slate-600">
-          Create a draft article, then edit, publish, feature or delete it in the full
-          editor.
+          Create a draft article, choose the main section, then choose a more specific category such as On the Record.
         </p>
         {message && (
           <p className="mt-4 rounded-2xl bg-slate-50 p-4 text-sm text-red-600">
@@ -98,18 +109,23 @@ export default function NewArticlePage() {
             />
           </label>
           <label className="block">
-            <span className="text-sm font-semibold">Section</span>
+            <span className="text-sm font-semibold">Main section</span>
             <select
               value={section}
-              onChange={(e) => setSection(e.target.value)}
+              onChange={(e) => changeSection(e.target.value)}
               className="mt-2 w-full rounded-2xl border px-4 py-3"
             >
-              <option>News</option>
-              <option>Opinion</option>
-              <option>Sports</option>
-              <option>Community</option>
-              <option>Business</option>
-              <option>Obituaries</option>
+              {sections.map((item) => <option key={item}>{item}</option>)}
+            </select>
+          </label>
+          <label className="block">
+            <span className="text-sm font-semibold">Specific category</span>
+            <select
+              value={subcategory}
+              onChange={(e) => setSubcategory(e.target.value)}
+              className="mt-2 w-full rounded-2xl border px-4 py-3"
+            >
+              {subcategoryOptions.map((item) => <option key={item}>{item}</option>)}
             </select>
           </label>
           <button

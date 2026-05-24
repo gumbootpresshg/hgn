@@ -95,7 +95,7 @@ export default async function ArticlePage({ params }: PageProps) {
 
       <article className="mt-6 rounded-2xl bg-white p-6 shadow-sm md:p-10">
         <div className="text-sm font-black uppercase tracking-wide text-hgnBlue">
-          {article.category || "News"}
+          {article.subcategory || article.category || "News"}
         </div>
 
         <h1 className="mt-3 text-4xl font-black leading-tight text-slate-950 md:text-5xl">

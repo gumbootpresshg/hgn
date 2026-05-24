@@ -12,6 +12,18 @@ type Article = Record<string, any>;
 const categories = ["News", "Sports", "Opinion", "Letters", "Community", "Business", "Events", "Obituaries", "Visitor Info"];
 const statuses = ["draft", "submitted", "published", "archived"];
 
+const subcategoriesByCategory: Record<string, string[]> = {
+  News: ["Local News", "Council", "Education", "Health", "Environment", "Public Safety"],
+  Sports: ["Local Sports", "Hockey", "Fishing", "Outdoor Recreation"],
+  Opinion: ["Editorials", "On the Record", "Letters to the Editor", "Columns", "Guest Opinion"],
+  Letters: ["Letters to the Editor", "Community Letters"],
+  Community: ["Community", "Arts & Culture", "Events", "Island Life"],
+  Business: ["Business", "Real Estate", "Tourism", "Jobs"],
+  Events: ["Events", "Community Calendar"],
+  Obituaries: ["Obituaries", "In Memoriam", "Celebration of Life"],
+  "Visitor Info": ["Visitor Info", "Travel", "Ferries", "Maps"],
+};
+
 function slugify(text: string) {
   return text
     .toLowerCase()
@@ -41,6 +53,7 @@ const blankArticle: Article = {
   author_name: "Haida Gwaii News",
   category: "News",
   section: "News",
+  subcategory: "Local News",
   image_url: "",
   status: "draft",
   featured: false,
@@ -63,6 +76,7 @@ export default function ArticleEditorPage() {
   const [preview, setPreview] = useState(false);
 
   const previewUrl = useMemo(() => article.slug ? `/articles/${article.slug}` : "#", [article.slug]);
+  const subcategoryOptions = useMemo(() => subcategoriesByCategory[article.category || "News"] || [], [article.category]);
 
   useEffect(() => {
     if (isNew) return;
@@ -80,6 +94,16 @@ export default function ArticleEditorPage() {
 
   function update(field: string, value: any) {
     setArticle((prev) => ({ ...prev, [field]: value }));
+  }
+
+  function updateCategory(value: string) {
+    const defaultSubcategory = (subcategoriesByCategory[value] || [""])[0];
+    setArticle((prev) => ({
+      ...prev,
+      category: value,
+      section: value,
+      subcategory: prev.category === value ? prev.subcategory : defaultSubcategory,
+    }));
   }
 
   function insertHtml(start: string, end = "") {
@@ -129,6 +153,7 @@ export default function ArticleEditorPage() {
     const status = nextStatus || article.status || "draft";
     const slug = article.slug?.trim() || slugify(title);
     const category = article.category || "News";
+    const subcategory = article.subcategory || null;
     // Prepare the body for saving. If the user hasn't entered any HTML tags,
     // convert each newline into its own <p>...</p> paragraph. This lets
     // editors type plain text and simply press Enter to start new
@@ -155,6 +180,7 @@ export default function ArticleEditorPage() {
       author_name: titleCaseName(article.author_name || "Haida Gwaii News"),
       category,
       section: category,
+      subcategory,
       image_url: article.image_url || null,
       status,
       featured: !!article.featured,
@@ -247,7 +273,7 @@ export default function ArticleEditorPage() {
 
           {preview && (
             <article className="hgn-card p-6 md:p-10">
-              <div className="text-sm font-black uppercase tracking-wide text-hgnBlue">{article.category || "News"}</div>
+              <div className="text-sm font-black uppercase tracking-wide text-hgnBlue">{article.subcategory || article.category || "News"}</div>
               <h2 className="mt-2 text-4xl font-black text-hgnNavy">{article.title || "Untitled"}</h2>
               <p className="mt-2 border-b pb-4 text-sm text-slate-500">By {article.author_name || "Haida Gwaii News"}</p>
               {article.image_url && <img src={article.image_url} alt="" className="mt-6 max-h-[520px] w-full rounded-xl object-cover" />}
@@ -267,8 +293,15 @@ export default function ArticleEditorPage() {
             </label>
             <label>
               Category
-              <select value={article.category || "News"} onChange={(e) => update("category", e.target.value)}>
+              <select value={article.category || "News"} onChange={(e) => updateCategory(e.target.value)}>
                 {categories.map((c) => <option key={c}>{c}</option>)}
+              </select>
+            </label>
+            <label>
+              Specific category
+              <select value={article.subcategory || ""} onChange={(e) => update("subcategory", e.target.value)}>
+                <option value="">None</option>
+                {subcategoryOptions.map((c) => <option key={c}>{c}</option>)}
               </select>
             </label>
             <label>

@@ -6,9 +6,9 @@ export const revalidate = 0
 export default async function OnTheRecordPage() {
   const { data, error } = await supabase
     .from("articles")
-    .select("id,title,slug,excerpt,dek,author,category,published_at,created_at,status")
+    .select("id,title,slug,excerpt,dek,author,category,subcategory,published_at,created_at,status")
     .in("status", ["published", "approved", "public", "live", "active"])
-    .or("category.eq.On the Record,title.ilike.%on the record%,slug.ilike.%on-the-record%")
+    .or("subcategory.eq.On the Record,category.eq.On the Record,title.ilike.%on the record%,slug.ilike.%on-the-record%")
     .not("category", "ilike", "%editorial%")
     .not("title", "ilike", "%editorial%")
     .not("slug", "ilike", "%editorial%")
@@ -20,13 +20,16 @@ export default async function OnTheRecordPage() {
     const title = String(article.title || "").toLowerCase()
     const slug = String(article.slug || "").toLowerCase()
     const category = String(article.category || "").toLowerCase()
+    const subcategory = String(article.subcategory || "").toLowerCase()
 
     const isOnTheRecord =
+      subcategory === "on the record" ||
       category === "on the record" ||
       title.includes("on the record") ||
       slug.includes("on-the-record")
 
     const isEditorial =
+      subcategory.includes("editorial") ||
       category.includes("editorial") ||
       title.includes("editorial") ||
       slug.includes("editorial")

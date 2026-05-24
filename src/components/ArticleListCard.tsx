@@ -19,7 +19,7 @@ export default function ArticleListCard({ article, fallbackLabel = "Article" }: 
           <img src={image} alt={article.title || "Article image"} className="h-24 w-32 shrink-0 rounded-2xl object-cover" />
         ) : null}
         <div className="min-w-0">
-          <p className="text-xs font-bold tracking-[0.18em] text-hgnBlue">{article.category || article.section || fallbackLabel}</p>
+          <p className="text-xs font-bold tracking-[0.18em] text-hgnBlue">{article.subcategory || article.category || article.section || fallbackLabel}</p>
           <h2 className="mt-2 text-2xl font-black">{article.title}</h2>
           <p className="mt-2 text-sm leading-6 text-slate-600">{articleExcerpt(article)}</p>
           <p className="mt-3 text-xs text-slate-500">

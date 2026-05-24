@@ -36,13 +36,13 @@ type NavLink = {
 
 function Dropdown({ label, children }: { label: string; children: NavLink[] }) {
   return (
-    <div className="group relative -mb-3 shrink-0 pb-3">
-      <button className="flex items-center gap-1 whitespace-nowrap hover:text-hgnBlue">
+    <div className="group relative shrink-0 md:-mb-3 md:pb-3">
+      <button className="flex items-center gap-1 whitespace-nowrap hover:text-hgnBlue" type="button">
         {label}
         <span aria-hidden="true">▾</span>
       </button>
 
-      <div className="invisible absolute left-1/2 top-full z-[10000] max-h-[70vh] min-w-72 -translate-x-1/2 overflow-visible rounded-b-2xl border border-slate-200 bg-white p-2 text-left tracking-normal text-slate-800 opacity-0 shadow-xl transition group-hover:visible group-hover:opacity-100">
+      <div className="hidden max-h-[70vh] w-[calc(100vw-2rem)] max-w-[calc(100vw-2rem)] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-2 text-left tracking-normal text-slate-800 shadow-xl group-focus-within:block group-hover:block md:invisible md:absolute md:left-1/2 md:top-full md:z-[10000] md:block md:min-w-72 md:w-auto md:max-w-[90vw] md:-translate-x-1/2 md:rounded-b-2xl md:opacity-0 md:transition md:group-focus-within:visible md:group-focus-within:opacity-100 md:group-hover:visible md:group-hover:opacity-100">
         {children.map((child) => (
           <div key={child.href} className="group/sub relative">
             <Link
@@ -50,11 +50,11 @@ function Dropdown({ label, children }: { label: string; children: NavLink[] }) {
               className="flex items-center justify-between gap-4 rounded-xl px-4 py-3 text-sm font-semibold hover:bg-slate-100 hover:text-hgnBlue"
             >
               <span>{child.label}</span>
-              {child.children ? <span aria-hidden="true">›</span> : null}
+              {child.children ? <span className="hidden md:inline" aria-hidden="true">›</span> : null}
             </Link>
 
             {child.children ? (
-              <div className="invisible absolute left-full top-0 z-[10001] ml-1 max-h-[70vh] min-w-72 overflow-y-auto rounded-2xl border border-slate-200 bg-white p-2 opacity-0 shadow-xl transition group-hover/sub:visible group-hover/sub:opacity-100">
+              <div className="ml-4 border-l border-slate-200 pl-2 md:invisible md:absolute md:left-full md:top-0 md:z-[10001] md:ml-1 md:max-h-[70vh] md:min-w-72 md:overflow-y-auto md:rounded-2xl md:border md:border-slate-200 md:bg-white md:p-2 md:pl-2 md:opacity-0 md:shadow-xl md:transition md:group-hover/sub:visible md:group-hover/sub:opacity-100">
                 {child.children.map((sub) => (
                   <Link
                     key={sub.href}
@@ -121,6 +121,7 @@ export function Header() {
         label: "Opinion",
         children: [
           { href: "/opinion/editorials", label: "Editorials" },
+          { href: "/opinion/on-the-record", label: "On the Record" },
           { href: "/columns", label: "Columns", children: columns },
           { href: "/letters", label: "Letters to the Editor" },
           { href: "/submit-guest-opinion", label: "Submit a Guest Opinion" },
@@ -159,12 +160,6 @@ export function Header() {
           { href: "/explore/live/power-outages", label: "Power Outages" },
         ],
       },
-      {
-        label: "Horoscope",
-        children: [
-          { href: "/horoscope", label: "Horoscope" },
-        ],
-      },
     ],
     [columns]
   )
@@ -201,7 +196,7 @@ export function Header() {
           isStuck ? "fixed left-0 right-0 top-0" : "relative",
         ].join(" ")}
       >
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-x-6 gap-y-2 px-4 py-3 text-sm font-semibold tracking-wide text-slate-800">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-start justify-center gap-x-6 gap-y-2 px-4 py-3 text-sm font-semibold tracking-wide text-slate-800 md:items-center">
           <Link
             href="/"
             className={[
@@ -218,11 +213,7 @@ export function Header() {
 
           <Link href="/events" className="shrink-0 whitespace-nowrap hover:text-hgnBlue">Events</Link>
           <Link href="/obituaries" className="shrink-0 whitespace-nowrap hover:text-hgnBlue">Obituaries</Link>
-          {/*
-            The Horoscope link is provided via the navItems dropdown above. To prevent
-            duplicate menu items we omit the direct Horoscope link here. See
-            navItems definition for the Horoscope section with its single child link.
-          */}
+          <Link href="/horoscope" className="shrink-0 whitespace-nowrap hover:text-hgnBlue">Horoscope</Link>
         </div>
       </nav>
     </>

@@ -99,7 +99,7 @@ export default async function Articles({ searchParams }: PageProps) {
                 <div className="grid gap-4 md:grid-cols-[220px_1fr]">
                   <img src={article.cover_image_url || article.image_url || "/news-placeholder.svg"} alt="" className="h-40 w-full rounded-xl object-cover" />
                   <div>
-                    <div className="text-xs font-black uppercase tracking-wide text-hgnBlue">{article.category || "News"}</div>
+                    <div className="text-xs font-black uppercase tracking-wide text-hgnBlue">{article.subcategory || article.category || "News"}</div>
                     <h2 className="mt-2 text-2xl font-black text-slate-900">{article.title}</h2>
                     <p className="mt-2 line-clamp-3 text-slate-700">{excerpt(article)}</p>
                     <p className="mt-3 text-sm text-slate-500">

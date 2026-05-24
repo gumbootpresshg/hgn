@@ -92,7 +92,7 @@ export default function AdminArticlesPage() {
                   </p>
                   <h2 className="mt-2 text-xl font-black">{article.title}</h2>
                   <p className="mt-1 text-sm text-slate-600">
-                    {[article.category, article.section, article.author_name || article.author]
+                    {[article.category, article.subcategory, article.author_name || article.author]
                       .filter(Boolean)
                       .join(" · ")}
                   </p>
