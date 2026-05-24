@@ -34,7 +34,7 @@ type NavLink = {
   children?: NavLink[]
 }
 
-function Dropdown({ label, children }: { label: string; children: NavLink[] }) {
+function Dropdown({ label, children, onNavigate }: { label: string; children: NavLink[]; onNavigate: () => void }) {
   return (
     <div className="group relative shrink-0 md:-mb-3 md:pb-3">
       <button className="flex items-center gap-1 whitespace-nowrap hover:text-hgnBlue" type="button">
@@ -47,6 +47,7 @@ function Dropdown({ label, children }: { label: string; children: NavLink[] }) {
           <div key={child.href} className="group/sub relative">
             <Link
               href={child.href}
+              onClick={onNavigate}
               className="flex items-center justify-between gap-4 rounded-xl px-4 py-3 text-sm font-semibold hover:bg-slate-100 hover:text-hgnBlue"
             >
               <span>{child.label}</span>
@@ -59,6 +60,7 @@ function Dropdown({ label, children }: { label: string; children: NavLink[] }) {
                   <Link
                     key={sub.href}
                     href={sub.href}
+                    onClick={onNavigate}
                     className="block rounded-xl px-4 py-3 text-sm font-semibold hover:bg-slate-100 hover:text-hgnBlue"
                   >
                     {sub.label}
@@ -164,6 +166,11 @@ export function Header() {
     [columns]
   )
 
+  function closeMobileMenus() {
+    const active = document.activeElement
+    if (active instanceof HTMLElement) active.blur()
+  }
+
   return (
     <>
       <header id="hgn-masthead" className="relative z-40 border-b border-slate-300 bg-white">
@@ -181,8 +188,8 @@ export function Header() {
           </div>
         </div>
 
-        <div className="mx-auto max-w-7xl px-4 py-5 text-center">
-          <Link href="/" className="font-serif text-5xl font-black tracking-tight text-slate-950 md:text-7xl">
+        <div className="mx-auto max-w-7xl px-4 py-4 text-center md:py-5">
+          <Link href="/" className="whitespace-nowrap font-serif text-[2rem] font-black leading-none tracking-tight text-slate-950 sm:text-5xl md:text-7xl">
             Haida Gwaii News
           </Link>
         </div>
@@ -200,7 +207,7 @@ export function Header() {
           <Link
             href="/"
             className={[
-              "mr-2 shrink-0 font-serif text-lg font-black tracking-tight text-slate-950 transition-all duration-200",
+              "mr-2 shrink-0 whitespace-nowrap font-serif text-base font-black tracking-tight text-slate-950 transition-all duration-200 sm:text-lg",
               isStuck ? "inline-block opacity-100" : "hidden opacity-0",
             ].join(" ")}
           >
@@ -208,12 +215,12 @@ export function Header() {
           </Link>
 
           {navItems.map((item) => (
-            <Dropdown key={item.label} label={item.label} children={item.children} />
+            <Dropdown key={item.label} label={item.label} children={item.children} onNavigate={closeMobileMenus} />
           ))}
 
-          <Link href="/events" className="shrink-0 whitespace-nowrap hover:text-hgnBlue">Events</Link>
-          <Link href="/obituaries" className="shrink-0 whitespace-nowrap hover:text-hgnBlue">Obituaries</Link>
-          <Link href="/horoscope" className="shrink-0 whitespace-nowrap hover:text-hgnBlue">Horoscope</Link>
+          <Link href="/events" onClick={closeMobileMenus} className="shrink-0 whitespace-nowrap hover:text-hgnBlue">Events</Link>
+          <Link href="/obituaries" onClick={closeMobileMenus} className="shrink-0 whitespace-nowrap hover:text-hgnBlue">Obituaries</Link>
+          <Link href="/horoscope" onClick={closeMobileMenus} className="shrink-0 whitespace-nowrap hover:text-hgnBlue">Horoscope</Link>
         </div>
       </nav>
     </>
