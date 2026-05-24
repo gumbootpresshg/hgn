@@ -1,7 +1,6 @@
 "use client";
 
-import ColumnSelector from "@/components/admin/ColumnSelector"
-import { columnSlugFor } from "@/lib/column-options"
+import { columnSlugFor, hgnColumnOptions } from "@/lib/column-options"
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -54,6 +53,8 @@ const blankArticle: Article = {
   category: "News",
   section: "News",
   subcategory: "Local News",
+  column_name: "",
+  column_slug: "",
   image_url: "",
   status: "draft",
   featured: false,
@@ -77,6 +78,7 @@ export default function ArticleEditorPage() {
 
   const previewUrl = useMemo(() => article.slug ? `/articles/${article.slug}` : "#", [article.slug]);
   const subcategoryOptions = useMemo(() => subcategoriesByCategory[article.category || "News"] || [], [article.category]);
+  const showColumnSelector = article.category === "Opinion" && article.subcategory === "Columns";
 
   useEffect(() => {
     if (isNew) return;
@@ -103,6 +105,25 @@ export default function ArticleEditorPage() {
       category: value,
       section: value,
       subcategory: prev.category === value ? prev.subcategory : defaultSubcategory,
+      column_name: value === "Opinion" && (prev.category === value ? prev.subcategory : defaultSubcategory) === "Columns" ? prev.column_name : "",
+      column_slug: value === "Opinion" && (prev.category === value ? prev.subcategory : defaultSubcategory) === "Columns" ? prev.column_slug : "",
+    }));
+  }
+
+  function updateSubcategory(value: string) {
+    setArticle((prev) => ({
+      ...prev,
+      subcategory: value,
+      column_name: prev.category === "Opinion" && value === "Columns" ? prev.column_name : "",
+      column_slug: prev.category === "Opinion" && value === "Columns" ? prev.column_slug : "",
+    }));
+  }
+
+  function updateColumnName(value: string) {
+    setArticle((prev) => ({
+      ...prev,
+      column_name: value,
+      column_slug: value ? columnSlugFor(value) : "",
     }));
   }
 
@@ -154,6 +175,7 @@ export default function ArticleEditorPage() {
     const slug = article.slug?.trim() || slugify(title);
     const category = article.category || "News";
     const subcategory = article.subcategory || null;
+    const columnName = category === "Opinion" && subcategory === "Columns" ? (article.column_name || "") : "";
     // Prepare the body for saving. If the user hasn't entered any HTML tags,
     // convert each newline into its own <p>...</p> paragraph. This lets
     // editors type plain text and simply press Enter to start new
@@ -181,6 +203,8 @@ export default function ArticleEditorPage() {
       category,
       section: category,
       subcategory,
+      column_name: columnName || null,
+      column_slug: columnName ? columnSlugFor(columnName) : null,
       image_url: article.image_url || null,
       status,
       featured: !!article.featured,
@@ -299,11 +323,20 @@ export default function ArticleEditorPage() {
             </label>
             <label>
               Specific category
-              <select value={article.subcategory || ""} onChange={(e) => update("subcategory", e.target.value)}>
+              <select value={article.subcategory || ""} onChange={(e) => updateSubcategory(e.target.value)}>
                 <option value="">None</option>
                 {subcategoryOptions.map((c) => <option key={c}>{c}</option>)}
               </select>
             </label>
+            {showColumnSelector ? (
+              <label>
+                Specific column / series
+                <select value={article.column_name || ""} onChange={(e) => updateColumnName(e.target.value)}>
+                  <option value="">Choose a column</option>
+                  {hgnColumnOptions.map((c) => <option key={c}>{c}</option>)}
+                </select>
+              </label>
+            ) : null}
             <label>
               Author full name
               <input value={article.author_name || ""} onChange={(e) => update("author_name", e.target.value)} onBlur={(e) => update("author_name", titleCaseName(e.target.value))} />
