@@ -5,7 +5,7 @@ type Article = {
   seo_title?: string | null;
   excerpt?: string | null;
   meta_description?: string | null;
-  slug?: string;
+  slug?: string | null;
   author?: string | null;
   author_name?: string | null;
   published_at?: string | null;
