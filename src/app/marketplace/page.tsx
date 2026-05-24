@@ -12,21 +12,6 @@ import {
 
 export const revalidate = 0
 
-function priceNumber(price?: string) {
-  const raw = String(price || "").replace(/[^0-9.]/g, "")
-  return raw ? Number(raw) : null
-}
-
-function matchesPrice(item: any, min?: string, max?: string) {
-  const value = priceNumber(item.price)
-  if (value === null) return true
-  const minValue = min ? Number(min) : null
-  const maxValue = max ? Number(max) : null
-  if (minValue !== null && value < minValue) return false
-  if (maxValue !== null && value > maxValue) return false
-  return true
-}
-
 export default async function MarketplacePage({
   searchParams,
 }: {
@@ -35,8 +20,6 @@ export default async function MarketplacePage({
     q?: string
     town?: string
     condition?: string
-    min?: string
-    max?: string
     today?: string
   }>
 }) {
@@ -66,8 +49,6 @@ export default async function MarketplacePage({
     if (town && String(item.town || item.location || "").toLowerCase() !== town.toLowerCase()) return false
     if (condition && String(item.condition || "").toLowerCase() !== condition.toLowerCase()) return false
     if (todayOnly && !isPostedToday(item.created_at)) return false
-    if (!matchesPrice(item, params?.min, params?.max)) return false
-
     return true
   })
 
@@ -83,8 +64,6 @@ export default async function MarketplacePage({
   if (q) queryBase.set("q", q)
   if (town) queryBase.set("town", town)
   if (condition) queryBase.set("condition", condition)
-  if (params?.min) queryBase.set("min", params.min)
-  if (params?.max) queryBase.set("max", params.max)
   if (todayOnly) queryBase.set("today", "1")
 
   return (
@@ -104,7 +83,7 @@ export default async function MarketplacePage({
           </Link>
         </div>
 
-        <form className="mt-6 grid gap-3 lg:grid-cols-[1.4fr_0.8fr_0.6fr_0.6fr_auto]" action="/marketplace">
+        <form className="mt-6 grid gap-3 lg:grid-cols-[1.4fr_0.8fr_auto]" action="/marketplace">
           <input name="q" defaultValue={params?.q || ""} placeholder="Search Marketplace" className="rounded-2xl border px-4 py-3" />
 
           <select name="town" defaultValue={town} className="rounded-2xl border px-4 py-3">
@@ -112,8 +91,6 @@ export default async function MarketplacePage({
             {towns.map((townName: any) => <option key={townName} value={townName}>{townName}</option>)}
           </select>
 
-          <input name="min" defaultValue={params?.min || ""} placeholder="Min $" className="rounded-2xl border px-4 py-3" />
-          <input name="max" defaultValue={params?.max || ""} placeholder="Max $" className="rounded-2xl border px-4 py-3" />
 
           <input type="hidden" name="category" value={selected} />
           <button className="rounded-full bg-hgnBlue px-6 py-3 text-sm font-black text-white">Search</button>
@@ -174,7 +151,7 @@ export default async function MarketplacePage({
                   <p className="text-xs font-black uppercase tracking-[0.18em] text-hgnBlue">Featured Sponsors</p>
                   <h2 className="mt-1 text-2xl font-black">Promoted Listings</h2>
                 </div>
-                <Link href="/marketplace?featured=1" className="text-sm font-bold text-hgnBlue">View all →</Link>
+                <Link href="/marketplace" className="text-sm font-bold text-hgnBlue">View all →</Link>
               </div>
               <div className="mt-4 grid gap-4 md:grid-cols-3">
                 {promoted.map((item: any) => <MiniCard key={item.id} item={item} />)}
