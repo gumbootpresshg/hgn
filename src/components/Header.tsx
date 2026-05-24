@@ -42,7 +42,7 @@ function Dropdown({ label, children, onNavigate }: { label: string; children: Na
         <span aria-hidden="true">▾</span>
       </button>
 
-      <div className="hidden max-h-[70vh] w-[calc(100vw-2rem)] max-w-[calc(100vw-2rem)] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-2 text-left tracking-normal text-slate-800 shadow-xl group-focus-within:block group-hover:block md:invisible md:absolute md:left-1/2 md:top-full md:z-[10000] md:block md:min-w-72 md:w-auto md:max-w-[90vw] md:-translate-x-1/2 md:rounded-b-2xl md:opacity-0 md:transition md:group-focus-within:visible md:group-focus-within:opacity-100 md:group-hover:visible md:group-hover:opacity-100">
+      <div className="hidden w-[calc(100vw-2rem)] max-w-[calc(100vw-2rem)] overflow-visible rounded-2xl border border-slate-200 bg-white p-2 text-left tracking-normal text-slate-800 shadow-xl group-focus-within:block group-hover:block md:invisible md:absolute md:left-1/2 md:top-full md:z-[10000] md:block md:max-h-[70vh] md:min-w-72 md:w-auto md:max-w-[90vw] md:overflow-y-auto md:-translate-x-1/2 md:rounded-b-2xl md:opacity-0 md:transition md:group-focus-within:visible md:group-focus-within:opacity-100 md:group-hover:visible md:group-hover:opacity-100">
         {children.map((child) => (
           <div key={child.href} className="group/sub relative">
             <Link

@@ -38,8 +38,6 @@ export default async function MarketplacePage({
     min?: string
     max?: string
     today?: string
-    delivery?: string
-    featured?: string
   }>
 }) {
   const params = await searchParams
@@ -48,8 +46,6 @@ export default async function MarketplacePage({
   const town = String(params?.town || "").trim()
   const condition = String(params?.condition || "").trim()
   const todayOnly = params?.today === "1"
-  const deliveryOnly = params?.delivery === "1"
-  const featuredOnly = params?.featured === "1"
 
   const { data, error } = await supabase
     .from("classifieds")
@@ -70,8 +66,6 @@ export default async function MarketplacePage({
     if (town && String(item.town || item.location || "").toLowerCase() !== town.toLowerCase()) return false
     if (condition && String(item.condition || "").toLowerCase() !== condition.toLowerCase()) return false
     if (todayOnly && !isPostedToday(item.created_at)) return false
-    if (deliveryOnly && !item.delivery_available) return false
-    if (featuredOnly && !item.is_featured) return false
     if (!matchesPrice(item, params?.min, params?.max)) return false
 
     return true
@@ -92,8 +86,6 @@ export default async function MarketplacePage({
   if (params?.min) queryBase.set("min", params.min)
   if (params?.max) queryBase.set("max", params.max)
   if (todayOnly) queryBase.set("today", "1")
-  if (deliveryOnly) queryBase.set("delivery", "1")
-  if (featuredOnly) queryBase.set("featured", "1")
 
   return (
     <main className="mx-auto max-w-7xl space-y-6 px-4 py-6 md:px-6">
@@ -129,8 +121,6 @@ export default async function MarketplacePage({
 
         <div className="mt-4 flex flex-wrap gap-2">
           <FilterChip active={todayOnly} href={`/marketplace?${toggleParam(queryBase, "today", todayOnly ? "" : "1")}`}>Posted Today</FilterChip>
-          <FilterChip active={featuredOnly} href={`/marketplace?${toggleParam(queryBase, "featured", featuredOnly ? "" : "1")}`}>Featured</FilterChip>
-          <FilterChip active={deliveryOnly} href={`/marketplace?${toggleParam(queryBase, "delivery", deliveryOnly ? "" : "1")}`}>Delivery Available</FilterChip>
           <Link href="/marketplace" className="rounded-full border px-4 py-2 text-sm font-bold">Clear filters</Link>
         </div>
       </section>
