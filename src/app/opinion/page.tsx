@@ -1,9 +1,17 @@
-import Link from "next/link"
+import Link from "next/link";
 
 const sections = [
   { title: "Editorials", href: "/opinion/editorials", description: "Editorials and newsroom opinion." },
+  { title: "On the Record", href: "/opinion/on-the-record", description: "Regular opinion and commentary from On the Record." },
+  { title: "Columns", href: "/opinion/columns", description: "Columns and recurring opinion series." },
+  { title: "Guest Opinion", href: "/opinion/guest-opinion", description: "Community viewpoints and contributed opinion pieces." },
   { title: "Letters to the Editor", href: "/letters", description: "Published community letters." },
-]
+];
+
+export const metadata = {
+  title: "Opinion | Haida Gwaii News",
+  description: "Editorials, columns, guest opinions and letters from Haida Gwaii News.",
+};
 
 export default function OpinionPage() {
   return (
@@ -11,7 +19,7 @@ export default function OpinionPage() {
       <section className="rounded-3xl border bg-white p-8 shadow-sm">
         <p className="text-sm font-semibold uppercase tracking-[0.25em] text-slate-500">Opinion</p>
         <h1 className="mt-3 text-4xl font-bold tracking-tight">Opinion</h1>
-        <p className="mt-3 text-slate-600">Editorials and Letters to the Editor.</p>
+        <p className="mt-3 text-slate-600">Editorials, On the Record, columns, guest opinions and Letters to the Editor.</p>
       </section>
       <section className="grid gap-5 md:grid-cols-2">
         {sections.map((section) => (
@@ -23,5 +31,5 @@ export default function OpinionPage() {
         ))}
       </section>
     </main>
-  )
+  );
 }
