@@ -1,49 +1,23 @@
-"use client"
+"use client";
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { supabase } from "@/lib/supabase";
 
-import { useState } from "react"
-import { supabase } from "@/lib/supabase"
-
-export default function AdminNewsletterPage() {
-  const [message, setMessage] = useState("")
-
-  async function createDraft(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    const form = new FormData(event.currentTarget)
-
-    const { error } = await supabase.from("newsletter_drafts").insert({
-      title: String(form.get("title") || ""),
-      subject: String(form.get("subject") || ""),
-      intro: String(form.get("intro") || ""),
-      date_from: String(form.get("date_from") || "") || null,
-      date_to: String(form.get("date_to") || "") || null,
-      status: "draft",
-    })
-
-    setMessage(error ? error.message : "Newsletter draft created.")
-    if (!error) event.currentTarget.reset()
-  }
-
-  return (
-    <main className="mx-auto max-w-4xl space-y-8 px-6 py-10">
-      <section className="rounded-3xl border bg-white p-8 shadow-sm">
-        <p className="text-sm font-semibold tracking-[0.18em] text-hgnBlue">Admin</p>
-        <h1 className="mt-3 text-4xl font-black tracking-tight">Newsletter Builder</h1>
-        <p className="mt-3 text-slate-600">
-          Create newsletter drafts by date range. Article picker/send integration can be added next.
-        </p>
-      </section>
-
-      <form onSubmit={createDraft} className="space-y-4 rounded-3xl border bg-white p-6 shadow-sm">
-        <input name="title" required placeholder="Newsletter title" className="w-full rounded-2xl border px-4 py-3" />
-        <input name="subject" placeholder="Email subject" className="w-full rounded-2xl border px-4 py-3" />
-        <textarea name="intro" rows={5} placeholder="Intro note from the publisher" className="w-full rounded-2xl border px-4 py-3" />
-        <div className="grid gap-3 md:grid-cols-2">
-          <label className="text-sm font-bold">From date<input name="date_from" type="date" className="mt-2 w-full rounded-2xl border px-4 py-3" /></label>
-          <label className="text-sm font-bold">To date<input name="date_to" type="date" className="mt-2 w-full rounded-2xl border px-4 py-3" /></label>
-        </div>
-        <button className="rounded-full bg-slate-950 px-6 py-3 text-sm font-bold text-white">Create Draft</button>
-        {message ? <p className="rounded-2xl bg-slate-50 p-4 text-sm">{message}</p> : null}
-      </form>
-    </main>
-  )
-}
+type Data={settings:any;editions:any[];subscribers:number};
+async function token(){const {data}=await supabase.auth.getSession();return data.session?.access_token||"";}
+export default function NewsletterAutomationPage(){const [data,setData]=useState<Data|null>(null);const [message,setMessage]=useState("");const [busy,setBusy]=useState(false);const [selected,setSelected]=useState("");const [testEmail,setTestEmail]=useState("");
+async function call(path:string,body?:any,method="POST"){setBusy(true);setMessage("");try{const r=await fetch(path,{method,headers:{Authorization:`Bearer ${await token()}`,...(body?{"Content-Type":"application/json"}:{})},body:body?JSON.stringify(body):undefined});const j=await r.json();if(!r.ok)throw new Error(j.error||"Request failed");return j;}catch(e:any){setMessage(e.message);throw e;}finally{setBusy(false)}}
+async function load(){try{const j=await call("/api/newsletters/settings",undefined,"GET");setData(j);setSelected((x:string)=>x||j.editions?.[0]?.id||"");setTestEmail(j.settings?.test_email||"");}catch{}}
+useEffect(()=>{load()},[]);
+const preview=useMemo(()=>data?.editions.find(e=>e.id===selected),[data,selected]);
+async function save(e:React.FormEvent<HTMLFormElement>){e.preventDefault();const f=new FormData(e.currentTarget);const b=Object.fromEntries(f.entries()) as any;["require_approval","include_events","include_weather","include_ferry","include_marketplace","include_obituaries","include_opinion","include_guide"].forEach(k=>b[k]=f.get(k)==="on");await call("/api/newsletters/settings",b);setMessage("Newsletter settings saved.");await load()}
+async function build(){const j=await call("/api/newsletters/build",{});setMessage("Newsletter built for review.");await load();setSelected(j.edition.id)}
+async function test(){await call("/api/newsletters/test",{edition_id:selected,email:testEmail});setMessage(`Test newsletter sent to ${testEmail}.`)}
+async function send(){if(!confirm("Send this newsletter to all active biweekly subscribers now?"))return;const j=await call("/api/newsletters/send",{edition_id:selected});setMessage(`Send complete: ${j.sent} sent, ${j.failed} failed.`);await load()}
+if(!data)return <main className="mx-auto max-w-6xl px-4 py-10"><div className="hgn-card p-8">Loading Newsletter Desk… {message}</div></main>;
+const s=data.settings;return <main className="mx-auto max-w-7xl px-4 py-10"><header className="flex flex-col gap-5 border-b pb-6 lg:flex-row lg:items-end lg:justify-between"><div><p className="text-sm font-black uppercase tracking-widest text-hgnBlue">HGN Operations</p><h1 className="mt-2 text-5xl font-black text-hgnNavy">Newsletter Automation</h1><p className="mt-3 max-w-3xl text-slate-700">Build preference-aware newsletters automatically every two weeks, or keep the launch button firmly in newsroom hands.</p></div><img src="/brand/hgn-news-seal.png" alt="Haida Gwaii News" className="h-32 w-32 object-contain"/></header>
+{message&&<div className="mt-6 rounded-xl border bg-slate-50 p-4 font-bold">{message}</div>}
+<section className="mt-8 grid gap-4 md:grid-cols-3"><div className="hgn-card p-5"><div className="text-xs font-black uppercase text-slate-500">Active subscribers</div><div className="mt-2 text-4xl font-black">{data.subscribers}</div></div><div className="hgn-card p-5"><div className="text-xs font-black uppercase text-slate-500">Mode</div><div className="mt-2 text-3xl font-black capitalize">{s.mode}</div></div><div className="hgn-card p-5"><div className="text-xs font-black uppercase text-slate-500">Last sent</div><div className="mt-2 text-xl font-black">{s.last_sent_at?new Date(s.last_sent_at).toLocaleString():"Never"}</div></div></section>
+<section className="mt-8 grid gap-6 lg:grid-cols-[0.9fr_1.1fr]"><form onSubmit={save} className="hgn-card grid gap-4 p-6"><h2 className="text-2xl font-black text-hgnNavy">Settings</h2><label>Newsletter mode<select name="mode" defaultValue={s.mode}><option value="manual">Manual send only</option><option value="automatic">Automatic schedule</option></select></label><label>Automatic action<select name="automatic_action" defaultValue={s.automatic_action}><option value="build_for_approval">Build for approval</option><option value="build_and_send">Build and send</option></select></label><label className="flex items-center gap-2"><input className="w-auto" type="checkbox" name="require_approval" defaultChecked={s.require_approval}/>Require approval before sending</label><div className="grid gap-3 md:grid-cols-3"><label>Every days<input name="frequency_days" type="number" defaultValue={s.frequency_days}/></label><label>Lookback days<input name="lookback_days" type="number" defaultValue={s.lookback_days}/></label><label>Max stories<input name="max_stories" type="number" defaultValue={s.max_stories}/></label></div><div className="grid gap-3 md:grid-cols-2"><label>Send weekday<select name="send_weekday" defaultValue={s.send_weekday}>{["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"].map((x,i)=><option value={i} key={x}>{x}</option>)}</select></label><label>Pacific hour<select name="send_hour" defaultValue={s.send_hour}>{Array.from({length:24},(_,i)=><option value={i} key={i}>{String(i).padStart(2,"0")}:00</option>)}</select></label></div><fieldset className="grid gap-2 rounded-xl border p-4"><legend className="px-2 font-black">Default content</legend>{[["include_events","Events"],["include_weather","Weather"],["include_ferry","Ferry"],["include_marketplace","Marketplace"],["include_obituaries","Obituaries"],["include_opinion","Opinion"],["include_guide","Guide updates"]].map(([k,l])=><label className="flex items-center gap-2" key={k}><input className="w-auto" type="checkbox" name={k} defaultChecked={Boolean(s[k])}/>{l}</label>)}</fieldset><label>From name<input name="from_name" defaultValue={s.from_name}/></label><label>From email<input name="from_email" type="email" defaultValue={s.from_email}/></label><label>Reply-to<input name="reply_to" type="email" defaultValue={s.reply_to||""}/></label><label>Test email<input name="test_email" type="email" defaultValue={s.test_email||""}/></label><button disabled={busy} className="hgn-btn-primary">Save settings</button></form>
+<div className="grid content-start gap-6"><div className="hgn-card p-6"><h2 className="text-2xl font-black text-hgnNavy">Build and send</h2><p className="mt-2 text-slate-600">The builder selects recent published stories, sorts important stories first, then each subscriber receives only the sections matching their saved preferences.</p><div className="mt-5 flex flex-wrap gap-3"><button disabled={busy} onClick={build} className="hgn-btn-primary">Build newsletter now</button><Link href="/newsletter" className="hgn-btn-dark">Signup page</Link><Link href="/newsletter-archive" className="hgn-btn-dark">Archive</Link></div><label className="mt-5 block">Edition<select value={selected} onChange={e=>setSelected(e.target.value)}>{data.editions.map(e=><option key={e.id} value={e.id}>{e.title} · {e.status}</option>)}</select></label><label className="mt-3 block">Test recipient<input type="email" value={testEmail} onChange={e=>setTestEmail(e.target.value)}/></label><div className="mt-4 flex flex-wrap gap-3"><button disabled={busy||!selected||!testEmail} onClick={test} className="hgn-btn-dark">Send test</button><button disabled={busy||!selected} onClick={send} className="rounded-xl bg-red-700 px-5 py-3 font-black text-white">Approve and send</button></div></div>
+{preview&&<div className="hgn-card p-6"><div className="text-xs font-black uppercase text-hgnBlue">Preview · {preview.status}</div><h2 className="mt-2 text-3xl font-black text-hgnNavy">{preview.title}</h2><p className="mt-2 text-slate-700">{preview.intro}</p><div className="mt-5 divide-y">{(preview.content_json?.articles||[]).map((a:any)=><article key={a.id} className="py-4"><div className="text-xs font-black uppercase text-hgnBlue">{a.category}</div><div className="text-xl font-black">{a.title}</div><p className="mt-1 text-sm text-slate-600">{a.excerpt}</p></article>)}</div><p className="mt-4 text-sm font-bold">Planned recipients: {preview.recipient_count||0}</p></div>}</div></section></main>}

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 
-const interests = ["Daily headlines", "Breaking news", "Events", "Classifieds", "Weather/ferry alerts", "Supporter updates"];
+const interests = ["Daily headlines", "Breaking news", "Events", "Classifieds", "Weather/ferry alerts", "Opinion", "Obituaries", "Sports", "Haida Gwaii Guide", "Supporter updates"];
 
 export default function NewsletterPage() {
   const [ok, setOk] = useState(false);
@@ -22,6 +22,8 @@ export default function NewsletterPage() {
       source: "newsletter_page",
       interests: selected,
       status: "active",
+      frequency: "biweekly",
+      consent_source: "newsletter_page",
     };
 
     const { error } = await supabase.from("subscribers").upsert(payload, { onConflict: "email" });

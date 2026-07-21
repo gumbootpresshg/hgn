@@ -3,6 +3,10 @@
     {
       "path": "/api/run-rankings-bot",
       "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/newsletters/cron",
+      "schedule": "0 17 * * *"
     }
   ]
 }
