@@ -8,7 +8,7 @@ import { slugify } from "@/lib/article-routing"
 
 const utilityLinks = [
   { href: "/newsletter", label: "Newsletter" },
-  { href: "/digital-paper", label: "ePaper" },
+  { href: "/digital-paper", label: "Archives" },
   { href: "/advertise", label: "Advertise" },
   { href: "/contact", label: "Contact" },
 ]
@@ -161,8 +161,23 @@ export function Header() {
   }, [])
 
   useEffect(() => {
-    document.body.style.overflow = mobileOpen ? "hidden" : ""
-    return () => { document.body.style.overflow = "" }
+    if (!mobileOpen) return
+    const scrollY = window.scrollY
+    const previousBody = { overflow: document.body.style.overflow, position: document.body.style.position, top: document.body.style.top, width: document.body.style.width }
+    const previousHtmlOverflow = document.documentElement.style.overflow
+    document.documentElement.style.overflow = "hidden"
+    document.body.style.overflow = "hidden"
+    document.body.style.position = "fixed"
+    document.body.style.top = `-${scrollY}px`
+    document.body.style.width = "100%"
+    return () => {
+      document.documentElement.style.overflow = previousHtmlOverflow
+      document.body.style.overflow = previousBody.overflow
+      document.body.style.position = previousBody.position
+      document.body.style.top = previousBody.top
+      document.body.style.width = previousBody.width
+      window.scrollTo(0, scrollY)
+    }
   }, [mobileOpen])
 
   useEffect(() => {
@@ -297,7 +312,15 @@ export function Header() {
       </nav>
 
       {mobileOpen ? (
-        <div id="mobile-navigation" className="fixed inset-0 z-[9998] overflow-y-auto bg-[#fffefa] px-4 pb-12 pt-20 md:hidden">
+        <div id="mobile-navigation" className="fixed inset-0 z-[10050] flex h-[100dvh] flex-col overflow-hidden bg-[#fffefa] md:hidden">
+          <div className="flex shrink-0 items-center justify-between border-b border-stone-900 px-4 py-2">
+            <Link href="/" onClick={closeAllMenus} className="border-r border-stone-300 pr-4 font-serif text-xl font-bold">HGN</Link>
+            <div className="flex items-center gap-1">
+              <Link href="/search" onClick={closeAllMenus} aria-label="Search" className="grid h-10 w-10 place-items-center"><Search size={20} strokeWidth={1.7} /></Link>
+              <button type="button" className="grid h-10 w-10 place-items-center" aria-label="Close menu" onClick={closeAllMenus}><X size={24} /></button>
+            </div>
+          </div>
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-[max(3rem,env(safe-area-inset-bottom))] pt-4 [-webkit-overflow-scrolling:touch]">
           <nav aria-label="Mobile primary" className="mx-auto max-w-xl border-t border-stone-900">
             {navItems.map((item) => item.children ? (
               <details key={item.label} className="border-b border-stone-300">
@@ -319,6 +342,7 @@ export function Header() {
               <Link href="/account" onClick={closeAllMenus} className="border border-stone-300 px-3 py-3 text-center">My HGN</Link>
             </div>
           </nav>
+          </div>
         </div>
       ) : null}
     </>
