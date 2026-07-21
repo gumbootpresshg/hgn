@@ -26,7 +26,7 @@ export async function buildNewsletterContent(options: BuildOptions) {
   const lookbackDays = Math.max(1, Number(options.lookbackDays || settings.lookback_days || 14));
   const from = new Date(now.getTime() - lookbackDays * 86400000);
   const maxStories = Math.max(1, Number(settings.max_stories || 12));
-  const fields = "id,title,slug,excerpt,summary,category,subcategory,image_url,published_at,created_at,updated_at,featured,front_page_main,status";
+  const fields = "id,title,slug,excerpt,dek,category,subcategory,image_url,published_at,created_at,updated_at,featured,front_page_main,status";
 
   let candidates: any[] = [];
   let source = "recent_published";
@@ -89,7 +89,7 @@ export async function buildNewsletterContent(options: BuildOptions) {
     .map((article) => ({
       ...article,
       topic: articleTopic(article),
-      excerpt: article.excerpt || article.summary || "Read the full story on Haida Gwaii News.",
+      excerpt: article.excerpt || article.dek || "Read the full story on Haida Gwaii News.",
     }));
 
   // A newsletter with no stories is not useful. Fall back to the newest published news items.
@@ -97,7 +97,7 @@ export async function buildNewsletterContent(options: BuildOptions) {
     articles = candidates.slice(0, maxStories).map((article) => ({
       ...article,
       topic: articleTopic(article),
-      excerpt: article.excerpt || article.summary || "Read the full story on Haida Gwaii News.",
+      excerpt: article.excerpt || article.dek || "Read the full story on Haida Gwaii News.",
     }));
     source += "_all_topics_fallback";
   }
