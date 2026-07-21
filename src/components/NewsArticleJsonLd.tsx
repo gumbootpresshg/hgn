@@ -17,10 +17,12 @@ type Article = {
   category?: string | null;
   subcategory?: string | null;
   column_name?: string | null;
+  seo_keywords?: string[] | null;
+  google_news_headline?: string | null;
 };
 
 export default function NewsArticleJsonLd({ article }: { article: Article }) {
-  const headline = article.seo_title || article.title || SITE.name;
+  const headline = article.google_news_headline || article.seo_title || article.title || SITE.name;
   const description =
     article.meta_description ||
     stripHtml(article.excerpt || "").slice(0, 180) ||
@@ -53,7 +55,7 @@ export default function NewsArticleJsonLd({ article }: { article: Article }) {
       "@id": url,
     },
     articleSection: section,
-    keywords: [article.category, article.subcategory, article.column_name, "Haida Gwaii", "local news"].filter(Boolean),
+    keywords: Array.from(new Set([...(article.seo_keywords || []), article.category, article.subcategory, article.column_name, "Haida Gwaii", "local news"].filter(Boolean))),
     isAccessibleForFree: true,
     inLanguage: "en-CA",
   };

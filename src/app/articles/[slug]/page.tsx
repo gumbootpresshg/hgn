@@ -24,6 +24,11 @@ type Article = {
   body?: string | null;
   content?: string | null;
   meta_description?: string | null;
+  social_title?: string | null;
+  social_description?: string | null;
+  canonical_url?: string | null;
+  seo_keywords?: string[] | null;
+  google_news_headline?: string | null;
   author?: string | null;
   author_name?: string | null;
   category?: string | null;
@@ -65,7 +70,7 @@ export async function generateMetadata({ params }: PageProps) {
   const { slug } = await params;
   const { data: article } = await supabase
     .from("articles")
-    .select("title,seo_title,excerpt,body,meta_description,slug,image_url,cover_image_url,og_image_url,published_at,updated_at,author_name,author,category,subcategory")
+    .select("title,seo_title,excerpt,body,meta_description,social_title,social_description,canonical_url,slug,image_url,cover_image_url,og_image_url,published_at,updated_at,author_name,author,category,subcategory,seo_keywords,google_news_headline")
     .eq("slug", slug)
     .maybeSingle();
 
@@ -75,15 +80,17 @@ export async function generateMetadata({ params }: PageProps) {
   const title = typed.seo_title || typed.title || SITE.name;
   const description = articleDescription(typed);
   const image = typed.og_image_url || typed.cover_image_url || typed.image_url || SITE.defaultImage;
-  const url = absoluteUrl(`/articles/${typed.slug || slug}`);
+  const url = typed.canonical_url || absoluteUrl(`/articles/${typed.slug || slug}`);
+  const socialTitle = typed.social_title || title;
+  const socialDescription = typed.social_description || description;
 
   return {
     title,
     description,
     alternates: { canonical: url },
     openGraph: {
-      title,
-      description,
+      title: socialTitle,
+      description: socialDescription,
       url,
       type: "article",
       publishedTime: typed.published_at || undefined,
@@ -94,8 +101,8 @@ export async function generateMetadata({ params }: PageProps) {
     },
     twitter: {
       card: "summary_large_image",
-      title,
-      description,
+      title: socialTitle,
+      description: socialDescription,
       images: [absoluteUrl(image)],
     },
   };

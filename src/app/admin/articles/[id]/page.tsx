@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import RichTextEditor from "@/components/admin/RichTextEditor";
+import { generateSeoFields, seoReadiness } from "@/lib/seo-generator";
 
 type Article = Record<string, any>;
 
@@ -66,6 +67,15 @@ const blankArticle: Article = {
   front_page_main: false,
   sort_order: 0,
   published_at: null,
+  seo_title: "",
+  meta_description: "",
+  social_title: "",
+  social_description: "",
+  og_image_url: "",
+  seo_keywords: [],
+  google_news_headline: "",
+  google_news_include: true,
+  seo_generated_at: null,
 };
 
 export default function ArticleEditorPage() {
@@ -84,6 +94,7 @@ export default function ArticleEditorPage() {
   const previewUrl = useMemo(() => article.slug ? `/articles/${article.slug}` : "#", [article.slug]);
   const subcategoryOptions = useMemo(() => subcategoriesByCategory[article.category || "News"] || [], [article.category]);
   const showColumnSelector = article.category === "Opinion" && article.subcategory === "Columns";
+  const readiness = useMemo(() => seoReadiness(article), [article]);
 
   useEffect(() => {
     if (isNew) return;
@@ -139,6 +150,22 @@ export default function ArticleEditorPage() {
     }));
   }
 
+
+  function generateAllSeo() {
+    if (!String(article.title || "").trim()) {
+      setMessage("Add the headline before generating SEO.");
+      return;
+    }
+    const generated = generateSeoFields(article);
+    setArticle((prev) => ({
+      ...prev,
+      ...generated,
+      slug: prev.slug?.trim() || generated.slug,
+      og_image_url: prev.image_url || prev.og_image_url || generated.og_image_url,
+      image_alt: prev.image_alt?.trim() || generated.image_alt,
+    }));
+    setMessage("SEO, Google News and social fields generated. Review them, then save or publish.");
+  }
 
   async function uploadImage(file: File) {
     setUploading(true);
@@ -213,6 +240,16 @@ export default function ArticleEditorPage() {
       image_alt: article.image_alt || null,
       image_caption: article.image_caption || null,
       image_credit: article.image_credit || null,
+      seo_title: article.seo_title || null,
+      meta_description: article.meta_description || null,
+      social_title: article.social_title || null,
+      social_description: article.social_description || null,
+      og_image_url: article.og_image_url || article.image_url || null,
+      seo_keywords: Array.isArray(article.seo_keywords) ? article.seo_keywords : String(article.seo_keywords || "").split(",").map((item) => item.trim()).filter(Boolean),
+      google_news_headline: article.google_news_headline || article.seo_title || title,
+      google_news_include: article.google_news_include !== false,
+      seo_generated_at: article.seo_generated_at || null,
+      updated_at: new Date().toISOString(),
       front_page_photo: !!article.front_page_photo,
       status,
       featured: !!article.featured,
@@ -357,6 +394,48 @@ export default function ArticleEditorPage() {
             <label>
               Published date
               <input type="datetime-local" value={article.published_at ? new Date(article.published_at).toISOString().slice(0, 16) : ""} onChange={(e) => update("published_at", e.target.value ? new Date(e.target.value).toISOString() : null)} />
+            </label>
+          </div>
+
+          <div className="hgn-card grid gap-4 p-5">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-2xl font-black text-hgnNavy">One-click SEO</h2>
+                <p className="mt-1 text-sm text-slate-600">Creates Google News, search and social fields from the finished story. It never rewrites the article.</p>
+              </div>
+              <span className={`rounded-full px-3 py-1 text-sm font-black ${readiness.score >= 90 ? "bg-emerald-100 text-emerald-800" : readiness.score >= 70 ? "bg-amber-100 text-amber-800" : "bg-rose-100 text-rose-800"}`}>{readiness.score}%</span>
+            </div>
+            <button type="button" onClick={generateAllSeo} className="hgn-btn-primary">Generate all SEO</button>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              {readiness.checks.map((check) => <div key={check.key} className={`rounded-xl border p-2 font-bold ${check.ok ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-amber-200 bg-amber-50 text-amber-900"}`}>{check.ok ? "✓" : "•"} {check.label}</div>)}
+            </div>
+            <label>
+              SEO title
+              <input value={article.seo_title || ""} onChange={(e) => update("seo_title", e.target.value)} maxLength={90} />
+            </label>
+            <label>
+              Search description
+              <textarea value={article.meta_description || ""} onChange={(e) => update("meta_description", e.target.value)} rows={3} maxLength={220} />
+            </label>
+            <label>
+              Google News headline
+              <input value={article.google_news_headline || ""} onChange={(e) => update("google_news_headline", e.target.value)} maxLength={110} />
+            </label>
+            <label>
+              Social title
+              <input value={article.social_title || ""} onChange={(e) => update("social_title", e.target.value)} maxLength={110} />
+            </label>
+            <label>
+              Social description
+              <textarea value={article.social_description || ""} onChange={(e) => update("social_description", e.target.value)} rows={3} maxLength={240} />
+            </label>
+            <label>
+              Suggested keywords
+              <input value={Array.isArray(article.seo_keywords) ? article.seo_keywords.join(", ") : article.seo_keywords || ""} onChange={(e) => update("seo_keywords", e.target.value)} />
+            </label>
+            <label className="flex items-center gap-2">
+              <input className="w-auto" type="checkbox" checked={article.google_news_include !== false} onChange={(e) => update("google_news_include", e.target.checked)} />
+              Include in Google News sitemap
             </label>
           </div>
 
