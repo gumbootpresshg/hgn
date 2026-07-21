@@ -25,7 +25,7 @@ export default function NewsArticleJsonLd({ article }: { article: Article }) {
     article.meta_description ||
     stripHtml(article.excerpt || "").slice(0, 180) ||
     SITE.description;
-  const image = article.og_image_url || article.cover_image_url || article.image_url || SITE.defaultImage;
+  const image = article.og_image_url || article.cover_image_url || article.image_url || null;
   const url = article.slug ? absoluteUrl(`/articles/${article.slug}`) : SITE.url;
   const authorName = article.author_name || article.author || SITE.name;
   const section = article.subcategory || article.category || "News";
@@ -35,7 +35,7 @@ export default function NewsArticleJsonLd({ article }: { article: Article }) {
     "@type": "NewsArticle",
     headline,
     description,
-    image: [absoluteUrl(image)],
+    ...(image ? { image: [absoluteUrl(image)] } : {}),
     datePublished: article.published_at || undefined,
     dateModified: article.updated_at || article.published_at || undefined,
     author: [{ "@type": "Person", name: authorName }],

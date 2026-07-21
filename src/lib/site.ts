@@ -2,7 +2,7 @@ export const SITE = {
   name: "Haida Gwaii News",
   url: process.env.NEXT_PUBLIC_SITE_URL || "https://haidagwaiinews.com",
   description: "Local news, community information, events and stories from Haida Gwaii.",
-  defaultImage: "/news-placeholder.jpg",
+  defaultImage: "/news-placeholder.svg",
 };
 
 export function absoluteUrl(path = "") {

@@ -1,0 +1,6 @@
+{
+  "dependencies_to_add": {
+    "sharp": "latest"
+  },
+  "note": "Run npm install sharp after applying this upgrade if package.json does not already include it."
+}

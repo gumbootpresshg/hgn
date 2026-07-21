@@ -1,25 +1,90 @@
-@tailwind base;@tailwind components;@tailwind utilities;
-body{background:#f6f8fa;color:#101820}.prose p{margin-bottom:1rem;line-height:1.75}.hgn-card{@apply rounded-2xl bg-white shadow-sm border border-slate-200}.hgn-btn{@apply inline-flex items-center justify-center rounded-xl px-4 py-2 font-semibold transition}.hgn-btn-primary{@apply hgn-btn bg-hgnBlue text-white hover:opacity-90}.hgn-btn-dark{@apply hgn-btn bg-hgnNavy text-white hover:opacity-90}input,textarea,select{@apply w-full rounded-xl border border-slate-300 bg-white p-3 outline-none focus:ring-2 focus:ring-hgnBlue}label{@apply text-sm font-semibold text-slate-700}
-/* v22 WordPress article cleanup */
-.article-body {
-  color: rgb(30 41 59);
-  font-size: 1.125rem;
-  line-height: 1.85;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --paper: #fffefa;
+  --paper-muted: #f4f0e8;
+  --ink: #171717;
+  --muted: #665f57;
+  --rule: #b7b0a6;
+  --accent: #a31d24;
+  --navy: #173f5f;
 }
+
+html, body { max-width: 100%; overflow-x: hidden; }
+html { background: var(--paper-muted); }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: Arial, Helvetica, sans-serif;
+  text-rendering: optimizeLegibility;
+}
+
+::selection { background: #ead3d4; color: var(--ink); }
+a { text-underline-offset: 3px; }
+summary::-webkit-details-marker { display: none; }
+
+.masthead-wordmark {
+  display: inline-block;
+  color: #111;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(2.35rem, 6.2vw, 5.55rem);
+  font-weight: 700;
+  letter-spacing: -0.045em;
+  line-height: .94;
+}
+
+.newspaper-shell { width: min(1480px, calc(100% - 2rem)); margin-inline: auto; }
+.newspaper-kicker { color: var(--navy); font-size: .68rem; font-weight: 800; letter-spacing: .16em; line-height: 1.2; text-transform: uppercase; }
+.newspaper-nav-link { display: inline-flex; min-height: 3rem; align-items: center; gap: .25rem; padding: 0 .72rem; color: #171717; font-family: Georgia, "Times New Roman", serif; font-size: .97rem; font-weight: 700; }
+.newspaper-nav-link:hover { color: var(--accent); }
+.newspaper-section-heading { display: flex; align-items: end; justify-content: space-between; gap: 1rem; border-top: 3px double #222; border-bottom: 1px solid var(--rule); padding: .7rem 0 .55rem; }
+.newspaper-section-heading h2 { font-family: Georgia, "Times New Roman", serif; font-size: 1.65rem; font-weight: 700; letter-spacing: -.025em; }
+.newspaper-section-heading a { flex: none; font-size: .7rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.newspaper-button, .newspaper-button-outline { display: inline-flex; min-height: 2.6rem; align-items: center; justify-content: center; padding: .65rem 1rem; font-size: .72rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; transition: .15s ease; }
+.newspaper-button { background: #171717; color: #fff; }
+.newspaper-button:hover { background: var(--accent); }
+.newspaper-button-outline { border: 1px solid #171717; color: #171717; }
+.newspaper-button-outline:hover { background: #171717; color: #fff; }
+
+.prose p { margin-bottom: 1rem; line-height: 1.75; }
+.hgn-card { @apply border border-stone-300 bg-[#fffefa]; border-radius: 0; box-shadow: none; }
+.hgn-btn { @apply inline-flex items-center justify-center px-4 py-2 font-semibold transition; border-radius: 0; }
+.hgn-btn-primary { @apply hgn-btn bg-hgnRed text-white hover:opacity-90; }
+.hgn-btn-dark { @apply hgn-btn bg-stone-950 text-white hover:opacity-90; }
+input, textarea, select { @apply w-full border border-stone-400 bg-white p-3 outline-none focus:ring-2 focus:ring-hgnRed; border-radius: 0; }
+label { @apply text-sm font-semibold text-stone-700; }
+
+.article-body { color: #292524; font-family: Georgia, "Times New Roman", serif; font-size: 1.125rem; line-height: 1.85; }
 .article-body p { margin: 0 0 1.15rem; }
 .article-body p:empty { display: none; }
-.article-body h2 { margin: 2rem 0 0.75rem; font-size: 1.75rem; line-height: 1.2; font-weight: 900; color: #102a43; }
-.article-body h3 { margin: 1.5rem 0 0.5rem; font-size: 1.35rem; line-height: 1.25; font-weight: 900; color: #102a43; }
-.article-body a { color: #0b65a3; font-weight: 700; text-decoration: underline; }
-.article-body img { max-width: 100%; height: auto; border-radius: 1rem; margin: 1.5rem 0; }
-.article-body blockquote { border-left: 4px solid #0b65a3; padding-left: 1rem; color: rgb(71 85 105); font-weight: 600; }
+.article-body h2 { margin: 2rem 0 .75rem; color: #171717; font-family: Georgia, "Times New Roman", serif; font-size: 1.8rem; font-weight: 700; line-height: 1.15; }
+.article-body h3 { margin: 1.5rem 0 .5rem; color: #171717; font-family: Georgia, "Times New Roman", serif; font-size: 1.4rem; font-weight: 700; line-height: 1.2; }
+.article-body a { color: var(--navy); font-weight: 700; text-decoration: underline; }
+.article-body img { max-width: 100%; height: auto; margin: 1.5rem 0; border-radius: 0; }
+.article-body blockquote { margin: 1.5rem 0; border-left: 3px solid var(--accent); padding-left: 1.25rem; color: #57534e; font-family: Georgia, "Times New Roman", serif; font-size: 1.35rem; font-weight: 700; line-height: 1.5; }
 
-/* v37 menu polish: no horizontal scrollbar navigation */
-html, body {
-  max-width: 100%;
-  overflow-x: hidden;
+/* Bring legacy card-heavy pages into the newspaper system without changing their functionality. */
+.rounded-3xl, .rounded-2xl, .rounded-xl { border-radius: .15rem !important; }
+.shadow-xl, .shadow-lg, .shadow-md, .shadow-sm { box-shadow: none !important; }
+.bg-slate-50 { background-color: var(--paper-muted) !important; }
+.text-hgnNavy { color: var(--ink) !important; }
+.text-hgnBlue { color: var(--navy) !important; }
+.hover\:text-hgnBlue:hover { color: var(--accent) !important; }
+.hover\:border-hgnBlue:hover { border-color: var(--accent) !important; }
+
+:focus-visible { outline: 3px solid #a31d24; outline-offset: 3px; }
+.skip-link { position: fixed; left: 1rem; top: -5rem; z-index: 100000; background: #171717; padding: .75rem 1rem; font-weight: 800; color: #fff; transition: top .15s; }
+.skip-link:focus { top: 1rem; }
+button, a, input, select, textarea { touch-action: manipulation; }
+
+@media (max-width: 767px) {
+  .newspaper-shell { width: min(100% - 1.25rem, 1480px); }
+  .masthead-wordmark { letter-spacing: -.045em; }
 }
 
-summary::-webkit-details-marker {
-  display: none;
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }

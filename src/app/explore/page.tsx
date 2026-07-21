@@ -1,114 +1,31 @@
 import Link from "next/link"
-import { communities, directoryEntries, emergencyContacts, exploreCategories, sourceLinks } from "@/lib/explore-data"
+import { communities, emergencyContacts } from "@/lib/explore-data"
+import { guidePlaces, guideQuickLinks } from "@/lib/guide-places"
+
+export const metadata = { title: "Haida Gwaii Guide", description: "A practical island guide for residents and visitors, built into Haida Gwaii News." }
 
 export default function ExplorePage() {
-  const featured = directoryEntries.slice(0, 8)
-
-  return (
-    <main className="mx-auto max-w-7xl space-y-10 px-6 py-8">
-      <section className="rounded-3xl border bg-white p-8 shadow-sm">
-        <p className="text-sm font-semibold tracking-[0.18em] text-hgnBlue">Explore Haida Gwaii</p>
-        <h1 className="mt-2 text-5xl font-black tracking-tight">Explore Haida Gwaii</h1>
-        <p className="mt-4 max-w-3xl text-slate-600">
-          Communities, travel tools, official links, emergency resources, cultural anchors and local services across Haida Gwaii.
-        </p>
-
-        <div className="mt-6 flex flex-wrap gap-3">
-          <Link href="/explore/directory" className="rounded-full bg-slate-950 px-5 py-3 text-sm font-bold text-white">Directory</Link>
-          <Link href="/ferry-info" className="rounded-full border px-5 py-3 text-sm font-bold">Ferry Info</Link>
-          <Link href="/weather" className="rounded-full border px-5 py-3 text-sm font-bold">Weather Desk</Link>
-          <Link href="/weather/tides" className="rounded-full border px-5 py-3 text-sm font-bold">Tides</Link>
+  const featured = guidePlaces.filter((place) => place.featured).slice(0, 6)
+  return <main className="mx-auto max-w-[1480px] space-y-10 px-4 py-8 md:px-7">
+    <section className="overflow-hidden rounded-[2rem] border border-stone-300 bg-[#fffefa] shadow-sm">
+      <div className="grid lg:grid-cols-[1.05fr_0.95fr]">
+        <div className="p-7 md:p-12">
+          <p className="text-xs font-black uppercase tracking-[0.24em] text-hgnBlue">Inside Haida Gwaii News</p>
+          <h1 className="mt-3 font-serif text-5xl font-bold leading-none tracking-tight md:text-7xl">Haida Gwaii Guide</h1>
+          <p className="mt-5 max-w-2xl text-lg leading-8 text-stone-600">One island companion for daily life and travel: ferries, beaches, fuel, rest stops, cameras, communities, weather and essential services.</p>
+          <div className="mt-7 flex flex-wrap gap-3"><Link href="/explore/map" className="rounded-full bg-stone-950 px-6 py-3 text-sm font-bold text-white">Open Island Map</Link><Link href="/explore/travel" className="rounded-full border border-stone-400 px-6 py-3 text-sm font-bold">Ferries & Travel</Link><Link href="/explore/cams" className="rounded-full border border-stone-400 px-6 py-3 text-sm font-bold">Island Cams</Link></div>
         </div>
-      </section>
-
-      <section>
-        <div className="mb-5 flex items-center justify-between">
-          <h2 className="text-3xl font-black">Communities</h2>
-          <Link href="/explore/directory" className="text-sm font-bold text-hgnBlue">Full Directory →</Link>
+        <div className="grid grid-cols-2 border-t border-stone-300 bg-stone-950 p-5 text-white lg:border-l lg:border-t-0">
+          {guideQuickLinks.slice(0, 6).map((item) => <Link key={item.href} href={item.href} className="border border-white/10 p-5 transition hover:bg-white/10"><p className="font-serif text-xl font-bold">{item.title}</p><p className="mt-2 text-xs leading-5 text-stone-300">{item.description}</p></Link>)}
         </div>
+      </div>
+    </section>
 
-        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-          {communities.map((community) => (
-            <Link key={community.slug} href={`/explore/${community.slug}`} className="rounded-3xl border bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-hgnBlue">
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-hgnBlue">Community</p>
-              <h3 className="mt-2 text-2xl font-black">{community.name}</h3>
-              <p className="mt-3 text-sm leading-6 text-slate-600">{community.description}</p>
-              <div className="mt-4 flex flex-wrap gap-2">
-                {community.highlights.map((item) => (
-                  <span key={item} className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">{item}</span>
-                ))}
-              </div>
-            </Link>
-          ))}
-        </div>
-      </section>
+    <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">{featured.map((place) => <article key={place.id} className="rounded-3xl border bg-white p-6 shadow-sm"><p className="text-xs font-black uppercase tracking-[0.17em] text-hgnBlue">{place.category} · {place.community}</p><h2 className="mt-2 font-serif text-3xl font-bold">{place.name}</h2><p className="mt-3 text-sm leading-6 text-slate-600">{place.description}</p>{place.caution ? <p className="mt-4 rounded-xl bg-amber-50 p-3 text-xs font-semibold leading-5 text-amber-900">{place.caution}</p> : null}<Link href={`/explore/map?category=${encodeURIComponent(place.category)}`} className="mt-5 inline-flex text-sm font-bold text-hgnBlue">View on guide map →</Link></article>)}</section>
 
-      <section className="grid gap-6 lg:grid-cols-[0.7fr_1.3fr]">
-        <div className="rounded-3xl border bg-white p-6 shadow-sm">
-          <h2 className="text-2xl font-black">Explore Categories</h2>
-          <div className="mt-5 space-y-3">
-            {exploreCategories.map((category) => (
-              <Link key={category.slug} href={`/explore/directory?category=${encodeURIComponent(category.title)}`} className="block rounded-2xl bg-slate-50 px-4 py-3 hover:bg-slate-100">
-                <p className="font-black">{category.title}</p>
-                <p className="mt-1 text-xs leading-5 text-slate-500">{category.description}</p>
-              </Link>
-            ))}
-          </div>
-        </div>
-
-        <div className="space-y-5">
-          <div className="flex items-center justify-between">
-            <h2 className="text-3xl font-black">Featured Resources</h2>
-            <Link href="/explore/directory" className="text-sm font-bold text-hgnBlue">View all →</Link>
-          </div>
-
-          <div className="grid gap-5 md:grid-cols-2">
-            {featured.map((entry) => (
-              <article key={entry.name} className="rounded-3xl border bg-white p-6 shadow-sm">
-                <div className="flex flex-wrap gap-2">
-                  <span className="rounded-full bg-hgnBlue/10 px-3 py-1 text-xs font-black text-hgnBlue">{entry.category}</span>
-                  <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-600">{entry.community}</span>
-                </div>
-                <h3 className="mt-4 text-2xl font-black">{entry.name}</h3>
-                <p className="mt-3 text-sm leading-6 text-slate-600">{entry.description}</p>
-                {entry.website ? <a href={entry.website} target="_blank" rel="noreferrer" className="mt-4 inline-flex text-sm font-bold text-hgnBlue">Open official link →</a> : null}
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="rounded-3xl border bg-slate-950 p-8 text-white shadow-sm">
-        <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
-          <div>
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-hgnBlue">Emergency & Utilities</p>
-            <h2 className="mt-2 text-3xl font-black">Important Contacts</h2>
-            <p className="mt-3 text-sm leading-7 text-slate-300">
-              Quick access to emergency and travel-related resources across Haida Gwaii.
-            </p>
-          </div>
-          <div className="grid gap-3">
-            {emergencyContacts.map((item) => (
-              <a key={item.label} href={item.href} target={item.href.startsWith("http") ? "_blank" : undefined} rel={item.href.startsWith("http") ? "noreferrer" : undefined} className="rounded-2xl border border-white/10 bg-white/5 px-5 py-4 hover:border-hgnBlue">
-                <p className="text-xs font-black uppercase tracking-[0.18em] text-white/50">{item.label}</p>
-                <p className="mt-2 text-lg font-black">{item.value}</p>
-              </a>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="rounded-3xl border bg-white p-6 shadow-sm">
-        <h2 className="text-2xl font-black">Official Source Links</h2>
-        <div className="mt-5 grid gap-4 md:grid-cols-2">
-          {sourceLinks.map((source) => (
-            <a key={source.href} href={source.href} target="_blank" rel="noreferrer" className="rounded-2xl border p-4 hover:border-hgnBlue">
-              <p className="font-black">{source.title}</p>
-              <p className="mt-2 text-sm leading-6 text-slate-600">{source.description}</p>
-            </a>
-          ))}
-        </div>
-      </section>
-    </main>
-  )
+    <section className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
+      <div><div className="mb-5 flex items-end justify-between"><div><p className="text-xs font-black uppercase tracking-[0.2em] text-hgnBlue">Across the islands</p><h2 className="mt-1 font-serif text-4xl font-bold">Communities</h2></div><Link href="/explore/directory" className="text-sm font-bold text-hgnBlue">Full directory →</Link></div><div className="grid gap-3 sm:grid-cols-2">{communities.map((community) => <Link key={community.slug} href={`/explore/${community.slug}`} className="rounded-2xl border bg-white p-5 hover:border-hgnBlue"><h3 className="font-serif text-2xl font-bold">{community.name}</h3><p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-600">{community.description}</p></Link>)}</div></div>
+      <aside className="rounded-3xl bg-stone-950 p-7 text-white"><p className="text-xs font-black uppercase tracking-[0.2em] text-sky-300">Essential now</p><h2 className="mt-2 font-serif text-4xl font-bold">Quick contacts</h2><div className="mt-5 space-y-3">{emergencyContacts.map((item) => <a key={item.label} href={item.href} target={item.href.startsWith("http") ? "_blank" : undefined} rel={item.href.startsWith("http") ? "noreferrer" : undefined} className="block rounded-2xl border border-white/10 p-4 hover:border-sky-300"><p className="text-xs uppercase tracking-wider text-white/55">{item.label}</p><p className="mt-1 font-bold">{item.value}</p></a>)}</div><p className="mt-5 text-xs leading-5 text-stone-400">Live information remains linked to its official source and should be checked before travel or emergency decisions.</p></aside>
+    </section>
+  </main>
 }

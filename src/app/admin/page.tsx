@@ -4,6 +4,8 @@ const sections = [
   {
     title: "Publishing",
     links: [
+      { href: "/admin/front-page", label: "Front Page Manager" },
+      { href: "/admin/ai-desk", label: "AI Desk" },
       { href: "/admin/articles", label: "Articles" },
       { href: "/admin/pages", label: "Pages" },
       { href: "/admin/events", label: "Events" },
@@ -16,6 +18,10 @@ const sections = [
   {
     title: "Audience & Revenue",
     links: [
+      { href: "/admin/operations", label: "Advertising Operations" },
+      { href: "/admin/billing", label: "Billing Queue" },
+      { href: "/admin/customers", label: "Customers" },
+      { href: "/admin/sales", label: "Sales Desk" },
       { href: "/admin/marketplace", label: "Marketplace" },
       { href: "/admin/members", label: "Members" },
       { href: "/admin/subscriptions", label: "Subscriptions" },

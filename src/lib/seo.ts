@@ -9,6 +9,6 @@ export function cleanExcerpt(input?: string | null, max = 160) {
 export function articleSeo(article: any) {
   const title = article?.seo_title || article?.title || 'Haida Gwaii News';
   const description = article?.seo_description || article?.excerpt || cleanExcerpt(article?.body);
-  const image = article?.og_image_url || article?.image_url || '/news-placeholder.jpg';
+  const image = article?.og_image_url || article?.image_url || '/news-placeholder.svg';
   return { title, description, image };
 }

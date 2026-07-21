@@ -13,6 +13,6 @@ export function imageCredit(credit?: string | null) {
 }
 
 export function normalizeImageUrl(url?: string | null) {
-  if (!url || !url.trim()) return "/news-placeholder.jpg";
+  if (!url || !url.trim()) return "/news-placeholder.svg";
   return url.trim();
 }

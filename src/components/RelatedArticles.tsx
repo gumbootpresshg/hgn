@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { supabase } from "@/lib/supabase"
 import { articleExcerpt, articleAuthor, isColumn, slugify, officialColumnNames } from "@/lib/article-routing"
+import { smartExcerpt } from "@/lib/text"
 
 function articleColumnSlug(article: any) {
   const fields = [article.column_name, article.column, article.category, article.section, article.slug, article.title].map((item) => String(item || ""))
@@ -45,7 +46,8 @@ function RelatedBlock({ title, articles }: { title: string; articles: any[] }) {
           <Link key={item.id} href={`/articles/${item.slug}`} className="rounded-2xl border bg-white p-5 shadow-sm hover:border-hgnBlue">
             <p className="text-xs font-black uppercase tracking-[0.18em] text-hgnBlue">{item.category || item.section || "Article"}</p>
             <h3 className="mt-2 text-xl font-black">{item.title}</h3>
-            <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">{articleExcerpt(item)}</p>
+            <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">{smartExcerpt(articleExcerpt(item), 150)}</p>
+            <span className="mt-3 inline-block text-xs font-bold uppercase tracking-[0.12em] text-hgnBlue">Read more →</span>
             <p className="mt-3 text-xs text-slate-500">{articleAuthor(item)}</p>
           </Link>
         ))}

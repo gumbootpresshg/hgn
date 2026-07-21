@@ -1,51 +1,48 @@
-import Link from "next/link";
+import Link from "next/link"
+
+const footerGroups = [
+  { title: "News", links: [["Latest Stories", "/articles"], ["Opinion", "/opinion"], ["Letters", "/letters"], ["Obituaries", "/obituaries"]] },
+  { title: "Community", links: [["Events", "/events"], ["Marketplace", "/marketplace"], ["Notices", "/notices"], ["Live Map", "/live-map"]] },
+  { title: "About", links: [["About HGN", "/about"], ["Contact", "/contact"], ["Advertise", "/advertise"], ["Community Standards", "/community-standards"]] },
+]
 
 export function Footer() {
   return (
-    <footer className="mt-16 bg-hgnNavy text-white">
-      <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 md:grid-cols-4">
-        <div>
-          <b className="text-lg">Haida Gwaii News</b>
-          <p className="mt-2 text-sm leading-6 text-slate-200">Community news, print paper, digital stories and island information.</p>
-        </div>
-        <div>
-          <b>Reader links</b>
-          <div className="mt-3 grid gap-2 text-sm text-slate-200">
-            <Link href="/articles">News</Link>
-            <Link href="/events">Events calendar</Link>
-            <Link href="/letters">Letters to the Editor</Link>
-            <Link href="/obituaries">Obituaries</Link>
+    <footer className="mt-16 border-t-4 border-double border-stone-900 bg-[#f4f0e8] text-stone-900">
+      <div className="mx-auto max-w-[1480px] px-4 py-10 md:px-7">
+        <div className="grid gap-10 border-b border-stone-400 pb-9 lg:grid-cols-[1.25fr_2fr_1fr]">
+          <div>
+            <Link href="/" className="font-serif text-3xl font-bold tracking-tight">Haida Gwaii News</Link>
+            <p className="mt-3 max-w-sm text-sm leading-6 text-stone-600">Independent reporting, community information and the stories of Haida Gwaii.</p>
+            <div className="mt-5 flex gap-4 text-sm font-bold">
+              <a href="https://www.facebook.com/haidagwaiinews" target="_blank" rel="noreferrer">Facebook</a>
+              <a href="https://www.instagram.com/" target="_blank" rel="noreferrer">Instagram</a>
+            </div>
+          </div>
+          <div className="grid gap-8 sm:grid-cols-3">
+            {footerGroups.map((group) => (
+              <div key={group.title}>
+                <h2 className="newspaper-kicker text-stone-900">{group.title}</h2>
+                <div className="mt-3 grid gap-2 text-sm text-stone-600">
+                  {group.links.map(([label, href]) => <Link key={href} href={href} className="hover:text-hgnRed">{label}</Link>)}
+                </div>
+              </div>
+            ))}
+          </div>
+          <div>
+            <h2 className="newspaper-kicker text-stone-900">Support local journalism</h2>
+            <p className="mt-3 text-sm leading-6 text-stone-600">Help keep local reporting and community information accessible.</p>
+            <div className="mt-5 flex flex-wrap gap-2">
+              <Link href="/support-us" className="newspaper-button">Support HGN</Link>
+              <Link href="/subscribe" className="newspaper-button-outline">Subscribe</Link>
+            </div>
           </div>
         </div>
-        <div>
-          <b>Community</b>
-          <div className="mt-3 grid gap-2 text-sm text-slate-200">
-            <Link href="/marketplace">Classifieds</Link>
-            <Link href="/notices">Notices</Link>
-            <Link href="/live-map">Live Map</Link>
-            <Link href="/weather">Weather</Link>
-          </div>
-        </div>
-        <div>
-          <b>Support HGN</b>
-          <p className="mt-3 text-sm leading-6 text-slate-200">Help keep local journalism and the website free for everyone.</p>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Link href="/support-us" className="rounded-full bg-white px-4 py-2 text-sm font-black text-hgnNavy">Support Us</Link>
-            <Link href="/advertise" className="rounded-full border border-white px-4 py-2 text-sm font-black text-white">Advertise</Link>
-          </div>
+        <div className="flex flex-col gap-3 pt-5 text-xs text-stone-500 md:flex-row md:items-center md:justify-between">
+          <p>© {new Date().getFullYear()} Haida Gwaii News. All rights reserved.</p>
+          <div className="flex flex-wrap gap-4"><Link href="/privacy">Privacy</Link><Link href="/terms">Terms</Link><Link href="/corrections">Corrections</Link><Link href="/accessibility-status">Accessibility</Link></div>
         </div>
       </div>
-    
-        <div className="mt-6 flex justify-center gap-3 text-sm">
-          <a href="https://www.facebook.com/haidagwaiinews" target="_blank" rel="noreferrer" aria-label="Facebook" className="rounded-full border px-3 py-2 font-bold">f</a>
-          <a href="https://www.instagram.com/" target="_blank" rel="noreferrer" aria-label="Instagram" className="rounded-full border px-3 py-2 font-bold">◎</a>
-          <a href="https://x.com/" target="_blank" rel="noreferrer" aria-label="X" className="rounded-full border px-3 py-2 font-bold">X</a>
-        </div>
-      
-        <div className="mt-6 flex justify-center gap-4 text-sm font-bold">
-          <a href="/about" className="hover:text-hgnBlue">About Us</a>
-          <a href="/contact" className="hover:text-hgnBlue">Contact Us</a>
-        </div>
-      </footer>
-  );
+    </footer>
+  )
 }

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import AdSlot from "@/components/AdSlot";
+import { getArticleImage } from "@/lib/article-images";
 
 export const revalidate = 60;
 
@@ -19,6 +20,7 @@ type Article = {
   column_slug?: string | null;
   image_url?: string | null;
   cover_image_url?: string | null;
+  image_alt?: string | null;
   published_at?: string | null;
 };
 
@@ -99,8 +101,8 @@ export default async function Articles({ searchParams }: PageProps) {
           {(articles || []).map((article: Article, i: number) => (
             <div key={article.id}>
               <Link href={`/articles/${article.slug}`} className="block border-b pb-6 hover:opacity-90">
-                <div className="grid gap-4 md:grid-cols-[220px_1fr]">
-                  <img src={article.cover_image_url || article.image_url || "/news-placeholder.svg"} alt="" className="h-40 w-full rounded-xl object-cover" />
+                <div className={`grid gap-4 ${getArticleImage(article) ? "md:grid-cols-[220px_1fr]" : "grid-cols-1"}`}>
+                  {getArticleImage(article) ? <img src={getArticleImage(article) || ""} alt={article.image_alt || article.title} className="h-40 w-full object-cover" /> : null}
                   <div>
                     <div className="text-xs font-black uppercase tracking-wide text-hgnBlue">{article.subcategory || article.category || "News"}</div>
                     <h2 className="mt-2 text-2xl font-black text-slate-900">{article.title}</h2>
@@ -109,6 +111,7 @@ export default async function Articles({ searchParams }: PageProps) {
                       {article.author_name || "Haida Gwaii News"}
                       {article.published_at ? ` · ${new Date(article.published_at).toLocaleDateString("en-CA", { year: "numeric", month: "short", day: "numeric" })}` : ""}
                     </p>
+                    <span className="mt-3 inline-block text-xs font-black uppercase tracking-wider">Read more →</span>
                   </div>
                 </div>
               </Link>

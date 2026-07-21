@@ -57,6 +57,10 @@ const blankArticle: Article = {
   column_name: "",
   column_slug: "",
   image_url: "",
+  image_alt: "",
+  image_caption: "",
+  image_credit: "",
+  front_page_photo: false,
   status: "draft",
   featured: false,
   front_page_main: false,
@@ -206,6 +210,10 @@ export default function ArticleEditorPage() {
       column_name: columnName || null,
       column_slug: columnName ? columnSlugFor(columnName) : null,
       image_url: article.image_url || null,
+      image_alt: article.image_alt || null,
+      image_caption: article.image_caption || null,
+      image_credit: article.image_credit || null,
+      front_page_photo: !!article.front_page_photo,
       status,
       featured: !!article.featured,
       front_page_main: !!article.front_page_main,
@@ -226,6 +234,18 @@ export default function ArticleEditorPage() {
 
     if (error) setMessage(error.message);
     else {
+      if (payload.front_page_photo && savedId) {
+        const { error: clearPhotoError } = await supabase
+          .from("articles")
+          .update({ front_page_photo: false })
+          .eq("front_page_photo", true)
+          .neq("id", savedId);
+        if (clearPhotoError) {
+          setMessage(`Article saved, but the previous front-page photo could not be cleared: ${clearPhotoError.message}`);
+          setSaving(false);
+          return;
+        }
+      }
       setMessage(status === "published" ? "Article published." : "Article saved.");
       setArticle((prev) => ({ ...prev, ...payload }));
       if (isNew && savedId) router.replace(`/admin/articles/${savedId}`);
@@ -351,6 +371,18 @@ export default function ArticleEditorPage() {
               Uploaded image URL
               <input value={article.image_url || ""} readOnly placeholder="Upload a photo above" />
             </label>
+            <label>
+              Alt text
+              <textarea value={article.image_alt || ""} onChange={(e) => update("image_alt", e.target.value)} rows={2} placeholder="Describe what is important in the photo for screen readers." />
+            </label>
+            <label>
+              Caption
+              <textarea value={article.image_caption || ""} onChange={(e) => update("image_caption", e.target.value)} rows={2} placeholder="What is happening in the photo?" />
+            </label>
+            <label>
+              Photo credit
+              <input value={article.image_credit || ""} onChange={(e) => update("image_credit", e.target.value)} placeholder="Photographer or source" />
+            </label>
             {uploading && <p className="font-bold text-hgnBlue">Uploading photo...</p>}
           </div>
 
@@ -360,6 +392,7 @@ export default function ArticleEditorPage() {
               <input className="w-auto" type="checkbox" checked={!!article.front_page_main} onChange={(e) => update("front_page_main", e.target.checked)} />
               Main front-page story
             </label>
+            <p className="rounded-xl border bg-slate-50 p-3 text-sm leading-6 text-slate-600">Front-page photographs are now managed separately in <a href="/admin/front-page" className="font-bold text-hgnBlue underline">Front Page Manager</a>. This keeps standalone photographs out of the article archive.</p>
             <label className="flex items-center gap-2">
               <input className="w-auto" type="checkbox" checked={!!article.featured} onChange={(e) => update("featured", e.target.checked)} />
               Featured story

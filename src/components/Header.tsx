@@ -1,230 +1,326 @@
 "use client"
 
 import Link from "next/link"
-import { useEffect, useMemo, useState } from "react"
+import { ChevronDown, Menu, Search, UserRound, X } from "lucide-react"
+import { usePathname } from "next/navigation"
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import { slugify } from "@/lib/article-routing"
 
 const utilityLinks = [
-  { href: "/account", label: "My HGN" },
-  { href: "/search", label: "🔍 Search" },
-  { href: "/subscribe", label: "Subscribe" },
+  { href: "/newsletter", label: "Newsletter" },
+  { href: "/digital-paper", label: "ePaper" },
   { href: "/advertise", label: "Advertise" },
+  { href: "/contact", label: "Contact" },
 ]
 
 const fallbackColumns = [
-  "Tlellagram",
-  "Living Out Loud",
-  "Life on the Gwaii",
-  "GKNS Chronicles",
-  "Off Island Antics",
-  "Wisdom Beyond",
-  "Island Cuisine",
-  "Science Matters",
-  "Backseat Life-ing",
-  "Book Talk",
-  "Gallivanting",
-  "Terry's Take",
-  "Sandspit Shingle",
-  "Masset Matters",
+  "Tlellagram", "Living Out Loud", "Life on the Gwaii", "GKNS Chronicles", "Off Island Antics",
+  "Wisdom Beyond", "Island Cuisine", "Science Matters", "Backseat Life-ing", "Book Talk",
+  "Gallivanting", "Terry's Take", "Sandspit Shingle", "Masset Matters",
 ]
 
-type NavLink = {
-  href: string
-  label: string
-  children?: NavLink[]
+type NavLink = { href: string; label: string; children?: NavLink[] }
+type NavItem = { label: string; href?: string; children?: NavLink[] }
+
+type DesktopDropdownProps = {
+  item: Required<Pick<NavItem, "label" | "children">>
+  isOpen: boolean
+  onOpen: () => void
+  onClose: () => void
+  onNavigate: () => void
 }
 
-function Dropdown({ label, children, onNavigate }: { label: string; children: NavLink[]; onNavigate: () => void }) {
+function DesktopDropdown({ item, isOpen, onOpen, onClose, onNavigate }: DesktopDropdownProps) {
+  const wide = item.children.some((child) => child.children?.length)
+  const triggerRef = useRef<HTMLButtonElement | null>(null)
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 16, width: wide ? 792 : 320 })
+
+  const cancelScheduledClose = () => {
+    if (closeTimerRef.current) {
+      clearTimeout(closeTimerRef.current)
+      closeTimerRef.current = null
+    }
+  }
+
+  const openMenu = () => {
+    cancelScheduledClose()
+    onOpen()
+  }
+
+  const scheduleClose = () => {
+    cancelScheduledClose()
+    closeTimerRef.current = setTimeout(onClose, 450)
+  }
+
+  useEffect(() => () => cancelScheduledClose(), [])
+
+  useLayoutEffect(() => {
+    if (!isOpen) return
+
+    const updatePosition = () => {
+      const rect = triggerRef.current?.getBoundingClientRect()
+      if (!rect) return
+
+      const sidePadding = 16
+      const desiredWidth = wide ? 792 : 320
+      const availableWidth = Math.max(240, window.innerWidth - sidePadding * 2)
+      const width = Math.min(desiredWidth, availableWidth)
+      const preferredLeft = wide ? rect.left + rect.width / 2 - width / 2 : rect.left
+      const left = Math.min(
+        Math.max(sidePadding, preferredLeft),
+        Math.max(sidePadding, window.innerWidth - width - sidePadding),
+      )
+
+      setDropdownPosition({ top: rect.bottom - 1, left, width })
+    }
+
+    updatePosition()
+    window.addEventListener("resize", updatePosition)
+    window.addEventListener("scroll", updatePosition, { passive: true })
+    return () => {
+      window.removeEventListener("resize", updatePosition)
+      window.removeEventListener("scroll", updatePosition)
+    }
+  }, [isOpen, wide])
+
   return (
-    <div className="group relative shrink-0 md:-mb-3 md:pb-3">
-      <button className="flex items-center gap-1 whitespace-nowrap hover:text-hgnBlue" type="button">
-        {label}
-        <span aria-hidden="true">▾</span>
+    <div
+      className="relative shrink-0"
+      onMouseEnter={openMenu}
+      onMouseLeave={scheduleClose}
+    >
+      <button
+        ref={triggerRef}
+        className="newspaper-nav-link"
+        type="button"
+        aria-haspopup="true"
+        aria-expanded={isOpen}
+        onClick={() => (isOpen ? onClose() : onOpen())}
+      >
+        {item.label}<ChevronDown size={14} strokeWidth={1.6} aria-hidden="true" />
       </button>
-
-      <div className="hidden w-[calc(100vw-2rem)] max-w-[calc(100vw-2rem)] overflow-visible rounded-2xl border border-slate-200 bg-white p-2 text-left tracking-normal text-slate-800 shadow-xl group-focus-within:block group-hover:block md:invisible md:absolute md:left-1/2 md:top-full md:z-[10000] md:block md:min-w-72 md:w-auto md:max-w-[90vw] md:overflow-visible md:-translate-x-1/2 md:rounded-b-2xl md:opacity-0 md:transition md:group-focus-within:visible md:group-focus-within:opacity-100 md:group-hover:visible md:group-hover:opacity-100">
-        {children.map((child) => (
-          <div key={child.href} className="group/sub relative">
-            <Link
-              href={child.href}
-              onClick={onNavigate}
-              className="flex items-center justify-between gap-4 rounded-xl px-4 py-3 text-sm font-semibold hover:bg-slate-100 hover:text-hgnBlue"
-            >
-              <span>{child.label}</span>
-              {child.children ? <span className="hidden md:inline" aria-hidden="true">›</span> : null}
-            </Link>
-
-            {child.children ? (
-              <div className="ml-4 border-l border-slate-200 pl-2 md:invisible md:absolute md:left-full md:top-0 md:z-[10001] md:ml-1 md:min-w-72 md:overflow-visible md:rounded-2xl md:border md:border-slate-200 md:bg-white md:p-2 md:pl-2 md:opacity-0 md:shadow-xl md:transition md:group-hover/sub:visible md:group-hover/sub:opacity-100">
-                {child.children.map((sub) => (
+      {isOpen ? (
+        <div
+          className="fixed z-[10000]"
+          style={{ top: dropdownPosition.top, left: dropdownPosition.left, width: dropdownPosition.width }}
+          onMouseEnter={cancelScheduledClose}
+          onMouseLeave={scheduleClose}
+        >
+          <div className="border border-stone-300 bg-[#fffefa] p-3 text-left text-stone-900 shadow-[0_16px_35px_rgba(0,0,0,.14)]">
+            <div className={wide ? "grid gap-1 md:grid-cols-2" : "space-y-0.5"}>
+              {item.children.map((child) => (
+                <div key={child.href} className={child.children ? "md:col-span-2" : ""}>
                   <Link
-                    key={sub.href}
-                    href={sub.href}
+                    href={child.href}
                     onClick={onNavigate}
-                    className="block rounded-xl px-4 py-3 text-sm font-semibold hover:bg-slate-100 hover:text-hgnBlue"
+                    className="block border-b border-stone-200 px-3 py-2.5 font-serif text-base font-bold hover:bg-stone-100 hover:text-hgnRed"
                   >
-                    {sub.label}
+                    {child.label}
                   </Link>
-                ))}
-              </div>
-            ) : null}
+                  {child.children ? (
+                    <div className="grid gap-x-4 px-2 py-2 sm:grid-cols-2 lg:grid-cols-3">
+                      {child.children.map((sub) => (
+                        <Link
+                          key={sub.href}
+                          href={sub.href}
+                          onClick={onNavigate}
+                          className="border-b border-stone-100 px-2 py-2 text-sm text-stone-700 hover:text-hgnRed"
+                        >
+                          {sub.label}
+                        </Link>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+              ))}
+            </div>
           </div>
-        ))}
-      </div>
+        </div>
+      ) : null}
     </div>
   )
 }
 
 export function Header() {
+  const pathname = usePathname()
+  const navRef = useRef<HTMLElement | null>(null)
   const [isStuck, setIsStuck] = useState(false)
+  const [mobileOpen, setMobileOpen] = useState(false)
+  const [openDesktopMenu, setOpenDesktopMenu] = useState<string | null>(null)
   const [today, setToday] = useState("")
-  const columns = useMemo(
-    () => fallbackColumns.map((name) => ({ href: `/columns/${slugify(name)}`, label: name })),
-    []
-  )
+  const columns = useMemo(() => fallbackColumns.map((name) => ({ href: `/columns/${slugify(name)}`, label: name })), [])
 
   useEffect(() => {
-    setToday(
-      new Intl.DateTimeFormat("en-CA", {
-        weekday: "long",
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      }).format(new Date())
-    )
-
-    function onScroll() {
-      const masthead = document.getElementById("hgn-masthead")
-      const bottom = masthead?.getBoundingClientRect().bottom ?? 0
-      setIsStuck(bottom <= 0)
-    }
-
+    setToday(new Intl.DateTimeFormat("en-CA", { weekday: "long", year: "numeric", month: "long", day: "numeric" }).format(new Date()))
+    const onScroll = () => setIsStuck((document.getElementById("hgn-masthead")?.getBoundingClientRect().bottom ?? 0) <= 0)
     onScroll()
     window.addEventListener("scroll", onScroll, { passive: true })
     window.addEventListener("resize", onScroll)
+    return () => { window.removeEventListener("scroll", onScroll); window.removeEventListener("resize", onScroll) }
+  }, [])
 
+  useEffect(() => {
+    document.body.style.overflow = mobileOpen ? "hidden" : ""
+    return () => { document.body.style.overflow = "" }
+  }, [mobileOpen])
+
+  useEffect(() => {
+    setOpenDesktopMenu(null)
+    setMobileOpen(false)
+  }, [pathname])
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setOpenDesktopMenu(null)
+        setMobileOpen(false)
+      }
+    }
+    const onPointerDown = (event: PointerEvent) => {
+      if (navRef.current && !navRef.current.contains(event.target as Node)) setOpenDesktopMenu(null)
+    }
+    document.addEventListener("keydown", onKeyDown)
+    document.addEventListener("pointerdown", onPointerDown)
     return () => {
-      window.removeEventListener("scroll", onScroll)
-      window.removeEventListener("resize", onScroll)
+      document.removeEventListener("keydown", onKeyDown)
+      document.removeEventListener("pointerdown", onPointerDown)
     }
   }, [])
 
-  const navItems = useMemo(
-    () => [
-      {
-        label: "News",
-        children: [
-          { href: "/news", label: "Local News" },
-          { href: "/sports", label: "Sports" },
-          { href: "/mountie-minute", label: "Mountie Minute" },
-        ],
-      },
-      {
-        label: "Opinion",
-        children: [
-          { href: "/opinion/editorials", label: "Editorials" },
-          { href: "/opinion/on-the-record", label: "On the Record" },
-          { href: "/columns", label: "Columns", children: columns },
-          { href: "/letters", label: "Letters to the Editor" },
-          { href: "/submit-guest-opinion", label: "Submit a Guest Opinion" },
-          { href: "/submit-letter", label: "Submit a Letter" },
-        ],
-      },
-      {
-        label: "Marketplace",
-        children: [
-          { href: "/marketplace", label: "All Listings" },
-          { href: "/marketplace/post", label: "Post Ad" },
-          { href: "/marketplace/my-listings", label: "My Listings" },
-          { href: "/marketplace?category=vehicles-boats", label: "Vehicles & Boats" },
-          { href: "/marketplace?category=real-estate", label: "Real Estate" },
-          { href: "/marketplace?category=rentals", label: "Rentals" },
-          { href: "/marketplace?category=jobs", label: "Jobs" },
-          { href: "/marketplace?category=services", label: "Services" },
-          { href: "/marketplace?category=notices", label: "Notices" },
-        ],
-      },
-      {
-        label: "Weather",
-        children: [
-          { href: "/weather", label: "Weather Desk" },
-          { href: "/weather/tides", label: "Tide Desk" },
-          { href: "/weather/earthquakes", label: "Earthquakes" },
-          { href: "/weather/tsunami-alerts", label: "Tsunami Alerts" },
-        ],
-      },
-      {
-        label: "Explore Haida Gwaii",
-        children: [
-          { href: "/live-map", label: "Live Map" },
-          { href: "/ferry-info", label: "Ferry Info" },
-          { href: "/explore/live", label: "Live Utilities" },
-          { href: "/explore/live/power-outages", label: "Power Outages" },
-        ],
-      },
-    ],
-    [columns]
-  )
+  const navItems: NavItem[] = useMemo(() => [
+    {
+      label: "News",
+      children: [
+        { href: "/articles", label: "Latest Stories" },
+        { href: "/news", label: "Local News" },
+        { href: "/mountie-minute", label: "Mountie Minute" },
+        { href: "/sports", label: "Sports" },
+      ],
+    },
+    {
+      label: "Opinion",
+      children: [
+        { href: "/columns", label: "Columns", children: columns },
+        { href: "/letters", label: "Letters to the Editor" },
+        { href: "/submit-guest-opinion", label: "Submit a Guest Opinion" },
+      ],
+    },
+    { label: "Weather", href: "/weather" },
+    {
+      label: "Community",
+      children: [
+        { href: "/events", label: "Events" },
+        { href: "/obituaries", label: "Obituaries" },
+        { href: "/ferry-info", label: "Ferry Info" },
+      ],
+    },
+    {
+      label: "Marketplace",
+      children: [
+        { href: "/marketplace", label: "All Listings" },
+        { href: "/marketplace/post", label: "Post Ad" },
+        { href: "/marketplace/my-listings", label: "My Listings" },
+        { href: "/marketplace?category=vehicles-boats", label: "Vehicles & Boats" },
+        { href: "/marketplace?category=real-estate", label: "Real Estate" },
+        { href: "/marketplace?category=rentals", label: "Rentals" },
+        { href: "/marketplace?category=jobs", label: "Jobs" },
+        { href: "/marketplace?category=services", label: "Services" },
+      ],
+    },
+    { label: "Horoscopes", href: "/horoscope" },
+    {
+      label: "Haida Gwaii Guide",
+      children: [
+        { href: "/explore", label: "Guide Home" },
+        { href: "/explore/map", label: "Island Map" },
+        { href: "/explore/travel", label: "Ferries & Travel" },
+        { href: "/explore/cams", label: "Island Cams" },
+        { href: "/explore/directory", label: "Directory" },
+      ],
+    },
+  ], [columns])
 
-  function closeMobileMenus() {
-    const active = document.activeElement
-    if (active instanceof HTMLElement) active.blur()
+  const closeAllMenus = () => {
+    setOpenDesktopMenu(null)
+    setMobileOpen(false)
   }
 
   return (
     <>
-      <header id="hgn-masthead" className="relative z-40 border-b border-slate-300 bg-white">
-        <div className="border-b border-slate-200">
-          <div className="mx-auto grid max-w-7xl gap-2 px-4 py-2 text-xs text-slate-600 md:grid-cols-3 md:items-center">
-            <div className="font-semibold">{today}</div>
-            <div className="text-center font-semibold tracking-[0.12em]">Independent free local journalism</div>
-            <nav className="flex flex-wrap justify-start gap-3 md:justify-end">
-              {utilityLinks.map((link) => (
-                <Link key={link.href} href={link.href} className="font-semibold hover:text-hgnBlue">
-                  {link.label}
-                </Link>
-              ))}
+      <header id="hgn-masthead" className="relative z-40 bg-[#fffefa] text-stone-950">
+        <div className="border-b border-stone-300">
+          <div className="mx-auto grid max-w-[1480px] gap-2 px-4 py-2 text-[11px] uppercase tracking-[0.08em] text-stone-600 md:grid-cols-3 md:items-center md:px-7">
+            <div className="font-semibold normal-case tracking-normal">{today}</div>
+            <div className="hidden text-center font-bold tracking-[0.2em] lg:block">Independent local journalism</div>
+            <nav aria-label="Utility" className="flex flex-wrap items-center gap-3 md:justify-end">
+              {utilityLinks.map((link) => <Link key={link.href} href={link.href} className="hover:text-hgnRed">{link.label}</Link>)}
+              <Link href="/account" aria-label="My account" className="inline-flex items-center gap-1 hover:text-hgnRed"><UserRound size={14} /> My HGN</Link>
             </nav>
           </div>
         </div>
-
-        <div className="mx-auto max-w-7xl px-4 py-4 text-center md:py-5">
-          <Link href="/" className="whitespace-nowrap font-serif text-[2rem] font-black leading-none tracking-tight text-slate-950 sm:text-5xl md:text-7xl">
-            Haida Gwaii News
-          </Link>
+        <div className="mx-auto max-w-[1480px] px-4 py-5 text-center md:px-7 md:py-7">
+          <Link href="/" className="masthead-wordmark">Haida Gwaii News</Link>
+          <div className="mt-2 flex items-center justify-center gap-4 text-[10px] font-semibold uppercase tracking-[0.28em] text-stone-500 sm:text-xs">
+            <span className="hidden h-px w-20 bg-stone-400 sm:block" />
+            The Islands&apos; News Source Since 2024
+            <span className="hidden h-px w-20 bg-stone-400 sm:block" />
+          </div>
         </div>
       </header>
 
-      <div className={isStuck ? "h-[51px]" : ""} aria-hidden="true" />
-
-      <nav
-        className={[
-          "z-[9999] border-b border-t border-slate-300 bg-white/95 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-white/90",
-          isStuck ? "fixed left-0 right-0 top-0" : "relative",
-        ].join(" ")}
-      >
-        <div className="mx-auto flex max-w-7xl flex-wrap items-start justify-center gap-x-6 gap-y-2 px-4 py-3 text-sm font-semibold tracking-wide text-slate-800 md:items-center">
-          <Link
-            href="/"
-            className={[
-              "mr-2 shrink-0 whitespace-nowrap font-serif text-base font-black tracking-tight text-slate-950 transition-all duration-200 sm:text-lg",
-              isStuck ? "inline-block opacity-100" : "hidden opacity-0",
-            ].join(" ")}
-          >
-            Haida Gwaii News
-          </Link>
-
-          {navItems.map((item) => (
-            <Dropdown key={item.label} label={item.label} children={item.children} onNavigate={closeMobileMenus} />
-          ))}
-
-          <Link href="/events" onClick={closeMobileMenus} className="shrink-0 whitespace-nowrap hover:text-hgnBlue">Events</Link>
-          <Link href="/obituaries" onClick={closeMobileMenus} className="shrink-0 whitespace-nowrap hover:text-hgnBlue">Obituaries</Link>
-          <Link href="/horoscope" onClick={closeMobileMenus} className="shrink-0 whitespace-nowrap hover:text-hgnBlue">Horoscope</Link>
+      <div className={isStuck ? "h-[49px]" : ""} aria-hidden="true" />
+      <nav ref={navRef} aria-label="Primary" className={`z-[9999] border-y border-stone-900 bg-[#fffefa] ${isStuck ? "fixed inset-x-0 top-0 border-b-2 shadow-[0_6px_18px_rgba(0,0,0,0.14)]" : "relative"}`}>
+        <div className={`mx-auto flex max-w-[1480px] items-center justify-between gap-3 px-4 md:px-7 ${isStuck ? "min-h-11" : "min-h-12"}`}>
+          <Link href="/" onClick={closeAllMenus} className={`${isStuck ? "block" : "md:hidden"} shrink-0 border-r border-stone-300 pr-3 font-serif text-base font-bold tracking-tight`}>HGN</Link>
+          <div className="hidden flex-1 items-center justify-center gap-0.5 md:flex">
+            {navItems.map((item) => item.children ? (
+              <DesktopDropdown
+                key={item.label}
+                item={{ label: item.label, children: item.children }}
+                isOpen={openDesktopMenu === item.label}
+                onOpen={() => setOpenDesktopMenu(item.label)}
+                onClose={() => setOpenDesktopMenu((current) => current === item.label ? null : current)}
+                onNavigate={closeAllMenus}
+              />
+            ) : (
+              <Link key={item.label} href={item.href ?? "/"} onClick={closeAllMenus} className="newspaper-nav-link">{item.label}</Link>
+            ))}
+          </div>
+          <div className="flex items-center gap-1">
+            <Link href="/search" onClick={closeAllMenus} aria-label="Search" className="grid h-10 w-10 place-items-center hover:text-hgnRed"><Search size={19} strokeWidth={1.7} /></Link>
+            <button type="button" className="grid h-10 w-10 place-items-center md:hidden" aria-expanded={mobileOpen} aria-controls="mobile-navigation" aria-label={mobileOpen ? "Close menu" : "Open menu"} onClick={() => setMobileOpen((value) => !value)}>
+              {mobileOpen ? <X size={22} /> : <Menu size={22} />}
+            </button>
+          </div>
         </div>
       </nav>
+
+      {mobileOpen ? (
+        <div id="mobile-navigation" className="fixed inset-0 z-[9998] overflow-y-auto bg-[#fffefa] px-4 pb-12 pt-20 md:hidden">
+          <nav aria-label="Mobile primary" className="mx-auto max-w-xl border-t border-stone-900">
+            {navItems.map((item) => item.children ? (
+              <details key={item.label} className="border-b border-stone-300">
+                <summary className="cursor-pointer list-none px-1 py-4 font-serif text-xl font-bold">{item.label}</summary>
+                <div className="border-t border-stone-200 pb-2">
+                  {item.children.map((child) => (
+                    <div key={child.href}>
+                      <Link href={child.href} onClick={closeAllMenus} className="block border-b border-stone-100 px-3 py-3 font-semibold">{child.label}</Link>
+                      {child.children ? <div className="grid grid-cols-2 gap-x-3 px-3 py-2">{child.children.map((sub) => <Link key={sub.href} href={sub.href} onClick={closeAllMenus} className="border-b border-stone-100 py-2 text-sm text-stone-600">{sub.label}</Link>)}</div> : null}
+                    </div>
+                  ))}
+                </div>
+              </details>
+            ) : (
+              <Link key={item.label} href={item.href ?? "/"} onClick={closeAllMenus} className="block border-b border-stone-300 px-1 py-4 font-serif text-xl font-bold">{item.label}</Link>
+            ))}
+            <div className="grid grid-cols-2 gap-2 py-5 text-sm font-semibold">
+              {utilityLinks.map((link) => <Link key={link.href} href={link.href} onClick={closeAllMenus} className="border border-stone-300 px-3 py-3 text-center">{link.label}</Link>)}
+              <Link href="/account" onClick={closeAllMenus} className="border border-stone-300 px-3 py-3 text-center">My HGN</Link>
+            </div>
+          </nav>
+        </div>
+      ) : null}
     </>
   )
 }
-
-export default Header

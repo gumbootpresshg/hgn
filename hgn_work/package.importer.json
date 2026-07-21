@@ -1,0 +1,12 @@
+{
+  "scripts": {
+    "import:wp:dry": "node scripts/import-wordpress-xml.mjs --dry",
+    "import:wp": "node scripts/import-wordpress-xml.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "latest",
+    "dotenv": "latest",
+    "fast-xml-parser": "latest",
+    "slugify": "latest"
+  }
+}

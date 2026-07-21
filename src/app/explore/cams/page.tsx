@@ -1,0 +1,7 @@
+const cams = [
+  { name: "DriveBC Northern Cameras", area: "Road conditions across northern B.C. and Haida Gwaii", href: "https://images.drivebc.ca/bchighwaycam/pub/html/www/index-Northern.html" },
+  { name: "BC Ferries Current Conditions", area: "Terminal conditions, notices and sailing status", href: "https://www.bcferries.com/current-conditions" },
+  { name: "DriveBC Road Conditions", area: "Closures, incidents and construction", href: "https://www.drivebc.ca/" },
+]
+export const metadata = { title: "Island Cams" }
+export default function CamsPage() { return <main className="mx-auto max-w-6xl space-y-8 px-6 py-8"><header><p className="text-xs font-black uppercase tracking-[0.2em] text-hgnBlue">Haida Gwaii Guide</p><h1 className="mt-2 text-5xl font-black">Island Cams & Live Sources</h1><p className="mt-4 max-w-3xl text-slate-600">Fast links to road and ferry sources. Each source opens in a new tab so the official timestamp and conditions remain visible.</p></header><section className="grid gap-5 md:grid-cols-2">{cams.map((cam) => <a key={cam.href} href={cam.href} target="_blank" rel="noreferrer" className="rounded-3xl border bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-hgnBlue"><p className="text-xs font-black uppercase tracking-[0.16em] text-hgnBlue">Live source</p><h2 className="mt-2 text-2xl font-black">{cam.name}</h2><p className="mt-3 text-sm leading-6 text-slate-600">{cam.area}</p><span className="mt-5 inline-flex text-sm font-bold text-hgnBlue">Open source →</span></a>)}</section></main> }

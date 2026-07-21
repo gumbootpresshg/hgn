@@ -1,0 +1,3 @@
+-- HGN v8 upgrade
+-- No database changes are required for the weather page.
+-- Weather loads directly from the Open-Meteo API in the browser.

@@ -1,0 +1,8 @@
+import { supabase } from "@/lib/supabase";
+export const dynamic = "force-dynamic";
+const fb=(a:any)=>`New on Haida Gwaii News: ${a.title}${a.excerpt || ""}Read more on HGN.`;
+const xt=(a:any)=>{const s=`New on HGN: ${a.title}`; return s.length>250?s.slice(0,247)+"...":s};
+export default async function SocialDeskPage(){
+ const {data:articles}=await supabase.from("articles").select("id,title,slug,excerpt,image_url,published_at,social_status").eq("status","published").order("published_at",{ascending:false}).limit(25);
+ return <main className="mx-auto max-w-6xl px-4 py-10"><p className="text-sm font-black uppercase tracking-wide text-hgnBlue">Publisher Tools</p><h1 className="mt-2 text-4xl font-black text-hgnNavy">Social Post Assistant</h1><p className="mt-3 max-w-3xl text-slate-600">Draft platform-friendly social posts for published articles. Copy/paste today; API automation can come later.</p><section className="mt-8 grid gap-5">{(articles||[]).map((article:any)=><article key={article.id} className="rounded-2xl border bg-white p-5 shadow-sm"><h2 className="text-2xl font-black text-slate-950">{article.title}</h2><div className="mt-4 grid gap-4 lg:grid-cols-2"><div className="rounded-xl bg-slate-50 p-4"><h3 className="font-black text-slate-900">Facebook / LinkedIn</h3><pre className="mt-3 whitespace-pre-wrap text-sm text-slate-700">{fb(article)}</pre></div><div className="rounded-xl bg-slate-50 p-4"><h3 className="font-black text-slate-900">X</h3><pre className="mt-3 whitespace-pre-wrap text-sm text-slate-700">{xt(article)}</pre></div></div></article>)}</section></main>
+}

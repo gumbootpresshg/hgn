@@ -95,9 +95,9 @@ export default function HomePoll() {
   if (!poll) return null
 
   return (
-    <section className="rounded-3xl border bg-white p-5 shadow-sm">
-      <p className="text-xs font-black uppercase tracking-[0.18em] text-hgnBlue">Reader Poll</p>
-      <h2 className="mt-2 text-2xl font-black">{poll.question}</h2>
+    <section className="border-y border-stone-400 py-5">
+      <p className="newspaper-kicker text-hgnRed">Reader Poll</p>
+      <h2 className="mt-2 font-serif text-3xl font-bold leading-tight">{poll.question}</h2>
       {poll.description ? <p className="mt-2 text-sm leading-6 text-slate-600">{poll.description}</p> : null}
 
       <div className="mt-4 grid gap-3">
@@ -106,7 +106,7 @@ export default function HomePoll() {
           const percent = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0
 
           return (
-            <div key={option.id} className="rounded-2xl border p-3">
+            <div key={option.id} className="border-b border-stone-300 py-3">
               {!voted ? (
                 <button onClick={() => vote(option.id)} className="w-full text-left text-sm font-bold hover:text-hgnBlue">
                   {option.label}
@@ -117,8 +117,8 @@ export default function HomePoll() {
                     <span>{option.label}</span>
                     <span>{percent}%</span>
                   </div>
-                  <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
-                    <div className="h-full rounded-full bg-hgnBlue" style={{ width: `${percent}%` }} />
+                  <div className="mt-2 h-1 overflow-hidden bg-stone-200">
+                    <div className="h-full bg-hgnRed" style={{ width: `${percent}%` }} />
                   </div>
                   <p className="mt-1 text-xs text-slate-500">{count} vote{count === 1 ? "" : "s"}</p>
                 </>
