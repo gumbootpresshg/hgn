@@ -1,6 +1,6 @@
 {
   "name": "hgn-website-build",
-  "version": "0.51.4",
+  "version": "0.51.5",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -13,7 +13,7 @@
     "import:wp:csv": "node scripts/import-wordpress-csv.mjs"
   },
   "dependencies": {
-    "@supabase/supabase-js": "latest",
+    "@supabase/supabase-js": "2.105.1",
     "@types/leaflet": "latest",
     "@types/sanitize-html": "2.16.0",
     "csv-parse": "latest",
