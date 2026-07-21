@@ -1,10 +1,12 @@
 import Link from "next/link"
 import { communities, emergencyContacts } from "@/lib/explore-data"
-import { guidePlaces, guideQuickLinks } from "@/lib/guide-places"
+import { guideQuickLinks } from "@/lib/guide-places"
+import { getPublishedGuidePlaces } from "@/lib/guide-db"
 
 export const metadata = { title: "Haida Gwaii Guide", description: "A practical island guide for residents and visitors, built into Haida Gwaii News." }
 
-export default function ExplorePage() {
+export default async function ExplorePage() {
+  const guidePlaces = await getPublishedGuidePlaces()
   const featured = guidePlaces.filter((place) => place.featured).slice(0, 6)
   return <main className="mx-auto max-w-[1480px] space-y-10 px-4 py-8 md:px-7">
     <section className="overflow-hidden rounded-[2rem] border border-stone-300 bg-[#fffefa] shadow-sm">
