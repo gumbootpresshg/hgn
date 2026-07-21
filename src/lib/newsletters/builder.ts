@@ -106,11 +106,17 @@ export async function buildNewsletterContent(options: BuildOptions) {
   if (settings.include_events) {
     const result = await db
       .from("events")
-      .select("id,title,start_date,location")
+      .select("id,title,description,start_date,start_time,end_time,is_all_day,location,community")
       .gte("start_date", now.toISOString().slice(0, 10))
       .order("start_date", { ascending: true })
       .limit(8);
-    events = result.data || [];
+    const seen = new Set<string>();
+    events = (result.data || []).filter((event: any) => {
+      const key = `${String(event.title || "").trim().toLowerCase()}|${event.start_date || ""}`;
+      if (!event.title || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
   }
 
   return {

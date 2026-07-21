@@ -1,5 +1,17 @@
 import "leaflet/dist/leaflet.css"
 import IslandGuideMap from "@/components/guide/IslandGuideMap"
-import { getPublishedGuidePlaces } from "@/lib/guide-db"
-export const metadata={title:"Island Map",description:"An interactive Haida Gwaii map for beaches, fuel, ferries, services, campsites and visitor essentials."}
-export default async function GuideMapPage({searchParams}:{searchParams?:Promise<{category?:string}>}){const params=await searchParams;const places=await getPublishedGuidePlaces();return <main className="mx-auto max-w-[1480px] space-y-6 px-4 py-8 md:px-7"><header className="max-w-4xl"><p className="text-xs font-black uppercase tracking-[.22em] text-hgnBlue">Haida Gwaii Guide</p><h1 className="mt-2 font-serif text-5xl font-bold tracking-tight md:text-7xl">Island Map</h1><p className="mt-4 text-lg leading-8 text-slate-600">Tap markers for directions, current cautions and official links. Use Near me to sort practical stops by distance while travelling.</p></header><IslandGuideMap places={places} initialCategory={params?.category||"All"}/></main>}
+import { guidePlaces } from "@/lib/guide-places"
+
+export const metadata = { title: "Island Map" }
+
+export default async function GuideMapPage({ searchParams }: { searchParams?: Promise<{ category?: string }> }) {
+  const params = await searchParams
+  return <main className="mx-auto max-w-[1480px] space-y-6 px-4 py-8 md:px-7">
+    <header className="max-w-4xl">
+      <p className="text-xs font-black uppercase tracking-[0.22em] text-hgnBlue">Haida Gwaii Guide</p>
+      <h1 className="mt-2 text-4xl font-black tracking-tight md:text-6xl">Island Map</h1>
+      <p className="mt-4 text-lg leading-8 text-slate-600">Find beaches, fuel, rest stops, transportation, cultural places and essential services. Locations are a curated starting point and should be confirmed before remote travel.</p>
+    </header>
+    <IslandGuideMap places={guidePlaces} initialCategory={params?.category || "All"} />
+  </main>
+}

@@ -7,10 +7,6 @@
     {
       "path": "/api/newsletters/cron",
       "schedule": "0 17 * * *"
-    },
-    {
-      "path": "/api/guide/cron",
-      "schedule": "30 16 * * *"
     }
   ]
 }
