@@ -5,6 +5,7 @@ import { ChevronDown, Menu, Search, UserRound, X } from "lucide-react"
 import { usePathname } from "next/navigation"
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import { slugify } from "@/lib/article-routing"
+import { useSiteTheme } from "@/components/theme/SiteThemeProvider"
 
 const utilityLinks = [
   { href: "/newsletter", label: "Newsletter" },
@@ -143,6 +144,7 @@ function DesktopDropdown({ item, isOpen, onOpen, onClose, onNavigate }: DesktopD
 }
 
 export function Header() {
+  const { labels } = useSiteTheme()
   const pathname = usePathname()
   const navRef = useRef<HTMLElement | null>(null)
   const [isStuck, setIsStuck] = useState(false)
@@ -205,7 +207,7 @@ export function Header() {
 
   const navItems: NavItem[] = useMemo(() => [
     {
-      label: "News",
+      label: labels.news,
       children: [
         { href: "/articles", label: "Latest Stories" },
         { href: "/news", label: "Local News" },
@@ -221,9 +223,9 @@ export function Header() {
         { href: "/submit-guest-opinion", label: "Submit a Guest Opinion" },
       ],
     },
-    { label: "Weather", href: "/weather" },
+    { label: labels.weather, href: "/weather" },
     {
-      label: "Community",
+      label: labels.community,
       children: [
         { href: "/events", label: "Events" },
         { href: "/obituaries", label: "Obituaries" },
@@ -231,7 +233,7 @@ export function Header() {
       ],
     },
     {
-      label: "Marketplace",
+      label: labels.marketplace,
       children: [
         { href: "/marketplace", label: "All Listings" },
         { href: "/marketplace/post", label: "Post Ad" },
@@ -243,9 +245,9 @@ export function Header() {
         { href: "/marketplace?category=services", label: "Services" },
       ],
     },
-    { label: "Horoscopes", href: "/horoscope" },
+    { label: labels.horoscopes, href: "/horoscope" },
     {
-      label: "Haida Gwaii Guide",
+      label: labels.guide,
       children: [
         { href: "/explore", label: "Guide Home" },
         { href: "/explore/map", label: "Island Map" },
@@ -254,7 +256,7 @@ export function Header() {
         { href: "/explore/directory", label: "Directory" },
       ],
     },
-  ], [columns])
+  ], [columns, labels])
 
   const closeAllMenus = () => {
     setOpenDesktopMenu(null)
@@ -275,10 +277,10 @@ export function Header() {
           </div>
         </div>
         <div className="mx-auto max-w-[1480px] px-4 py-5 text-center md:px-7 md:py-7">
-          <Link href="/" className="masthead-wordmark">Haida Gwaii News</Link>
+          <Link href="/" className="masthead-wordmark">{labels.siteName}</Link>
           <div className="mt-2 flex items-center justify-center gap-4 text-[10px] font-semibold uppercase tracking-[0.28em] text-stone-500 sm:text-xs">
             <span className="hidden h-px w-20 bg-stone-400 sm:block" />
-            The Islands&apos; News Source Since 2024
+            {labels.tagline}
             <span className="hidden h-px w-20 bg-stone-400 sm:block" />
           </div>
         </div>

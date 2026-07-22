@@ -6,6 +6,7 @@ import { BreakingAlertBar } from "@/components/BreakingAlertBar";
 import TsunamiAlertBanner from "@/components/TsunamiAlertBanner";
 import EarthquakeAlertBanner from "@/components/EarthquakeAlertBanner";
 import { absoluteUrl, SITE } from "@/lib/site";
+import { SiteThemeProvider } from "@/components/theme/SiteThemeProvider";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE.url),
@@ -24,5 +25,5 @@ export const viewport: Viewport = { width: "device-width", initialScale: 1, them
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const organization = { "@context": "https://schema.org", "@type": "NewsMediaOrganization", name: SITE.name, url: SITE.url, logo: absoluteUrl("/hgn-logo.png"), sameAs: [], publishingPrinciples: absoluteUrl("/community-standards") };
-  return <html lang="en-CA"><body><a href="#main-content" className="skip-link">Skip to main content</a><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organization) }} /><BreakingAlertBar /><Header /><TsunamiAlertBanner /><EarthquakeAlertBanner /><div id="main-content">{children}</div><Footer /></body></html>;
+  return <html lang="en-CA"><body><SiteThemeProvider><a href="#main-content" className="skip-link">Skip to main content</a><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organization) }} /><BreakingAlertBar /><Header /><TsunamiAlertBanner /><EarthquakeAlertBanner /><div id="main-content">{children}</div><Footer /></SiteThemeProvider></body></html>;
 }

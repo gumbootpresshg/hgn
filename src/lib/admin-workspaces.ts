@@ -43,6 +43,7 @@ export const adminTools: AdminTool[] = [
   { href: "/explore/directory", label: "View Public Directory", description: "Open the searchable public guide directory.", group: "Island Guide", roles: ["publisher", "editor", "sales"], keywords: ["places", "directory", "tourism"], mobileRelevant: true },
 
   { href: "/admin/settings", label: "Settings", description: "Open the main site and platform settings.", group: "Platform", roles: ["publisher"], keywords: ["configuration", "site"] },
+  { href: "/admin/theme-studio", label: "Theme Studio", description: "Change approved themes, colours, typography and public site labels without code.", group: "Platform", roles: ["publisher"], keywords: ["theme", "colors", "colours", "fonts", "labels", "branding"], priority: true, mobileRelevant: true },
   { href: "/admin/platform-map", label: "Platform Map", description: "See which important tools are connected and where they live.", group: "Platform", roles: ["publisher", "editor", "sales"], keywords: ["audit", "routes", "connected"], priority: true },
   { href: "/admin/app-readiness", label: "App Readiness", description: "Track what must be stable before the first iOS and Android release.", group: "Platform", roles: ["publisher", "editor", "sales"], keywords: ["ios", "android", "mobile", "api"], priority: true, mobileRelevant: true },
   { href: "/admin/media", label: "Media Library", description: "Manage uploaded photos and reusable media.", group: "Platform", roles: ["publisher", "editor"], keywords: ["images", "photos", "uploads"] },

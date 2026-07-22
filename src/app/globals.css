@@ -88,3 +88,22 @@ button, a, input, select, textarea { touch-action: manipulation; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
+
+/* v0.55.0 Theme Studio runtime controls */
+html[data-headline-font="modern"] .masthead-wordmark,
+html[data-headline-font="modern"] .newspaper-section-heading h2,
+html[data-headline-font="modern"] h1,
+html[data-headline-font="modern"] h2,
+html[data-headline-font="modern"] h3 { font-family: Arial, Helvetica, sans-serif; letter-spacing: -.03em; }
+html[data-headline-font="classic"] .masthead-wordmark,
+html[data-headline-font="classic"] .newspaper-section-heading h2,
+html[data-headline-font="classic"] h1,
+html[data-headline-font="classic"] h2,
+html[data-headline-font="classic"] h3 { font-family: "Times New Roman", Times, serif; }
+html[data-body-font="serif"] body { font-family: Georgia, "Times New Roman", serif; }
+html[data-density="compact"] .newspaper-shell { --theme-gap: .75rem; }
+html[data-density="spacious"] .newspaper-shell { --theme-gap: 1.5rem; }
+html[data-masthead="compact"] #hgn-masthead .masthead-wordmark { font-size: clamp(2rem, 4.2vw, 3.8rem); }
+html[data-masthead="compact"] #hgn-masthead > div:last-child { padding-top: 1rem; padding-bottom: 1rem; }
+html[data-theme="high-contrast"] a { text-decoration-thickness: 2px; }
+html[data-theme="high-contrast"] .newspaper-nav-link { text-decoration: underline; }
