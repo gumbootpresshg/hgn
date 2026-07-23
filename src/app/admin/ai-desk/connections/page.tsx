@@ -5,9 +5,6 @@ const connections = [
   ["Event", "Event submission draft", "/admin/events", "Creates a pending event record for staff to finish and approve."],
   ["Guide update", "Guide Keeper", "/admin/guide-keeper", "Keeps the proposed change in the review queue and links staff to the Guide workflow."],
   ["Site check", "Platform map", "/admin/platform-map", "Routes broken pages, missing fields and disconnected tools to the platform review area."],
-  ["Sales lead", "Sales Desk", "/admin/sales", "Links to the existing lead or creates a controlled follow-up task."],
-  ["Renewal", "Sales Desk", "/admin/sales", "Routes renewal work to the sales pipeline without sending customer contact."],
-  ["Billing follow-up", "Billing Queue", "/admin/billing", "Links staff to the related balance or reminder workflow."],
 ]
 
 export default function AiDeskConnectionsPage(){

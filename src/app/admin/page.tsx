@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
-import { ArrowRight, Search } from "lucide-react"
+import { ArrowRight, ExternalLink, Search } from "lucide-react"
 import { adminGroups, adminTools, normalizeAdminRole, type AdminRole } from "@/lib/admin-workspaces"
 import { supabase } from "@/lib/supabase"
 
@@ -46,6 +46,7 @@ export default function AdminDashboardPage() {
       <div className="mt-6 flex flex-wrap gap-3">
         <button type="button" onClick={() => setShowAll(false)} className={`rounded-full px-4 py-2 text-sm font-black ${!showAll ? "bg-white text-slate-950" : "border border-slate-600"}`}>My workspace</button>
         <button type="button" onClick={() => setShowAll(true)} className={`rounded-full px-4 py-2 text-sm font-black ${showAll ? "bg-white text-slate-950" : "border border-slate-600"}`}>All connected tools</button>
+        <a href="https://office.haidagwaiinews.com" target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full bg-blue-300 px-4 py-2 text-sm font-black text-slate-950 hover:bg-blue-200">HGN Operations <ExternalLink size={15}/></a>
       </div>
     </section>
 

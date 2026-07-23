@@ -3,8 +3,6 @@ import Link from "next/link"
 const settings = [
   ["Newsletter settings", "/admin/newsletter", "Automatic or manual production, schedule, sections and test sends."],
   ["Guide Keeper", "/admin/guide-keeper", "Official source checks, review queue and tourist-season freshness."],
-  ["Square & integrations", "/admin/integrations", "Connected payment data and historical synchronization."],
-  ["Reports & exports", "/admin/reports", "Bookkeeping, taxes, government-support and internal reporting files."],
   ["App readiness", "/admin/app-readiness", "Track the stable foundation required for iOS and Android."],
   ["Platform map", "/admin/platform-map", "See the core tools connected to each role-based workspace."],
 ]

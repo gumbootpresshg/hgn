@@ -3,6 +3,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { uploadPublicImage } from "@/lib/upload-media";
+import { notifyPublicSubmission } from "@/lib/public-submission-notify";
 
 const towns = ["Masset", "Old Massett", "Port Clements", "Tlell", "Skidegate", "Daajing Giids", "Sandspit", "Island-wide"];
 const categories = ["Stay", "Eat", "Explore", "Services", "Shops", "Tours", "Emergency", "Transportation"];
@@ -45,7 +46,7 @@ export default function SubmitVisitorListing() {
       status: "pending",
     };
     const { error } = await supabase.from("visitor_listings").insert(payload);
-    if (error) alert(error.message); else { setDone(true); e.currentTarget.reset(); }
+    if (error) alert(error.message); else { await notifyPublicSubmission("visitor_listing", { title, submitterName: String(f.get("submitter_name") || ""), submitterEmail: String(f.get("submitter_email") || ""), publicAdminUrl: "/admin/visitor-guide" }); setDone(true); e.currentTarget.reset(); }
     setSaving(false);
   }
 

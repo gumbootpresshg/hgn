@@ -102,7 +102,7 @@ export default async function MembershipDeskPage() {
   return <main className="mx-auto max-w-7xl px-4 py-10">
     <div className="flex flex-col gap-5 border-b pb-6 lg:flex-row lg:items-end lg:justify-between">
       <div><p className="text-sm font-black uppercase tracking-widest text-hgnBlue">v80 Membership Desk</p><h1 className="mt-2 text-5xl font-black text-hgnNavy">Membership Desk</h1><p className="mt-3 max-w-3xl text-slate-700">Prepare HGN for founding supporters: membership plans, supporter leads, benefits, payment readiness and launch tasks.</p></div>
-      <div className="flex flex-wrap gap-2"><Link href="/membership-beta" className="hgn-btn-primary">Public membership beta</Link><Link href="/admin/revenue-readiness" className="hgn-btn-dark">Revenue</Link><Link href="/admin/audience-growth" className="hgn-btn-dark">Audience</Link></div>
+      <div className="flex flex-wrap gap-2"><Link href="/membership-beta" className="hgn-btn-primary">Public membership beta</Link><Link href="/admin/audience-growth" className="hgn-btn-dark">Audience</Link></div>
     </div>
 
     <section className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-4">{stats.map(([label, value, helper, tone]) => <div key={label} className={`rounded-2xl border p-5 shadow-sm ${membershipToneClasses(String(tone))}`}><div className="text-xs font-black uppercase tracking-widest opacity-70">{label}</div><div className="mt-2 text-4xl font-black">{value}</div><p className="mt-2 text-sm font-semibold opacity-80">{helper}</p></div>)}</section>

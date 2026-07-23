@@ -17,9 +17,9 @@ type Comment={id:string;item_id:string;body:string;created_at:string;created_by:
 type Activity={id:string;item_id:string;action:string;detail:string|null;created_at:string}
 
 const statuses=["pending","approved","completed","rejected"]
-const types=["all","news_lead","event","guide_update","site_check","sales_lead","renewal","billing_followup"]
-const destination:Record<string,string>={news_lead:"Article draft",event:"Event draft",guide_update:"Guide Keeper",site_check:"Platform review",sales_lead:"Sales Desk",renewal:"Sales Desk",billing_followup:"Billing Queue"}
-const destinationHref:Record<string,string>={guide_update:"/admin/guide-keeper",site_check:"/admin/platform-map",sales_lead:"/admin/sales",renewal:"/admin/sales",billing_followup:"/admin/billing"}
+const types=["all","news_lead","event","guide_update","site_check"]
+const destination:Record<string,string>={news_lead:"Article draft",event:"Event draft",guide_update:"Guide Keeper",site_check:"Platform review"}
+const destinationHref:Record<string,string>={guide_update:"/admin/guide-keeper",site_check:"/admin/platform-map"}
 
 function slugify(value:string){return value.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")}
 function pretty(value:string){return value.replaceAll("_"," ").replace(/\b\w/g,c=>c.toUpperCase())}

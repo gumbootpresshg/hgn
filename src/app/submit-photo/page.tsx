@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { notifyPublicSubmission } from "@/lib/public-submission-notify";
 
 async function uploadPhoto(file: File | null) {
   if (!file || file.size === 0) return "";
@@ -19,7 +20,7 @@ export default function SubmitPhotoPage() {
   const [preview, setPreview] = useState("");
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault(); setSaving(true);
-    try { const f = new FormData(e.currentTarget); const photo_url = await uploadPhoto(f.get("photo") as File | null); const { error } = await supabase.from("photo_submissions").insert({ name: f.get("name"), email: f.get("email"), caption: f.get("caption"), photo_url, status: "new" }); if (error) alert(error.message); else setDone(true); }
+    try { const f = new FormData(e.currentTarget); const photo_url = await uploadPhoto(f.get("photo") as File | null); const { error } = await supabase.from("photo_submissions").insert({ name: f.get("name"), email: f.get("email"), caption: f.get("caption"), photo_url, status: "new" }); if (error) alert(error.message); else { await notifyPublicSubmission("photo", { title: String(f.get("caption") || "Reader photo"), submitterName: String(f.get("name") || ""), submitterEmail: String(f.get("email") || ""), publicAdminUrl: "/admin/submissions" }); setDone(true); } }
     catch (err:any) { alert(err.message || "Upload failed"); }
     finally { setSaving(false); }
   }

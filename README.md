@@ -93,7 +93,6 @@ npm run dev
 
 New beta revenue tools:
 
-- `/admin/revenue-readiness` - advertiser prospects, beta ad packages, revenue blockers and sponsor launch tasks.
 - `/media-kit-beta` - public-facing beta sponsor/media kit page.
 - `supabase/v72-upgrade.sql` - additive SQL for ad packages, advertiser prospects, sponsor assets and revenue readiness tasks.
 
@@ -101,7 +100,6 @@ Recommended after updating:
 
 1. Run `supabase/v72-upgrade.sql` in Supabase SQL Editor.
 2. Restart the dev server.
-3. Open `/admin/revenue-readiness` and confirm the starter sponsor packages are visible.
 
 ## v73 Audience Growth Desk
 

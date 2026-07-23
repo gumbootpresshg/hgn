@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { notifyHgnOperations } from "@/lib/hgn-operations-notify";
 
 export const dynamic = "force-dynamic";
 
@@ -7,13 +8,25 @@ async function submitCorrection(formData: FormData) {
   "use server";
   const message = String(formData.get("message") || "").trim();
   if (!message) return;
-  await supabase.from("correction_requests").insert({
-    name: String(formData.get("name") || "").trim() || null,
-    email: String(formData.get("email") || "").trim() || null,
-    related_url: String(formData.get("related_url") || "").trim() || null,
+  const name = String(formData.get("name") || "").trim();
+  const email = String(formData.get("email") || "").trim();
+  const relatedUrl = String(formData.get("related_url") || "").trim();
+  const { data } = await supabase.from("correction_requests").insert({
+    name: name || null,
+    email: email || null,
+    related_url: relatedUrl || null,
     issue_type: String(formData.get("issue_type") || "correction"),
     priority: String(formData.get("priority") || "normal"),
     message,
+  }).select("id").single();
+
+  await notifyHgnOperations({
+    submissionType: "correction",
+    sourceId: String(data?.id || crypto.randomUUID()),
+    title: relatedUrl ? `Correction request: ${relatedUrl}` : "Correction request",
+    submitterName: name || null,
+    submitterEmail: email || null,
+    publicAdminUrl: "/admin/corrections",
   });
 }
 

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { createHash } from "crypto";
+import { notifyHgnOperations } from "@/lib/hgn-operations-notify";
 
 type AlertResult = { skipped?: boolean; ok?: boolean; error?: string; reason?: string };
 
@@ -132,6 +133,15 @@ export async function POST(request: Request) {
   });
 
   await supabase.from("letters_to_editor").update({ alert_status: alertStatus }).eq("id", submissionId);
+
+  await notifyHgnOperations({
+    submissionType: "letter",
+    sourceId: String(submissionId),
+    title: "Letter to the Editor",
+    submitterName: name,
+    submitterEmail: email,
+    publicAdminUrl: "/admin/letters",
+  });
 
   return NextResponse.json({ ok: true, alertStatus });
 }

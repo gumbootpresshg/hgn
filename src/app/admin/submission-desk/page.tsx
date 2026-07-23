@@ -8,7 +8,6 @@ const desks = [
   ["Notices", "/notices", "Review legal, government, legislative, regulatory and required corporate notices."],
   ["Obituaries", "/obituaries", "Review obituary submissions and contact families."],
   ["Ads", "/admin/ads", "Manage ad placements, dates and links."],
-  ["Accounting", "/admin/accounting", "Track ad requests, Square links and payment status."],
   ["Subscribers", "/admin/subscribers", "Newsletter and audience list."],
   ["Staff Room", "/staff-room", "Planning, contributor notes and newsroom chat."],
 ];

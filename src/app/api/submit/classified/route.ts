@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { supabase } from "@/lib/supabase"
+import { notifyHgnOperations } from "@/lib/hgn-operations-notify"
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null)
@@ -64,6 +65,15 @@ export async function POST(request: Request) {
       { status: 500 }
     )
   }
+
+  await notifyHgnOperations({
+    submissionType: "classified",
+    sourceId: String(crypto.randomUUID()),
+    title: String(title || ""),
+    submitterName: classifiedPayload.seller_name ? String(classifiedPayload.seller_name) : null,
+    submitterEmail: classifiedPayload.seller_email ? String(classifiedPayload.seller_email) : null,
+    publicAdminUrl: "/admin/classifieds",
+  })
 
   return NextResponse.json({ ok: true })
 }

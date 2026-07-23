@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { SectionHeader } from "@/components/SectionHeader";
+import { notifyPublicSubmission } from "@/lib/public-submission-notify";
 
 const townCoords: Record<string, { lat: number; lng: number }> = {
   Masset: { lat: 54.0124, lng: -132.1497 },
@@ -40,6 +41,7 @@ export default function SubmitMapItem() {
     };
     const { error } = await supabase.from("live_map_items").insert(payload);
     if (error) return setError(error.message);
+    await notifyPublicSubmission("live_map", { title: String(payload.title || "Live Map submission"), publicAdminUrl: "/admin/live-map" });
     setSent(true);
     e.currentTarget.reset();
   }

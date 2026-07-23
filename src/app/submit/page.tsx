@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { notifyPublicSubmission } from "@/lib/public-submission-notify";
 
 export default function SubmitProfilePage() {
   const [status, setStatus] = useState("");
@@ -40,6 +41,7 @@ export default function SubmitProfilePage() {
       return;
     }
 
+    await notifyPublicSubmission("prospect", { title: String(form.get("name") || "Profile submission"), publicAdminUrl: "/admin/submissions" });
     formElement.reset();
     setStatus("Submitted! This profile will stay pending until it is reviewed and approved.");
   }

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { supabase } from "@/lib/supabase"
+import { notifyHgnOperations } from "@/lib/hgn-operations-notify"
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null)
@@ -38,6 +39,15 @@ export async function POST(request: Request) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
+
+  await notifyHgnOperations({
+    submissionType: "letter",
+    sourceId: String(data || crypto.randomUUID()),
+    title: String(subject || ""),
+    submitterName: name ? String(name) : null,
+    submitterEmail: email ? String(email) : null,
+    publicAdminUrl: "/admin/letters",
+  })
 
   return NextResponse.json({ ok: true, id: data || null })
 }
