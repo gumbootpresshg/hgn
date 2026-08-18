@@ -80,24 +80,24 @@ export default function AdminColumnsPage() {
     <main className="mx-auto max-w-6xl space-y-8 px-6 py-10">
       <section className="rounded-3xl border bg-white p-8 shadow-sm">
         <p className="text-sm font-semibold tracking-[0.18em] text-slate-500">HGN Admin</p>
-        <h1 className="mt-3 text-4xl font-black tracking-tight">Columns Menu</h1>
+        <h1 className="mt-3 text-4xl font-black tracking-tight">Columnists</h1>
         <p className="mt-3 text-slate-600">
-          Add, remove, hide, sort, and connect columnists/columns to the public Columns menu.
+          Add and manage HGN columnists, their public column pages, bios, photos and menu visibility.
         </p>
         {message ? <p className="mt-4 rounded-2xl bg-amber-50 p-4 text-sm text-amber-900">{message}</p> : null}
       </section>
 
       <section className="rounded-2xl border bg-white p-5 shadow-sm">
-        <h2 className="text-xl font-black">Add column</h2>
+        <h2 className="text-xl font-black">Add Columnist</h2>
         <div className="mt-4 grid gap-3 md:grid-cols-[1fr_auto]">
           <input
             value={name}
             onChange={(event) => setName(event.target.value)}
-            placeholder="Column or columnist name"
+            placeholder="Columnist or column name"
             className="rounded-2xl border px-4 py-3"
           />
           <button onClick={addColumnist} className="rounded-full bg-slate-950 px-5 py-3 text-sm font-bold text-white">
-            Add
+            + Add Columnist
           </button>
         </div>
       </section>
@@ -111,15 +111,27 @@ export default function AdminColumnsPage() {
               <Field label="Author match" value={item.author_match || ""} onChange={(value) => updateItem(item, { author_match: value })} />
               <Field label="Category match" value={item.category_match || ""} onChange={(value) => updateItem(item, { category_match: value })} />
               <Field label="Section match" value={item.section_match || ""} onChange={(value) => updateItem(item, { section_match: value })} />
+              <Field label="Photo URL" value={item.photo_url || ""} onChange={(value) => updateItem(item, { photo_url: value || null })} />
               <Field label="Sort order" type="number" value={String(item.sort_order || 0)} onChange={(value) => updateItem(item, { sort_order: Number(value) })} />
             </div>
 
             <label className="mt-4 block">
-              <span className="text-sm font-semibold">Description</span>
+              <span className="text-sm font-semibold">Short description</span>
               <textarea
                 value={item.description || ""}
                 onChange={(event) => updateItem(item, { description: event.target.value })}
                 rows={2}
+                className="mt-2 w-full rounded-2xl border px-4 py-3"
+              />
+            </label>
+
+
+            <label className="mt-4 block">
+              <span className="text-sm font-semibold">Public bio</span>
+              <textarea
+                value={item.bio || ""}
+                onChange={(event) => updateItem(item, { bio: event.target.value })}
+                rows={4}
                 className="mt-2 w-full rounded-2xl border px-4 py-3"
               />
             </label>

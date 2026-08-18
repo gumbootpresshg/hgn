@@ -86,6 +86,8 @@ export default function EditAdPage() {
         end_date: ad.end_date || null,
         status: status || ad.status || "draft",
         sort_order: Number(ad.sort_order || 0),
+        display_mode: ad.display_mode || "recommended",
+        max_width_px: ad.display_mode === "custom" ? Number(ad.max_width_px || 0) || null : null,
         notes: ad.notes || null,
         is_house_ad: Boolean(ad.is_house_ad),
         updated_at: new Date().toISOString(),
@@ -144,6 +146,26 @@ export default function EditAdPage() {
           <Field label="Alt text" value={ad.alt_text || ""} onChange={(v) => patch("alt_text", v)} />
           <Field label="Start date" type="date" value={ad.start_date || ""} onChange={(v) => patch("start_date", v)} />
           <Field label="End date" type="date" value={ad.end_date || ""} onChange={(v) => patch("end_date", v)} />
+
+          <label className="block">
+            <span className="text-sm font-semibold">Display size</span>
+            <select
+              value={ad.display_mode || "recommended"}
+              onChange={(event) => patch("display_mode", event.target.value)}
+              className="mt-2 w-full rounded-2xl border px-4 py-3"
+            >
+              <option value="recommended">Auto / Recommended</option>
+              <option value="small">Small · max 300px wide</option>
+              <option value="medium">Medium · max 468px wide</option>
+              <option value="leaderboard">Leaderboard · max 728px wide</option>
+              <option value="full">Full available width</option>
+              <option value="custom">Custom maximum width</option>
+            </select>
+          </label>
+
+          {ad.display_mode === "custom" ? (
+            <Field label="Custom max width (px)" type="number" value={String(ad.max_width_px || 728)} onChange={(v) => patch("max_width_px", Math.max(120, Math.min(1200, Number(v) || 728)))} />
+          ) : null}
         </div>
 
         {selectedPlacement ? (
@@ -156,6 +178,7 @@ export default function EditAdPage() {
             <p className="mt-1 text-sm text-slate-500">
               {selectedPlacement.size_notes || "Upload WebP, JPG, PNG, or GIF. Keep under 2MB if possible."}
             </p>
+            <p className="mt-2 text-sm font-semibold text-slate-700">Display Size controls how large the creative appears on the website. The uploaded image keeps its aspect ratio and will not be stretched taller to fill the slot.</p>
           </section>
         ) : null}
 
