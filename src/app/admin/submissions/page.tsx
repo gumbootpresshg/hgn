@@ -86,7 +86,7 @@ export default function AdminSubmissionsPage() {
       _kind: classifyInboxKind(item),
     }))
 
-    const inboxReaderSubmissions = inboxRows.filter((item) => item._kind === "submission")
+    const inboxReaderSubmissions = inboxRows.filter((item) => item._kind === "submission" && String(item.submission_type || "") !== "contact_message")
     const inboxMarketplace = inboxRows.filter((item) => item._kind === "classified").map(normalizeMarketplaceItem)
     const inboxJobs = inboxRows.filter((item) => item._kind === "job")
 
@@ -188,7 +188,7 @@ export default function AdminSubmissionsPage() {
           Submissions Review
         </h1>
         <p className="mt-3 max-w-3xl text-slate-600">
-          Reader submissions are now separated from marketplace/classifieds and jobs.
+          Editorial and community submissions are separated from general correspondence, marketplace/classifieds and jobs. General contact messages now live in Contact Messages.
         </p>
 
         <div className="mt-6 grid gap-3 sm:grid-cols-4">

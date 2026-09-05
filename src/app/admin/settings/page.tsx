@@ -1,6 +1,7 @@
 import Link from "next/link"
 
 const settings = [
+  ["Contact & notifications", "/admin/settings/contact", "Choose contact destinations, topic routing, form availability and Operations notifications."],
   ["Newsletter settings", "/admin/newsletter", "Automatic or manual production, schedule, sections and test sends."],
   ["Guide Keeper", "/admin/guide-keeper", "Official source checks, review queue and tourist-season freshness."],
   ["App readiness", "/admin/app-readiness", "Track the stable foundation required for iOS and Android."],
