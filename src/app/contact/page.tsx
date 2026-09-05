@@ -1,4 +1,5 @@
 import Link from "next/link";
+import ContactForm from "@/components/ContactForm";
 
 export default function ContactPage() {
   return (
@@ -36,39 +37,7 @@ export default function ContactPage() {
           <h2 className="text-2xl font-black text-hgnNavy">Send us a message</h2>
           <p className="mt-2 text-slate-600">Use this simple form for general questions. For urgent ad bookings or public notices, call or email directly.</p>
 
-          <form action="mailto:sales@haidagwaiinews.com" method="post" encType="text/plain" className="mt-6 grid gap-4">
-            <div className="grid gap-4 md:grid-cols-2">
-              <label className="grid gap-2 text-sm font-bold text-hgnNavy">
-                Name
-                <input name="name" required className="rounded-2xl border px-4 py-3 font-normal text-slate-900" />
-              </label>
-              <label className="grid gap-2 text-sm font-bold text-hgnNavy">
-                Email
-                <input name="email" type="email" required className="rounded-2xl border px-4 py-3 font-normal text-slate-900" />
-              </label>
-            </div>
-
-            <label className="grid gap-2 text-sm font-bold text-hgnNavy">
-              What is this about?
-              <select name="topic" className="rounded-2xl border px-4 py-3 font-normal text-slate-900" defaultValue="General question">
-                <option>General question</option>
-                <option>News tip</option>
-                <option>Advertising</option>
-                <option>Subscription</option>
-                <option>Public notice</option>
-                <option>Obituary</option>
-                <option>Correction</option>
-                <option>Letter to the editor</option>
-              </select>
-            </label>
-
-            <label className="grid gap-2 text-sm font-bold text-hgnNavy">
-              Message
-              <textarea name="message" required rows={7} className="rounded-2xl border px-4 py-3 font-normal text-slate-900" />
-            </label>
-
-            <button className="hgn-btn-primary justify-center" type="submit">Send Message</button>
-          </form>
+          <ContactForm />
         </section>
       </section>
     </main>

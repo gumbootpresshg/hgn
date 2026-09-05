@@ -6,7 +6,9 @@ export type PublicSubmissionNotice = {
   title?: string | null;
   submitterName?: string | null;
   submitterEmail?: string | null;
+  summary?: string | null;
   publicAdminUrl?: string | null;
+  receivedAt?: string | null;
   metadata?: Record<string, unknown>;
 };
 
@@ -20,7 +22,7 @@ export async function notifyHgnOperations(
   const url = process.env.HGN_OPERATIONS_WEBHOOK_URL || DEFAULT_OPERATIONS_WEBHOOK;
 
   if (!secret) {
-    console.warn("[HGN Operations] HGN_PUBLIC_SITE_WEBHOOK_SECRET is not configured.");
+    console.warn("[HGN Operations] Webhook secret is not configured.");
     return { delivered: false, error: "Webhook secret not configured" };
   }
 
@@ -29,33 +31,33 @@ export async function notifyHgnOperations(
       method: "POST",
       headers: {
         "content-type": "application/json",
-        authorization: `Bearer ${secret}`,
-        "x-hgn-webhook-secret": secret,
+        "x-hgn-operations-secret": secret,
       },
       body: JSON.stringify({
         source_id: notice.sourceId,
         submission_type: notice.submissionType,
-        title: notice.title ?? null,
+        title: notice.title ?? "Public submission",
         submitter_name: notice.submitterName ?? null,
         submitter_email: notice.submitterEmail ?? null,
+        summary: notice.summary ?? null,
         public_admin_url: notice.publicAdminUrl ?? null,
+        received_at: notice.receivedAt ?? null,
         metadata: notice.metadata ?? {},
       }),
       cache: "no-store",
     });
 
     if (!response.ok) {
-      const detail = await response.text().catch(() => "");
-      console.error("[HGN Operations] webhook rejected", response.status, detail);
+      console.error("[HGN Operations] webhook rejected", response.status);
       return { delivered: false, error: `Webhook returned ${response.status}` };
     }
 
     return { delivered: true };
   } catch (error) {
-    console.error("[HGN Operations] webhook delivery failed", error);
-    return {
-      delivered: false,
-      error: error instanceof Error ? error.message : "Unknown webhook error",
-    };
+    console.error(
+      "[HGN Operations] webhook delivery failed",
+      error instanceof Error ? error.name : "unknown_error"
+    );
+    return { delivered: false, error: "Webhook delivery failed" };
   }
 }
