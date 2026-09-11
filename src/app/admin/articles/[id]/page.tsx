@@ -1,7 +1,7 @@
 "use client";
 
 import { columnSlugFor, hgnColumnOptions } from "@/lib/column-options"
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -146,12 +146,19 @@ export default function ArticleEditorPage() {
   const [article, setArticle] = useState<Article>(blankArticle);
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
+  const [saveAction, setSaveAction] = useState<"save" | "publish" | null>(null);
+  const [isDirty, setIsDirty] = useState(false);
+  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
+  const [draftRecovered, setDraftRecovered] = useState(false);
+  const draftReadyRef = useRef(false);
+  const editVersionRef = useRef(0);
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState("");
   const [preview, setPreview] = useState(false);
   const [newsroomTimezone, setNewsroomTimezone] = useState("America/Vancouver");
 
   const previewUrl = useMemo(() => article.slug ? `/articles/${article.slug}` : "#", [article.slug]);
+  const draftKey = useMemo(() => `hgn:article-editor-draft:${id}`, [id]);
   const subcategoryOptions = useMemo(() => subcategoriesByCategory[article.category || "News"] || [], [article.category]);
   const showColumnSelector = article.category === "Opinion" && article.subcategory === "Columns";
   const readiness = useMemo(() => seoReadiness(article), [article]);
@@ -161,6 +168,49 @@ export default function ArticleEditorPage() {
     loadArticle();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  useEffect(() => {
+    if (!draftReadyRef.current || !isDirty) return;
+    const timer = window.setTimeout(() => {
+      try {
+        localStorage.setItem(draftKey, JSON.stringify({
+          article,
+          savedLocallyAt: new Date().toISOString(),
+        }));
+      } catch {
+        // Local draft protection is best-effort; database saves remain authoritative.
+      }
+    }, 500);
+    return () => window.clearTimeout(timer);
+  }, [article, draftKey, isDirty]);
+
+  useEffect(() => {
+    const persistDraftImmediately = () => {
+      if (!draftReadyRef.current || !isDirty) return;
+      try {
+        localStorage.setItem(draftKey, JSON.stringify({ article, savedLocallyAt: new Date().toISOString() }));
+      } catch {
+        // Best-effort recovery copy only.
+      }
+    };
+    const warnIfDirty = (event: BeforeUnloadEvent) => {
+      if (!isDirty) return;
+      persistDraftImmediately();
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    const handleVisibility = () => {
+      if (document.visibilityState === "hidden") persistDraftImmediately();
+    };
+    window.addEventListener("beforeunload", warnIfDirty);
+    window.addEventListener("pagehide", persistDraftImmediately);
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => {
+      window.removeEventListener("beforeunload", warnIfDirty);
+      window.removeEventListener("pagehide", persistDraftImmediately);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
+  }, [article, draftKey, isDirty]);
 
   useEffect(() => {
     (async () => {
@@ -180,20 +230,49 @@ export default function ArticleEditorPage() {
     if (error) setMessage(error.message);
     else {
       const row = data || {};
-      setArticle({
+      const databaseArticle = {
         ...blankArticle,
         ...row,
         author_name: row.author_name || row.author || blankArticle.author_name,
-      });
+      };
+      let nextArticle = databaseArticle;
+      try {
+        const rawDraft = localStorage.getItem(draftKey);
+        if (rawDraft) {
+          const draft = JSON.parse(rawDraft);
+          const localTime = new Date(draft?.savedLocallyAt || 0).getTime();
+          const databaseTime = new Date(row.updated_at || row.created_at || 0).getTime();
+          if (draft?.article && localTime > databaseTime) {
+            nextArticle = { ...databaseArticle, ...draft.article };
+            setIsDirty(true);
+            setDraftRecovered(true);
+            setMessage("Recovered unsaved changes from this browser.");
+          } else {
+            localStorage.removeItem(draftKey);
+          }
+        }
+      } catch {
+        // Ignore corrupt or unavailable local draft storage.
+      }
+      setArticle(nextArticle);
+      if (!draftRecovered) setLastSavedAt(row.updated_at ? new Date(row.updated_at) : null);
+      draftReadyRef.current = true;
     }
     setLoading(false);
   }
 
+  function markEdited() {
+    editVersionRef.current += 1;
+    setIsDirty(true);
+  }
+
   function update(field: string, value: any) {
     setArticle((prev) => ({ ...prev, [field]: value }));
+    markEdited();
   }
 
   function updateCategory(value: string) {
+    markEdited();
     const defaultSubcategory = (subcategoriesByCategory[value] || [""])[0];
     setArticle((prev) => ({
       ...prev,
@@ -206,6 +285,7 @@ export default function ArticleEditorPage() {
   }
 
   function updateSubcategory(value: string) {
+    markEdited();
     setArticle((prev) => ({
       ...prev,
       subcategory: value,
@@ -215,6 +295,7 @@ export default function ArticleEditorPage() {
   }
 
   function updateColumnName(value: string) {
+    markEdited();
     setArticle((prev) => ({
       ...prev,
       column_name: value,
@@ -246,6 +327,7 @@ export default function ArticleEditorPage() {
       og_image_url: prev.image_url || prev.og_image_url || generated.og_image_url,
       image_alt: prev.image_alt?.trim() || generated.image_alt,
     }));
+    markEdited();
     setMessage("SEO, Google News and social fields generated. Review them, then save or publish.");
   }
 
@@ -274,15 +356,18 @@ export default function ArticleEditorPage() {
 
   async function save(nextStatus?: string) {
     setSaving(true);
+    setSaveAction(nextStatus === "published" ? "publish" : "save");
     setMessage("");
 
     const title = String(article.title || "").trim();
     if (!title) {
       setMessage("Title is required.");
       setSaving(false);
+      setSaveAction(null);
       return;
     }
 
+    const saveVersion = editVersionRef.current;
     const status = nextStatus || article.status || "draft";
     const slug = article.slug?.trim() || slugify(title);
     const category = article.category || "News";
@@ -362,14 +447,27 @@ export default function ArticleEditorPage() {
         if (clearPhotoError) {
           setMessage(`Article saved, but the previous front-page photo could not be cleared: ${clearPhotoError.message}`);
           setSaving(false);
+          setSaveAction(null);
           return;
         }
       }
-      setMessage(status === "published" ? "Article published." : "Article saved.");
-      setArticle((prev) => ({ ...prev, ...payload }));
+      const savedAt = new Date();
+      const changedWhileSaving = editVersionRef.current !== saveVersion;
+      setMessage(status === "published" ? "Article published successfully." : "Article saved successfully.");
+      if (!changedWhileSaving) {
+        setArticle((prev) => ({ ...prev, ...payload }));
+        setIsDirty(false);
+        setDraftRecovered(false);
+        try { localStorage.removeItem(draftKey); } catch {}
+      } else {
+        setIsDirty(true);
+        setMessage(`${status === "published" ? "Article published" : "Article saved"}, but you made newer edits while it was saving. Those edits are still protected and need another save.`);
+      }
+      setLastSavedAt(savedAt);
       if (isNew && savedId) router.replace(`/admin/articles/${savedId}`);
     }
     setSaving(false);
+    setSaveAction(null);
   }
 
   async function deleteArticle() {
@@ -390,15 +488,24 @@ export default function ArticleEditorPage() {
           <h1 className="mt-2 text-4xl font-black text-hgnNavy md:text-5xl">{isNew ? "New Article" : "Edit Article"}</h1>
           <p className="mt-2 text-slate-600">A WordPress-style editor for titles, copy, photos, categories, and front-page placement.</p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          {!isNew && article.slug && <Link href={previewUrl} target="_blank" className="hgn-btn-dark">Open public page</Link>}
-          <button onClick={() => setPreview((v) => !v)} className="hgn-btn-dark">{preview ? "Hide preview" : "Preview"}</button>
-          <button onClick={() => save("draft")} disabled={saving} className="hgn-btn-primary">Save draft</button>
-          <button onClick={() => save("published")} disabled={saving} className="hgn-btn-primary">Publish</button>
+        <div className="flex flex-col items-start gap-2 md:items-end">
+          <div className="flex flex-wrap gap-2">
+            {!isNew && article.slug && <Link href={previewUrl} target="_blank" className="hgn-btn-dark">Open public page</Link>}
+            <button onClick={() => setPreview((v) => !v)} className="hgn-btn-dark">{preview ? "Hide preview" : "Preview"}</button>
+            <button onClick={() => save("draft")} disabled={saving} className="hgn-btn-primary">{saving && saveAction === "save" ? "Saving…" : "Save draft"}</button>
+            <button onClick={() => save("published")} disabled={saving} className="hgn-btn-primary">{saving && saveAction === "publish" ? "Publishing…" : "Publish"}</button>
+          </div>
+          <div className="text-xs font-bold uppercase tracking-[0.08em]">
+            {isDirty ? (
+              <span className="text-amber-700">● Unsaved changes · protected in this browser</span>
+            ) : lastSavedAt ? (
+              <span className="text-emerald-700">✓ Saved {lastSavedAt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</span>
+            ) : null}
+          </div>
         </div>
       </div>
 
-      {message && <div className="hgn-card mt-6 p-4 font-bold text-hgnNavy">{message}</div>}
+      {message && <div role="status" aria-live="polite" className="hgn-card mt-6 border-l-4 border-l-hgnRed p-4 font-bold text-hgnNavy">{message}</div>}
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_340px]">
         <section className="grid content-start gap-5">
@@ -579,8 +686,8 @@ export default function ArticleEditorPage() {
           </div>
 
           <div className="hgn-card grid gap-3 p-5">
-            <button onClick={() => save()} disabled={saving} className="hgn-btn-primary">Save changes</button>
-            <button onClick={() => save("published")} disabled={saving} className="hgn-btn-primary">Publish now</button>
+            <button onClick={() => save()} disabled={saving} className="hgn-btn-primary">{saving && saveAction === "save" ? "Saving…" : "Save changes"}</button>
+            <button onClick={() => save("published")} disabled={saving} className="hgn-btn-primary">{saving && saveAction === "publish" ? "Publishing…" : "Publish now"}</button>
             <button onClick={deleteArticle} className="hgn-btn-dark">Delete article</button>
           </div>
         </aside>

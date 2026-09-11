@@ -45,15 +45,24 @@ summary::-webkit-details-marker { display: none; }
 .newspaper-section-heading a { flex: none; font-size: .7rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
 .newspaper-button, .newspaper-button-outline { display: inline-flex; min-height: 2.6rem; align-items: center; justify-content: center; padding: .65rem 1rem; font-size: .72rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; transition: .15s ease; }
 .newspaper-button { background: #171717; color: #fff; }
-.newspaper-button:hover { background: var(--accent); }
+.newspaper-button:hover { background: var(--accent); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(23,23,23,.14); }
+.newspaper-button:active { transform: translateY(1px); }
+.newspaper-button:focus-visible, .newspaper-button-outline:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 60%, white); outline-offset: 3px; }
 .newspaper-button-outline { border: 1px solid #171717; color: #171717; }
-.newspaper-button-outline:hover { background: #171717; color: #fff; }
+.newspaper-button-outline:hover { background: #171717; color: #fff; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(23,23,23,.12); }
+.newspaper-button-outline:active { transform: translateY(1px); }
 
 .prose p { margin-bottom: 1rem; line-height: 1.75; }
 .hgn-card { @apply border border-stone-300 bg-[#fffefa]; border-radius: 0; box-shadow: none; }
-.hgn-btn { @apply inline-flex items-center justify-center px-4 py-2 font-semibold transition; border-radius: 0; }
-.hgn-btn-primary { @apply hgn-btn bg-hgnRed text-white hover:opacity-90; }
-.hgn-btn-dark { @apply hgn-btn bg-stone-950 text-white hover:opacity-90; }
+.hgn-btn { @apply inline-flex items-center justify-center px-4 py-2 font-semibold transition; border-radius: 0; transition-property: transform, box-shadow, background-color, color, opacity; transition-duration: 140ms; }
+.hgn-btn:hover { transform: translateY(-1px); box-shadow: 0 0 0 2px rgba(23, 23, 23, .10), 0 5px 14px rgba(23, 23, 23, .12); }
+.hgn-btn:active { transform: translateY(1px) scale(.99); box-shadow: 0 0 0 2px rgba(23, 23, 23, .08); }
+.hgn-btn:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 60%, white); outline-offset: 3px; }
+.hgn-btn:disabled { cursor: wait; transform: none; box-shadow: none; opacity: .58; }
+.hgn-btn-primary { @apply hgn-btn bg-hgnRed text-white; }
+.hgn-btn-primary:hover { filter: brightness(1.08); }
+.hgn-btn-dark { @apply hgn-btn bg-stone-950 text-white; }
+.hgn-btn-dark:hover { background: #292524; }
 input, textarea, select { @apply w-full border border-stone-400 bg-white p-3 outline-none focus:ring-2 focus:ring-hgnRed; border-radius: 0; }
 label { @apply text-sm font-semibold text-stone-700; }
 
