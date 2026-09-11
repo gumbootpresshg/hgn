@@ -21,7 +21,7 @@ export default async function SectionArticleList({
   const { data, error } = await supabase
     .from("articles")
     .select("*")
-    .in("status", ["published", "approved", "public", "live", "active"])
+    .eq("status", "published")
     .order("published_at", { ascending: false, nullsFirst: false })
     .order("created_at", { ascending: false })
     .limit(300)

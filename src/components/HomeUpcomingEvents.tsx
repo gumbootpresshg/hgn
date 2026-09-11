@@ -6,7 +6,7 @@ import { getPublishingSettings, publishingDateInputValue } from "@/lib/publishin
 
 function eventDateValue(event: any) { return event?.start_date || event?.event_date || event?.date || event?.starts_at || event?.created_at || "" }
 
-export default async function HomeUpcomingEvents() {
+export default async function HomeUpcomingEvents({ hideWhenEmpty = false }: { hideWhenEmpty?: boolean } = {}) {
   const publishingSettings = await getPublishingSettings()
   const today = publishingDateInputValue(new Date(), publishingSettings)
   const { data } = await fetchPublicEvents(supabase)
@@ -15,6 +15,8 @@ export default async function HomeUpcomingEvents() {
     const date = String(eventDateValue(event) || "").slice(0, 10)
     return date >= today && !title.includes("submit your") && !title.includes("community event submissions") && !title.includes("submissions open") && !title.includes("submit event")
   }).sort((a: any, b: any) => String(eventDateValue(a)).localeCompare(String(eventDateValue(b)))).slice(0, 4)
+
+  if (hideWhenEmpty && events.length === 0) return null
 
   return (
     <section className="mobile-compact-section">

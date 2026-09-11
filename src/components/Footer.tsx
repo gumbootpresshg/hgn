@@ -12,7 +12,7 @@ const footerGroups = [
 export function Footer() {
   const { labels } = useSiteTheme()
   return (
-    <footer className="mt-16 border-t-4 border-double border-stone-900 bg-[#f4f0e8] text-stone-900">
+    <footer className="mt-8 border-t-4 md:mt-16 border-double border-stone-900 bg-[#f4f0e8] text-stone-900">
       <div className="mx-auto max-w-[1480px] px-4 py-10 md:px-7">
         <div className="grid gap-10 border-b border-stone-400 pb-9 lg:grid-cols-[1.25fr_2fr_1fr]">
           <div>

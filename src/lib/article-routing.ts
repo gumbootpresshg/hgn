@@ -53,6 +53,7 @@ export function articleSectionValues(article: any) {
   return [
     article?.category,
     article?.section,
+    article?.subcategory,
     article?.vertical,
     article?.type,
     article?.column_name,
@@ -94,6 +95,26 @@ export function isEditorial(article: any) {
   return containsMatch(article, ["editorial"], ["category", "section", "subcategory", "type", "vertical", "slug"])
 }
 
+export function isOpinion(article: any) {
+  return isEditorial(article) || isColumn(article) || exactMatch(
+    article,
+    ["opinion", "guest opinion", "community voices", "on the record"],
+    ["category", "section", "subcategory", "type", "vertical"]
+  )
+}
+
+export function isPublishedArticle(article: any) {
+  return norm(article?.status) === "published"
+}
+
+export function sortArticlesNewest<T extends { published_at?: string | null; created_at?: string | null }>(articles: T[]) {
+  return [...articles].sort((a, b) => {
+    const aTime = Date.parse(a.published_at || a.created_at || "") || 0
+    const bTime = Date.parse(b.published_at || b.created_at || "") || 0
+    return bTime - aTime
+  })
+}
+
 export function isLetter(article: any) {
   return containsMatch(article, ["letter", "letters to the editor"], ["category", "section", "subcategory", "type", "vertical", "slug"])
 }
@@ -108,12 +129,11 @@ export function isMountieMinute(article: any) {
 }
 
 export function isLocalNews(article: any) {
-  return exactMatch(article, ["local news", "news", "local"], ["category", "section", "type", "vertical"])
+  return exactMatch(article, ["local news", "news", "local", "politics", "business"], ["category", "section", "subcategory", "type", "vertical"])
     && !isSports(article)
     && !isMountieMinute(article)
-    && !isEditorial(article)
+    && !isOpinion(article)
     && !isLetter(article)
-    && !isColumn(article)
 }
 
 export function articleBackHref(article: any) {

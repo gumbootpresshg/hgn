@@ -3,6 +3,7 @@ import { supabase } from "@/lib/supabase";
 import AdSlot from "@/components/AdSlot";
 import { getArticleImage } from "@/lib/article-images";
 import { formatPublishingDate, getPublishingSettings } from "@/lib/publishing-settings";
+import { isLetter, isOpinion, sortArticlesNewest } from "@/lib/article-routing";
 
 export const revalidate = 60;
 
@@ -75,11 +76,10 @@ export default async function Articles({ searchParams }: PageProps) {
 
   if (selectedCategory && isNewsCategory(selectedCategory)) {
     query = query.eq("category", selectedCategory);
-  } else {
-    query = query.not("category", "in", '("Letters","Letter","Letters to the Editor","Editorial","Editorials","Opinion","Column","Columns","Community Voices")');
   }
 
-  const { data: articles } = await query;
+  const { data } = await query;
+  const articles = sortArticlesNewest((data || []).filter((article: any) => !isOpinion(article) && !isLetter(article)));
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-10">

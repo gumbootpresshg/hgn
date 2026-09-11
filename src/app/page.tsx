@@ -4,7 +4,7 @@ import AdSlot from "@/components/AdSlot"
 import Link from "next/link"
 import { supabase } from "@/lib/supabase"
 import { smartExcerpt } from "@/lib/text"
-import { isColumn, isEditorial } from "@/lib/article-routing"
+import { isLocalNews, isOpinion, sortArticlesNewest } from "@/lib/article-routing"
 import { getArticleImage } from "@/lib/article-images"
 import { formatFreshness, formatPublishingDate, getPublishingSettings, type PublishingSettings } from "@/lib/publishing-settings"
 
@@ -70,7 +70,7 @@ export default async function Home() {
     supabase.from("articles").select("*").eq("status", "published").eq("front_page_main", true).order("published_at", { ascending: false }).limit(1),
     supabase.from("articles").select("*").eq("status", "published").eq("front_page_photo", true).not("image_url", "is", null).order("published_at", { ascending: false }).limit(1),
     supabase.from("articles").select("*").eq("status", "published").eq("featured", true).order("published_at", { ascending: false }).limit(8),
-    supabase.from("articles").select("*").eq("status", "published").order("published_at", { ascending: false }).limit(28),
+    supabase.from("articles").select("*").eq("status", "published").order("published_at", { ascending: false }).limit(80),
   ])
 
   const settings = (frontPageSettings || null) as FrontPageSettings | null
@@ -98,15 +98,21 @@ export default async function Home() {
   const frontPageCredit = photoInWindow && settings?.photo_url ? settings.photo_credit : legacyFrontPagePhoto?.image_credit
   const frontPageAlt = photoInWindow && settings?.photo_url ? settings.photo_alt : legacyFrontPagePhoto?.image_alt
   const frontPageHref = managedRelatedArticle ? `/articles/${managedRelatedArticle.slug}` : null
-  const featured = ((featuredStories?.length ? featuredStories : latestStories) || []).filter((a: Article) => a.slug !== main?.slug) as Article[]
+  const chronological = sortArticlesNewest((latestStories || []) as Article[])
+  const featured = sortArticlesNewest(((featuredStories || []) as Article[]).filter((a) => a.slug !== main?.slug))
   const secondary = featured.slice(0, 2)
-  const opinion = [...featured, ...(latestStories || [])].find((article: Article) => (isEditorial(article) || isColumn(article) || /opinion/i.test(`${article.category || ""} ${article.section || ""} ${article.subcategory || ""}`)) && article.slug !== main?.slug)
+  const opinion = chronological.find((article) => isOpinion(article) && article.slug !== main?.slug)
+
+  // "Latest" must stay literal: newest published stories, not leftovers after other homepage slots.
+  const briefs = chronological.filter((a) => a.slug !== main?.slug).slice(0, 5)
+
   const used = new Set([main?.slug, ...secondary.map((a) => a.slug), opinion?.slug].filter(Boolean))
-  const latest = (latestStories || []).filter((a: Article) => !used.has(a.slug)) as Article[]
-  const briefs = latest.slice(0, 5)
+  const remaining = chronological.filter((a) => !used.has(a.slug))
   const photoRailStories = secondary
-  const secondaryStripStories = latest.slice(5, 9)
-  const moreLocalStories = latest.slice(9, 19)
+  const localRemaining = remaining.filter(isLocalNews)
+  const secondaryStripStories = localRemaining.slice(0, 4)
+  const secondaryStripSlugs = new Set(secondaryStripStories.map((article) => article.slug))
+  const moreLocalStories = localRemaining.filter((article) => !secondaryStripSlugs.has(article.slug)).slice(0, 10)
 
   return (
     <main className="newspaper-shell py-3 md:py-7">
@@ -245,7 +251,7 @@ export default async function Home() {
               ))}
             </div>
           </div>
-          <HomeUpcomingEvents />
+          <HomeUpcomingEvents hideWhenEmpty />
           <HomePoll />
           <section className="border-y border-stone-400 py-5">
             <p className="newspaper-kicker text-hgnRed">Support local journalism</p>

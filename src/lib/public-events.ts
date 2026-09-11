@@ -21,22 +21,19 @@ function normalizePublicEvent(event: any, source: string) {
 }
 
 export async function fetchPublicEvents(supabase: any) {
-  // Admin Events is the source of truth. Public pages should only show approved
-  // event_submissions so old rows from the legacy events table cannot reappear.
-  const submissionResult = await supabase
-    .from("event_submissions")
-    .select("id,title,description,event_date,start_date,end_date,start_time,end_time,is_all_day,location,community,organizer_name,organizer_email,organizer_phone,contact_name,contact_email,contact_phone,image_url,status,updated_at,created_at,published_event_id")
-    .in("status", ["approved", "published", "public", "live"])
+  // The review queue lives in event_submissions. Once approved, the canonical
+  // public event is written to events. All reader-facing surfaces read events.
+  const result = await supabase
+    .from("events")
+    .select("id,title,description,event_date,start_date,end_date,start_time,end_time,is_all_day,location,community,town,organizer_name,organizer_email,organizer_phone,contact_name,contact_email,contact_phone,image_url,status,updated_at,created_at,starts_at,ends_at")
+    .in("status", ["published", "approved", "public", "live", "active"])
     .order("start_date", { ascending: true, nullsFirst: false })
     .order("event_date", { ascending: true, nullsFirst: false })
 
-  const events = (submissionResult.data || [])
+  const events = (result.data || [])
     .filter(isActualPublishedEvent)
-    .map((event: any) => normalizePublicEvent(event, "event_submissions"))
+    .map((event: any) => normalizePublicEvent(event, "events"))
     .filter((event: any) => eventStartDateValue(event))
 
-  return {
-    data: events,
-    error: submissionResult.error,
-  }
+  return { data: events, error: result.error }
 }
