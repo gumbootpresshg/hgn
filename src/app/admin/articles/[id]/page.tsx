@@ -401,7 +401,7 @@ export default function ArticleEditorPage() {
       {message && <div className="hgn-card mt-6 p-4 font-bold text-hgnNavy">{message}</div>}
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_340px]">
-        <section className="grid gap-5">
+        <section className="grid content-start gap-5">
           <div className="hgn-card space-y-4 p-5">
             <label className="block">
               <span className="block">Headline</span>
