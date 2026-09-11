@@ -141,3 +141,7 @@ Adds:
 - archive health scoring
 
 Run the migration in Supabase after applying previous upgrades.
+
+## v0.60.6 publishing date settings
+
+Publishing dates now use one configurable newsroom timezone and display style. Configure under `/admin/settings/publishing`. Run `supabase/v280-publishing-date-settings.sql` in the public HGN Supabase project before deploying.

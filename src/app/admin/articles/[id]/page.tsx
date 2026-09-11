@@ -36,18 +36,33 @@ function slugify(text: string) {
 }
 
 
-function toLocalDateTimeInput(value: string | null | undefined) {
+function toNewsroomDateTimeInput(value: string | null | undefined, timeZone: string) {
   if (!value) return "";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "";
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23",
+  }).formatToParts(date);
+  const get = (type: string) => parts.find((part) => part.type === type)?.value || "";
+  return `${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}`;
 }
 
-function fromLocalDateTimeInput(value: string) {
+function fromNewsroomDateTimeInput(value: string, timeZone: string) {
   if (!value) return null;
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? null : date.toISOString();
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/);
+  if (!match) return null;
+  const [, ys, ms, ds, hs, mins] = match;
+  const desiredUtc = Date.UTC(Number(ys), Number(ms) - 1, Number(ds), Number(hs), Number(mins));
+  let guess = desiredUtc;
+  for (let i = 0; i < 3; i += 1) {
+    const parts = new Intl.DateTimeFormat("en-CA", {
+      timeZone, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23",
+    }).formatToParts(new Date(guess));
+    const get = (type: string) => Number(parts.find((part) => part.type === type)?.value || 0);
+    const representedUtc = Date.UTC(get("year"), get("month") - 1, get("day"), get("hour"), get("minute"));
+    guess += desiredUtc - representedUtc;
+  }
+  return new Date(guess).toISOString();
 }
 
 function excerptFromArticleBody(value: string, maxLength = 220) {
@@ -134,6 +149,7 @@ export default function ArticleEditorPage() {
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState("");
   const [preview, setPreview] = useState(false);
+  const [newsroomTimezone, setNewsroomTimezone] = useState("America/Vancouver");
 
   const previewUrl = useMemo(() => article.slug ? `/articles/${article.slug}` : "#", [article.slug]);
   const subcategoryOptions = useMemo(() => subcategoriesByCategory[article.category || "News"] || [], [article.category]);
@@ -145,6 +161,18 @@ export default function ArticleEditorPage() {
     loadArticle();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (!token) return;
+      const response = await fetch("/api/admin/publishing-settings", { headers: { authorization: `Bearer ${token}` } });
+      if (!response.ok) return;
+      const result = await response.json().catch(() => ({}));
+      if (result.settings?.newsroom_timezone) setNewsroomTimezone(result.settings.newsroom_timezone);
+    })();
+  }, []);
 
   async function loadArticle() {
     setLoading(true);
@@ -460,7 +488,8 @@ export default function ArticleEditorPage() {
             </label>
             <label>
               Published date
-              <input type="datetime-local" value={toLocalDateTimeInput(article.published_at)} onChange={(e) => update("published_at", fromLocalDateTimeInput(e.target.value))} />
+              <span className="ml-2 text-xs font-normal text-slate-500">{newsroomTimezone}</span>
+              <input type="datetime-local" value={toNewsroomDateTimeInput(article.published_at, newsroomTimezone)} onChange={(e) => update("published_at", fromNewsroomDateTimeInput(e.target.value, newsroomTimezone))} />
             </label>
           </div>
 

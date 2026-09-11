@@ -2,6 +2,7 @@ import ArticleListCard from "@/components/ArticleListCard"
 import Link from "next/link"
 import { supabase } from "@/lib/supabase"
 import { articleExcerpt, articleAuthor, isLocalNews, isMountieMinute, isSports } from "@/lib/article-routing"
+import { getPublishingSettings } from "@/lib/publishing-settings"
 
 type Props = {
   title: string
@@ -16,6 +17,7 @@ export default async function SectionArticleList({
   sectionType,
   emptyText,
 }: Props) {
+  const publishingSettings = await getPublishingSettings()
   const { data, error } = await supabase
     .from("articles")
     .select("*")
@@ -46,7 +48,7 @@ export default async function SectionArticleList({
         <p className="rounded-2xl border bg-white p-6 text-slate-600">{emptyText || "No published articles found yet."}</p>
       ) : (
         <section className="space-y-4">
-          {articles.map((article: any) => (<ArticleListCard key={article.id} article={article} fallbackLabel={title} />))}
+          {articles.map((article: any) => (<ArticleListCard key={article.id} article={article} fallbackLabel={title} publishingSettings={publishingSettings} />))}
         </section>
       )}
     </main>

@@ -5,6 +5,7 @@ import Link from "next/link"
 import { supabase } from "@/lib/supabase"
 import { smartExcerpt } from "@/lib/text"
 import { getArticleImage } from "@/lib/article-images"
+import { formatFreshness, formatPublishingDate, getPublishingSettings, type PublishingSettings } from "@/lib/publishing-settings"
 
 export const revalidate = 60
 
@@ -43,47 +44,21 @@ function plainExcerpt(article: Article, length = 190) {
   return smartExcerpt(article.excerpt || article.body, length)
 }
 
-function articleDate(article: Article) {
-  return article.published_at ? new Date(article.published_at).toLocaleDateString("en-CA", { month: "short", day: "numeric", year: "numeric" }) : ""
+function articleDate(article: Article, settings: PublishingSettings) {
+  return formatPublishingDate(article.published_at, settings)
 }
 
-
-function articleFreshness(article: Article) {
-  if (!article.published_at) return ""
-
-  const publishedMs = new Date(article.published_at).getTime()
-  if (!Number.isFinite(publishedMs)) return ""
-
-  const ageMs = Date.now() - publishedMs
-  if (ageMs < 0) {
-    return new Date(article.published_at).toLocaleDateString("en-CA", {
-      month: "short",
-      day: "numeric",
-      timeZone: "America/Vancouver",
-    })
-  }
-
-  const minutes = Math.floor(ageMs / 60000)
-  if (minutes < 60) return minutes <= 1 ? "<1h" : `${minutes}m`
-
-  const hours = Math.floor(ageMs / 3600000)
-  if (hours < 24) return `${hours}h`
-
-  const days = Math.floor(ageMs / 86400000)
-  if (days < 7) return `${days}d`
-
-  return new Date(article.published_at).toLocaleDateString("en-CA", {
-    month: "short",
-    day: "numeric",
-    timeZone: "America/Vancouver",
-  })
+function articleFreshness(article: Article, settings: PublishingSettings) {
+  return formatFreshness(article.published_at, settings)
 }
 
-function StoryMeta({ article }: { article: Article }) {
-  return <p className="mt-3 text-[11px] uppercase tracking-[0.08em] text-stone-500">By {article.author_name || "Haida Gwaii News"}{articleDate(article) ? ` · ${articleDate(article)}` : ""}</p>
+function StoryMeta({ article, settings }: { article: Article; settings: PublishingSettings }) {
+  const date = articleDate(article, settings)
+  return <p className="mt-3 text-[11px] uppercase tracking-[0.08em] text-stone-500">By {article.author_name || "Haida Gwaii News"}{date ? ` · ${date}` : ""}</p>
 }
 
 export default async function Home() {
+  const publishingSettings = await getPublishingSettings()
   const [{ data: frontPageSettings }, { data: mainStories }, { data: frontPagePhotos }, { data: featuredStories }, { data: latestStories }] = await Promise.all([
     supabase.from("front_page_settings").select("*").eq("id", "current").maybeSingle(),
     supabase.from("articles").select("*").eq("status", "published").eq("front_page_main", true).order("published_at", { ascending: false }).limit(1),
@@ -148,7 +123,7 @@ export default async function Home() {
                 <Link href={`/articles/${main.slug}`} className="group">
                   <h1 className="mt-2 max-w-[15ch] font-serif text-[2.2rem] font-bold leading-[1.01] tracking-[-0.035em] text-stone-950 group-hover:text-hgnRed sm:text-[2.75rem] lg:text-[3rem] xl:text-[3.2rem]">{main.title}</h1>
                   <p className="mt-4 max-w-[42rem] text-base leading-7 text-stone-600">{plainExcerpt(main, 230)}</p>
-                  <StoryMeta article={main} />
+                  <StoryMeta article={main} settings={publishingSettings} />
                   <span className="mt-5 inline-block text-xs font-bold uppercase tracking-[0.12em]">Read full story →</span>
                 </Link>
               </article>
@@ -180,7 +155,7 @@ export default async function Home() {
                       <Link key={article.id} href={`/articles/${article.slug}`} className="group border-t border-stone-300 pt-3">
                         <p className="newspaper-kicker">{article.category || article.section || "News"}</p>
                         <h2 className="mt-1 font-serif text-xl font-bold leading-[1.08] group-hover:text-hgnRed">{article.title}</h2>
-                        <StoryMeta article={article} />
+                        <StoryMeta article={article} settings={publishingSettings} />
                       </Link>
                     ))}
                   </div>
@@ -196,7 +171,7 @@ export default async function Home() {
                 <h2 className="mt-2 font-serif text-2xl font-bold leading-[1.05] group-hover:text-hgnRed">{article.title}</h2>
                 <p className="mt-3 text-sm leading-6 text-stone-600">{plainExcerpt(article, 150)}</p>
                 <span className="mt-3 inline-block text-[11px] font-bold uppercase tracking-[0.12em]">Read more →</span>
-                <StoryMeta article={article} />
+                <StoryMeta article={article} settings={publishingSettings} />
               </Link>
             ))}
           </section>
@@ -220,7 +195,7 @@ export default async function Home() {
                               <h3 className="mt-1 font-serif text-xl font-bold leading-tight group-hover:text-hgnRed">{article.title}</h3>
                               <p className="mt-2 text-sm leading-6 text-stone-600">{plainExcerpt(article, 125)}</p>
                               <span className="mt-3 inline-block text-[11px] font-bold uppercase tracking-[0.12em]">Read more →</span>
-                              <StoryMeta article={article} />
+                              <StoryMeta article={article} settings={publishingSettings} />
                             </div>
                             {image ? <div className="aspect-[4/3] overflow-hidden bg-stone-200">
                               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -247,7 +222,7 @@ export default async function Home() {
               <h2 className="mt-2 font-serif text-3xl font-bold leading-[1.04] group-hover:text-hgnRed">{opinion.title}</h2>
               <p className="mt-3 text-sm leading-6 text-stone-600">{plainExcerpt(opinion, 170)}</p>
               <span className="mt-3 inline-block text-[11px] font-bold uppercase tracking-[0.12em]">Read more →</span>
-              <StoryMeta article={opinion} />
+              <StoryMeta article={opinion} settings={publishingSettings} />
             </Link>
           ) : null}
           <div className="border-t border-stone-300 pt-4">
@@ -259,7 +234,7 @@ export default async function Home() {
               {briefs.map((article) => (
                 <Link key={article.id} href={`/articles/${article.slug}`} className="grid grid-cols-[1fr_auto] gap-3 border-t border-stone-200 py-3 first:border-t-0">
                   <span className="font-serif text-base font-bold leading-tight hover:text-hgnRed">{article.title}</span>
-                  <span className="whitespace-nowrap text-[10px] uppercase text-stone-500">{articleFreshness(article)}</span>
+                  <span className="whitespace-nowrap text-[10px] uppercase text-stone-500">{articleFreshness(article, publishingSettings)}</span>
                 </Link>
               ))}
             </div>

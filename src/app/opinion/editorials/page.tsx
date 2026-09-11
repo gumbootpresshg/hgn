@@ -1,10 +1,12 @@
 import Link from "next/link"
 import { supabase } from "@/lib/supabase"
 import { articleExcerpt, articleAuthor, isEditorial } from "@/lib/article-routing"
+import { formatPublishingDate, getPublishingSettings } from "@/lib/publishing-settings"
 
 export const revalidate = 60
 
 export default async function EditorialsPage() {
+  const publishingSettings = await getPublishingSettings()
   const { data, error } = await supabase
     .from("articles")
     .select("*")
@@ -36,7 +38,7 @@ export default async function EditorialsPage() {
               <p className="mt-2 text-sm leading-6 text-slate-600">{articleExcerpt(article)}</p>
               <p className="mt-3 text-xs text-slate-500">
                 {articleAuthor(article)}
-                {article.published_at ? ` · ${new Date(article.published_at).toLocaleDateString("en-CA")}` : ""}
+                {article.published_at ? ` · ${formatPublishingDate(article.published_at, publishingSettings)}` : ""}
               </p>
             </Link>
           ))}

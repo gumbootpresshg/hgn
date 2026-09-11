@@ -10,6 +10,7 @@ import NewsArticleJsonLd from "@/components/NewsArticleJsonLd";
 import { absoluteUrl, stripHtml, SITE } from "@/lib/site";
 import { sanitizeArticleHtml } from "@/lib/sanitize-html";
 import Image from "next/image";
+import { formatPublishingDate, getPublishingSettings } from "@/lib/publishing-settings";
 
 export const dynamic = "force-dynamic";
 
@@ -53,18 +54,6 @@ function articleDescription(article: Article) {
   );
 }
 
-function displayDate(value?: string | null) {
-  if (!value) return "";
-  try {
-    return new Date(value).toLocaleDateString("en-CA", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  } catch {
-    return "";
-  }
-}
 
 export async function generateMetadata({ params }: PageProps) {
   const { slug } = await params;
@@ -119,11 +108,12 @@ export default async function ArticlePage({ params }: PageProps) {
 
   if (error || !article) notFound();
 
+  const publishingSettings = await getPublishingSettings();
   const typed = article as Article;
   const image = typed.image_url || typed.cover_image_url || typed.og_image_url;
   const author = displayAuthor(typed) || typed.author_name || typed.author || SITE.name;
-  const publishedDate = displayDate(typed.published_at);
-  const modifiedDate = displayDate(typed.updated_at);
+  const publishedDate = formatPublishingDate(typed.published_at, publishingSettings);
+  const modifiedDate = formatPublishingDate(typed.updated_at, publishingSettings);
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-10">

@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { supabase } from "@/lib/supabase"
 import { articleExcerpt, articleAuthor, officialColumnNames, slugify } from "@/lib/article-routing"
+import { formatPublishingDate, getPublishingSettings } from "@/lib/publishing-settings"
 
 export const revalidate = 60
 
@@ -17,6 +18,7 @@ function clean(value?: string | null) {
 export default async function ColumnDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
   const title = titleFromSlug(slug)
+  const publishingSettings = await getPublishingSettings()
 
   const { data } = await supabase
     .from("articles")
@@ -64,7 +66,7 @@ export default async function ColumnDetailPage({ params }: { params: Promise<{ s
               <p className="mt-2 text-sm text-slate-600">{articleExcerpt(article)}</p>
               <p className="mt-3 text-xs text-slate-500">
                 {articleAuthor(article)}
-                {article.published_at ? ` · ${new Date(article.published_at).toLocaleDateString("en-CA")}` : ""}
+                {article.published_at ? ` · ${formatPublishingDate(article.published_at, publishingSettings)}` : ""}
               </p>
             </Link>
           ))}

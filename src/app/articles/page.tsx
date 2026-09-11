@@ -2,6 +2,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import AdSlot from "@/components/AdSlot";
 import { getArticleImage } from "@/lib/article-images";
+import { formatPublishingDate, getPublishingSettings } from "@/lib/publishing-settings";
 
 export const revalidate = 60;
 
@@ -50,6 +51,7 @@ function excerpt(article: Article) {
 }
 
 export default async function Articles({ searchParams }: PageProps) {
+  const publishingSettings = await getPublishingSettings();
   const sp = searchParams ? await searchParams : {};
   const selectedCategory = sp.category || "";
 
@@ -109,7 +111,7 @@ export default async function Articles({ searchParams }: PageProps) {
                     <p className="mt-2 line-clamp-3 text-slate-700">{excerpt(article)}</p>
                     <p className="mt-3 text-sm text-slate-500">
                       {article.author_name || "Haida Gwaii News"}
-                      {article.published_at ? ` · ${new Date(article.published_at).toLocaleDateString("en-CA", { year: "numeric", month: "short", day: "numeric" })}` : ""}
+                      {article.published_at ? ` · ${formatPublishingDate(article.published_at, publishingSettings)}` : ""}
                     </p>
                     <span className="mt-3 inline-block text-xs font-black uppercase tracking-wider">Read more →</span>
                   </div>
