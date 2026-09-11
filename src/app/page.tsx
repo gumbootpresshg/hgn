@@ -47,6 +47,38 @@ function articleDate(article: Article) {
   return article.published_at ? new Date(article.published_at).toLocaleDateString("en-CA", { month: "short", day: "numeric", year: "numeric" }) : ""
 }
 
+
+function articleFreshness(article: Article) {
+  if (!article.published_at) return ""
+
+  const publishedMs = new Date(article.published_at).getTime()
+  if (!Number.isFinite(publishedMs)) return ""
+
+  const ageMs = Date.now() - publishedMs
+  if (ageMs < 0) {
+    return new Date(article.published_at).toLocaleDateString("en-CA", {
+      month: "short",
+      day: "numeric",
+      timeZone: "America/Vancouver",
+    })
+  }
+
+  const minutes = Math.floor(ageMs / 60000)
+  if (minutes < 60) return minutes <= 1 ? "<1h" : `${minutes}m`
+
+  const hours = Math.floor(ageMs / 3600000)
+  if (hours < 24) return `${hours}h`
+
+  const days = Math.floor(ageMs / 86400000)
+  if (days < 7) return `${days}d`
+
+  return new Date(article.published_at).toLocaleDateString("en-CA", {
+    month: "short",
+    day: "numeric",
+    timeZone: "America/Vancouver",
+  })
+}
+
 function StoryMeta({ article }: { article: Article }) {
   return <p className="mt-3 text-[11px] uppercase tracking-[0.08em] text-stone-500">By {article.author_name || "Haida Gwaii News"}{articleDate(article) ? ` · ${articleDate(article)}` : ""}</p>
 }
@@ -224,10 +256,10 @@ export default async function Home() {
               <Link href="/articles" className="text-[11px] font-bold">View all →</Link>
             </div>
             <div className="mt-2">
-              {briefs.map((article, index) => (
+              {briefs.map((article) => (
                 <Link key={article.id} href={`/articles/${article.slug}`} className="grid grid-cols-[1fr_auto] gap-3 border-t border-stone-200 py-3 first:border-t-0">
                   <span className="font-serif text-base font-bold leading-tight hover:text-hgnRed">{article.title}</span>
-                  <span className="text-[10px] uppercase text-hgnRed">{index + 1}h</span>
+                  <span className="whitespace-nowrap text-[10px] uppercase text-stone-500">{articleFreshness(article)}</span>
                 </Link>
               ))}
             </div>

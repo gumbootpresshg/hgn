@@ -49,6 +49,36 @@ function fromLocalDateTimeInput(value: string) {
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? null : date.toISOString();
 }
+
+function excerptFromArticleBody(value: string, maxLength = 220) {
+  const plain = String(value || "")
+    .replace(/<script[\s\S]*?<\/script>/gi, " " )
+    .replace(/<style[\s\S]*?<\/style>/gi, " " )
+    .replace(/<[^>]+>/g, " " )
+    .replace(/&nbsp;/gi, " " )
+    .replace(/&amp;/gi, "&")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/\s+/g, " " )
+    .trim();
+
+  if (!plain) return "";
+
+  const sentences = plain.match(/[^.!?]+[.!?]+(?=\s|$)|[^.!?]+$/g) || [plain];
+  let excerpt = "";
+  for (const sentence of sentences) {
+    const candidate = `${excerpt}${excerpt ? " " : ""}${sentence.trim()}`;
+    if (candidate.length > maxLength && excerpt) break;
+    excerpt = candidate;
+    if (excerpt.length >= 120) break;
+  }
+
+  if (excerpt.length <= maxLength) return excerpt;
+  const clipped = excerpt.slice(0, maxLength + 1);
+  const lastSpace = clipped.lastIndexOf(" " );
+  return `${clipped.slice(0, lastSpace > 120 ? lastSpace : maxLength).trim()}…`;
+}
+
 function titleCaseName(value: string) {
   return value
     .replace(/[._-]+/g, " ")
@@ -164,6 +194,16 @@ export default function ArticleEditorPage() {
     }));
   }
 
+
+  function generateExcerpt() {
+    const excerpt = excerptFromArticleBody(article.body || "");
+    if (!excerpt) {
+      setMessage("Paste or write the article body first, then generate the subtitle / excerpt.");
+      return;
+    }
+    update("excerpt", excerpt);
+    setMessage("Subtitle / excerpt created from the article. Review it before publishing.");
+  }
 
   function generateAllSeo() {
     if (!String(article.title || "").trim()) {
@@ -334,21 +374,34 @@ export default function ArticleEditorPage() {
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_340px]">
         <section className="grid gap-5">
-          <div className="hgn-card grid gap-4 p-5">
-            <label>
-              Headline
-              <input value={article.title || ""} onChange={(e) => update("title", e.target.value)} onBlur={() => !article.slug && update("slug", slugify(article.title || ""))} />
+          <div className="hgn-card space-y-4 p-5">
+            <label className="block">
+              <span className="block">Headline</span>
+              <input className="mt-1" value={article.title || ""} onChange={(e) => update("title", e.target.value)} onBlur={() => !article.slug && update("slug", slugify(article.title || ""))} />
             </label>
 
-            <label>
-              URL slug
-              <input value={article.slug || ""} onChange={(e) => update("slug", slugify(e.target.value))} />
+            <label className="block">
+              <span className="block">URL slug</span>
+              <input className="mt-1" value={article.slug || ""} onChange={(e) => update("slug", slugify(e.target.value))} />
             </label>
 
-            <label>
-              Subtitle / excerpt
-              <textarea value={article.excerpt || ""} onChange={(e) => update("excerpt", e.target.value)} rows={3} />
-            </label>
+            <div>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <label htmlFor="article-excerpt" className="block">Subtitle / excerpt</label>
+                <button type="button" onClick={generateExcerpt} className="hgn-btn-dark px-3 py-2 text-xs">
+                  Generate from article
+                </button>
+              </div>
+              <textarea
+                id="article-excerpt"
+                className="mt-1"
+                value={article.excerpt || ""}
+                onChange={(e) => update("excerpt", e.target.value)}
+                rows={3}
+                placeholder="Write a short deck, or generate one from the article body below."
+              />
+              <p className="mt-1 text-xs font-normal text-slate-500">Uses the opening sentences from the article as a starting point. You can edit it before saving.</p>
+            </div>
           </div>
 
           <div className="hgn-card p-5">
