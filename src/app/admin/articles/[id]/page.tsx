@@ -35,6 +35,20 @@ function slugify(text: string) {
     .replace(/^-|-$/g, "");
 }
 
+
+function toLocalDateTimeInput(value: string | null | undefined) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function fromLocalDateTimeInput(value: string) {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date.toISOString();
+}
 function titleCaseName(value: string) {
   return value
     .replace(/[._-]+/g, " ")
@@ -393,7 +407,7 @@ export default function ArticleEditorPage() {
             </label>
             <label>
               Published date
-              <input type="datetime-local" value={article.published_at ? new Date(article.published_at).toISOString().slice(0, 16) : ""} onChange={(e) => update("published_at", e.target.value ? new Date(e.target.value).toISOString() : null)} />
+              <input type="datetime-local" value={toLocalDateTimeInput(article.published_at)} onChange={(e) => update("published_at", fromLocalDateTimeInput(e.target.value))} />
             </label>
           </div>
 
