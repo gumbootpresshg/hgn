@@ -1,6 +1,7 @@
 "use client";
 
-import { columnSlugFor, hgnColumnOptions } from "@/lib/column-options"
+import { columnSlugFor } from "@/lib/column-options"
+import { useEditorialPeople } from "@/lib/use-editorial-people"
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -111,6 +112,7 @@ const blankArticle: Article = {
   excerpt: "",
   body: "",
   author_name: "Haida Gwaii News",
+  writer_id: null,
   category: "News",
   section: "News",
   subcategory: "Local News",
@@ -156,6 +158,7 @@ export default function ArticleEditorPage() {
   const [message, setMessage] = useState("");
   const [preview, setPreview] = useState(false);
   const [newsroomTimezone, setNewsroomTimezone] = useState("America/Vancouver");
+  const { authors, columns } = useEditorialPeople();
 
   const previewUrl = useMemo(() => article.slug ? `/articles/${article.slug}` : "#", [article.slug]);
   const draftKey = useMemo(() => `hgn:article-editor-draft:${id}`, [id]);
@@ -296,10 +299,15 @@ export default function ArticleEditorPage() {
 
   function updateColumnName(value: string) {
     markEdited();
+    const selectedColumn = columns.find((item) => (item.display_name || item.name || "") === value);
+    const selectedWriter = selectedColumn?.author_id ? authors.find((item) => item.id === selectedColumn.author_id) : undefined;
     setArticle((prev) => ({
       ...prev,
       column_name: value,
-      column_slug: value ? columnSlugFor(value) : "",
+      column_slug: value ? (selectedColumn?.slug || columnSlugFor(value)) : "",
+      writer_id: selectedWriter?.id || prev.writer_id || null,
+      author_name: selectedWriter?.display_name || prev.author_name,
+      author: selectedWriter?.display_name || prev.author,
     }));
   }
 
@@ -398,6 +406,7 @@ export default function ArticleEditorPage() {
       body: processedBody,
       author_name: titleCaseName(article.author_name || article.author || "Haida Gwaii News"),
       author: titleCaseName(article.author_name || article.author || "Haida Gwaii News"),
+      writer_id: article.writer_id || null,
       category,
       section: category,
       subcategory,
@@ -585,13 +594,33 @@ export default function ArticleEditorPage() {
                 Specific column / series
                 <select value={article.column_name || ""} onChange={(e) => updateColumnName(e.target.value)}>
                   <option value="">Choose a column</option>
-                  {hgnColumnOptions.map((c) => <option key={c}>{c}</option>)}
+                  {columns.map((item) => { const label = item.display_name || item.name || "Column"; return <option key={item.id} value={label}>{label}</option>; })}
                 </select>
               </label>
             ) : null}
             <label>
-              Author full name
-              <input value={article.author_name || ""} onChange={(e) => update("author_name", e.target.value)} onBlur={(e) => update("author_name", titleCaseName(e.target.value))} />
+              Author
+              <select
+                value={article.writer_id || ""}
+                onChange={(e) => {
+                  const nextId = e.target.value;
+                  const writer = authors.find((item) => item.id === nextId);
+                  markEdited();
+                  setArticle((prev) => ({
+                    ...prev,
+                    writer_id: nextId || null,
+                    author_name: writer?.display_name || prev.author_name || "Haida Gwaii News",
+                    author: writer?.display_name || prev.author || "Haida Gwaii News",
+                  }));
+                }}
+              >
+                <option value="">Legacy / Haida Gwaii News byline</option>
+                {authors.map((writer) => <option key={writer.id} value={writer.id}>{writer.display_name}</option>)}
+              </select>
+              <span className="mt-1 flex items-center justify-between gap-2 text-xs font-normal text-slate-500">
+                <span>{article.author_name || "Haida Gwaii News"}</span>
+                <Link href="/admin/authors" className="font-bold underline">Manage authors</Link>
+              </span>
             </label>
             <label>
               Published date

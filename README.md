@@ -149,3 +149,8 @@ Publishing dates now use one configurable newsroom timezone and display style. C
 ## v0.61.3 Article Editor Reliability
 
 Adds visible save/publish feedback, local unsaved-draft recovery, tab/background protection, leave warnings, and stronger button interaction states. See `CHANGELOG-v0.61.3.md`.
+
+
+## Current release
+
+HGN v0.61.4 adds the Writers & Columns system. See `CHANGELOG-v0.61.4.md` and `DEPLOYMENT-v0.61.4.md`.

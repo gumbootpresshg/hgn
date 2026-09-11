@@ -17,13 +17,22 @@ function clean(value?: string | null) {
 
 export default async function ColumnDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  const title = titleFromSlug(slug)
   const publishingSettings = await getPublishingSettings()
+  const { data: columnProfile } = await supabase
+    .from("columnists")
+    .select("id,display_name,name,slug,description,bio,photo_url,author_id")
+    .eq("slug", slug)
+    .eq("is_active", true)
+    .maybeSingle()
+  const title = columnProfile?.display_name || columnProfile?.name || titleFromSlug(slug)
+  const { data: columnAuthor } = columnProfile?.author_id
+    ? await supabase.from("hgn_authors").select("display_name,slug,photo_url").eq("id", columnProfile.author_id).maybeSingle()
+    : { data: null }
 
   const { data } = await supabase
     .from("articles")
     .select("*")
-    .in("status", ["published", "approved", "public", "live", "active"])
+    .eq("status", "published")
     .order("published_at", { ascending: false, nullsFirst: false })
     .order("created_at", { ascending: false })
     .limit(300)
@@ -46,6 +55,8 @@ export default async function ColumnDetailPage({ params }: { params: Promise<{ s
       <section className="rounded-3xl border bg-white p-8 shadow-sm">
         <p className="text-sm font-semibold tracking-[0.18em] text-slate-500">Columns</p>
         <h1 className="mt-3 text-4xl font-black tracking-tight">{title}</h1>
+        {columnProfile?.description ? <p className="mt-3 max-w-3xl text-slate-600">{columnProfile.description}</p> : null}
+        {columnAuthor?.slug ? <p className="mt-3 text-sm text-slate-600">By <Link href={`/authors/${columnAuthor.slug}`} className="font-bold hover:underline">{columnAuthor.display_name}</Link></p> : null}
         <Link href="/columns" className="mt-5 inline-flex text-sm font-bold text-hgnBlue">
           ← All columns
         </Link>

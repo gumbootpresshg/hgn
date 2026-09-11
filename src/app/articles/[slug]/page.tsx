@@ -32,6 +32,7 @@ type Article = {
   google_news_headline?: string | null;
   author?: string | null;
   author_name?: string | null;
+  writer_id?: string | null;
   category?: string | null;
   subcategory?: string | null;
   column_name?: string | null;
@@ -112,6 +113,9 @@ export default async function ArticlePage({ params }: PageProps) {
   const typed = article as Article;
   const image = typed.image_url || typed.cover_image_url || typed.og_image_url;
   const author = displayAuthor(typed) || typed.author_name || typed.author || SITE.name;
+  const { data: writer } = typed.writer_id
+    ? await supabase.from("hgn_authors").select("display_name,slug,is_active").eq("id", typed.writer_id).maybeSingle()
+    : { data: null };
   const publishedDate = formatPublishingDate(typed.published_at, publishingSettings);
   const modifiedDate = formatPublishingDate(typed.updated_at, publishingSettings);
 
@@ -133,7 +137,7 @@ export default async function ArticlePage({ params }: PageProps) {
         </h1>
 
         <div className="mt-4 border-b border-slate-200 pb-5 text-sm text-slate-600">
-          <span>By {author}</span>
+          <span>By {writer?.slug && writer?.is_active !== false ? <Link href={`/authors/${writer.slug}`} className="font-semibold hover:underline">{author}</Link> : author}</span>
           {publishedDate ? <span>{" "}· Published {publishedDate}</span> : null}
           {modifiedDate && modifiedDate !== publishedDate ? <span>{" "}· Updated {modifiedDate}</span> : null}
         </div>

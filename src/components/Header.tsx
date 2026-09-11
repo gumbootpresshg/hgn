@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation"
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import { slugify } from "@/lib/article-routing"
 import { useSiteTheme } from "@/components/theme/SiteThemeProvider"
+import { supabase } from "@/lib/supabase"
 
 const utilityLinks = [
   { href: "/newsletter", label: "Newsletter" },
@@ -151,7 +152,23 @@ export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [openDesktopMenu, setOpenDesktopMenu] = useState<string | null>(null)
   const [today, setToday] = useState("")
-  const columns = useMemo(() => fallbackColumns.map((name) => ({ href: `/columns/${slugify(name)}`, label: name })), [])
+  const fallbackColumnLinks = useMemo(() => fallbackColumns.map((name) => ({ href: `/columns/${slugify(name)}`, label: name })), [])
+  const [columns, setColumns] = useState<NavLink[]>(fallbackColumnLinks)
+
+  useEffect(() => {
+    let active = true
+    ;(async () => {
+      const { data } = await supabase
+        .from("columnists")
+        .select("display_name,name,slug")
+        .eq("is_active", true)
+        .order("sort_order", { ascending: true })
+        .order("display_name", { ascending: true })
+      if (!active || !data?.length) return
+      setColumns(data.map((item: any) => ({ href: `/columns/${item.slug}`, label: item.display_name || item.name })))
+    })()
+    return () => { active = false }
+  }, [])
 
   useEffect(() => {
     setToday(new Intl.DateTimeFormat("en-CA", { weekday: "long", year: "numeric", month: "long", day: "numeric" }).format(new Date()))

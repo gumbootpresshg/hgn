@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import { useEditorialPeople } from "@/lib/use-editorial-people";
 import { supabase } from "@/lib/supabase";
-import { columnSlugFor, hgnColumnOptions } from "@/lib/column-options";
+import { columnSlugFor } from "@/lib/column-options";
 
 const sections = ["News", "Opinion", "Sports", "Community", "Business", "Obituaries"];
 
@@ -24,6 +25,8 @@ export default function NewArticlePage() {
   const [subcategory, setSubcategory] = useState("Local News");
   const [columnName, setColumnName] = useState("");
   const [authorName, setAuthorName] = useState("Haida Gwaii News");
+  const [writerId, setWriterId] = useState("");
+  const { authors, columns } = useEditorialPeople();
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -64,7 +67,8 @@ export default function NewArticlePage() {
       const baseSlug = slugify(title) || `article-${Date.now()}`;
       const slug = `${baseSlug}-${Date.now().toString().slice(-5)}`;
       const selectedColumnName = showColumnSelector ? columnName : "";
-      const cleanAuthorName = authorName.trim() || "Haida Gwaii News";
+      const selectedWriter = authors.find((writer) => writer.id === writerId);
+      const cleanAuthorName = selectedWriter?.display_name || authorName.trim() || "Haida Gwaii News";
       const { data, error } = await supabase
         .from("articles")
         .insert({
@@ -80,6 +84,7 @@ export default function NewArticlePage() {
           excerpt: "",
           author_name: cleanAuthorName,
           author: cleanAuthorName,
+          writer_id: selectedWriter?.id || null,
           created_at: now,
           updated_at: now,
         })
@@ -128,12 +133,23 @@ export default function NewArticlePage() {
 
           <label className="block">
             <span className="text-sm font-semibold">Author</span>
-            <input
-              value={authorName}
-              onChange={(e) => setAuthorName(e.target.value)}
-              placeholder="Author name"
+            <select
+              value={writerId}
+              onChange={(e) => {
+                const nextId = e.target.value;
+                setWriterId(nextId);
+                const writer = authors.find((item) => item.id === nextId);
+                if (writer) setAuthorName(writer.display_name);
+              }}
               className="mt-2 w-full rounded-2xl border px-4 py-3"
-            />
+            >
+              <option value="">Haida Gwaii News / legacy byline</option>
+              {authors.map((writer) => <option key={writer.id} value={writer.id}>{writer.display_name}</option>)}
+            </select>
+            <span className="mt-2 flex items-center justify-between gap-3 text-xs text-slate-500">
+              <span>Active writers from Authors.</span>
+              <Link href="/admin/authors" className="font-bold underline">Manage authors</Link>
+            </span>
           </label>
           <label className="block">
             <span className="text-sm font-semibold">Main section</span>
@@ -160,11 +176,20 @@ export default function NewArticlePage() {
               <span className="text-sm font-semibold">Specific column / series</span>
               <select
                 value={columnName}
-                onChange={(e) => setColumnName(e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setColumnName(value);
+                  const selectedColumn = columns.find((item) => (item.display_name || item.name || "") === value);
+                  const selectedWriter = selectedColumn?.author_id ? authors.find((item) => item.id === selectedColumn.author_id) : undefined;
+                  if (selectedWriter) {
+                    setWriterId(selectedWriter.id);
+                    setAuthorName(selectedWriter.display_name);
+                  }
+                }}
                 className="mt-2 w-full rounded-2xl border px-4 py-3"
               >
                 <option value="">Choose a column</option>
-                {hgnColumnOptions.map((item) => <option key={item}>{item}</option>)}
+                {columns.map((item) => { const label = item.display_name || item.name || "Column"; return <option key={item.id} value={label}>{label}</option>; })}
               </select>
             </label>
           ) : null}
