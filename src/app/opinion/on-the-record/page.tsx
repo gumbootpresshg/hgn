@@ -1,9 +1,12 @@
 import Link from "next/link"
 import { supabase } from "@/lib/supabase"
+import { formatPublishingDate, getPublishingSettings } from "@/lib/publishing-settings"
 
+export const dynamic = "force-dynamic"
 export const revalidate = 0
 
 export default async function OnTheRecordPage() {
+  const publishingSettings = await getPublishingSettings()
   const { data, error } = await supabase
     .from("articles")
     .select("id,title,slug,excerpt,dek,author,category,subcategory,published_at,created_at,status")
@@ -59,7 +62,7 @@ export default async function OnTheRecordPage() {
                 {article.title}
               </Link>
               <p className="mt-2 text-sm text-slate-500">
-                {article.author || "HGN"} · {formatDate(article.published_at || article.created_at)}
+                {article.author || "HGN"} · {formatPublishingDate(article.published_at || article.created_at, publishingSettings)}
               </p>
               <p className="mt-3 text-slate-600">{article.excerpt || article.dek}</p>
             </article>
@@ -68,17 +71,4 @@ export default async function OnTheRecordPage() {
       )}
     </main>
   )
-}
-
-function formatDate(value?: string | null) {
-  if (!value) return "No date"
-  try {
-    return new Intl.DateTimeFormat("en-CA", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    }).format(new Date(value))
-  } catch {
-    return "No date"
-  }
 }

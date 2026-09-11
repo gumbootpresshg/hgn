@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { formatPublishingDate, getPublishingSettings } from "@/lib/publishing-settings";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 type PageProps = { params: Promise<{ subcategory: string }> };
 
@@ -45,14 +47,6 @@ function excerpt(article: Article) {
   );
 }
 
-function displayDate(value?: string | null) {
-  if (!value) return "";
-  try {
-    return new Intl.DateTimeFormat("en-CA", { year: "numeric", month: "long", day: "numeric" }).format(new Date(value));
-  } catch {
-    return "";
-  }
-}
 
 export async function generateMetadata({ params }: PageProps) {
   const { subcategory } = await params;
@@ -66,6 +60,7 @@ export async function generateMetadata({ params }: PageProps) {
 
 export default async function OpinionSubcategoryPage({ params }: PageProps) {
   const { subcategory } = await params;
+  const publishingSettings = await getPublishingSettings();
   const label = slugToLabel(subcategory);
   const target = clean(label);
 
@@ -112,7 +107,7 @@ export default async function OpinionSubcategoryPage({ params }: PageProps) {
               </Link>
               <p className="mt-2 text-sm text-slate-500">
                 {article.author_name || article.author || "Haida Gwaii News"}
-                {article.published_at || article.created_at ? ` · ${displayDate(article.published_at || article.created_at)}` : ""}
+                {article.published_at || article.created_at ? ` · ${formatPublishingDate(article.published_at || article.created_at, publishingSettings)}` : ""}
               </p>
               <p className="mt-3 text-slate-600">{excerpt(article)}</p>
             </article>

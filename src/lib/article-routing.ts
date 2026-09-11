@@ -69,20 +69,20 @@ export function fieldValues(article: any, fields: string[]) {
   return fields.map((field) => norm(article?.[field])).filter(Boolean)
 }
 
-export function exactMatch(article: any, terms: string[], fields = ["category", "section", "type", "vertical", "column_name", "column"]) {
+export function exactMatch(article: any, terms: string[], fields = ["category", "section", "subcategory", "type", "vertical", "column_name", "column"]) {
   const values = fieldValues(article, fields)
   const cleanTerms = terms.map(norm)
   return values.some((value) => cleanTerms.includes(value) || cleanTerms.includes(slugify(value)))
 }
 
-export function containsMatch(article: any, terms: string[], fields = ["category", "section", "type", "vertical", "column_name", "column", "slug"]) {
+export function containsMatch(article: any, terms: string[], fields = ["category", "section", "subcategory", "type", "vertical", "column_name", "column", "slug"]) {
   const values = fieldValues(article, fields)
   const cleanTerms = terms.map(norm)
   return values.some((value) => cleanTerms.some((term) => value.includes(term)))
 }
 
 export function isColumn(article: any) {
-  const values = fieldValues(article, ["category", "section", "type", "vertical", "column_name", "column", "slug", "title"])
+  const values = fieldValues(article, ["category", "section", "subcategory", "type", "vertical", "column_name", "column", "slug", "title"])
   return values.some((value) =>
     value.includes("column") ||
     officialColumnSlugs.includes(slugify(value)) ||
@@ -91,11 +91,11 @@ export function isColumn(article: any) {
 }
 
 export function isEditorial(article: any) {
-  return containsMatch(article, ["editorial"], ["category", "section", "type", "vertical", "slug"])
+  return containsMatch(article, ["editorial"], ["category", "section", "subcategory", "type", "vertical", "slug"])
 }
 
 export function isLetter(article: any) {
-  return containsMatch(article, ["letter", "letters to the editor"], ["category", "section", "type", "vertical", "slug"])
+  return containsMatch(article, ["letter", "letters to the editor"], ["category", "section", "subcategory", "type", "vertical", "slug"])
 }
 
 export function isSports(article: any) {

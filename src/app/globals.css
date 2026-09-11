@@ -82,8 +82,17 @@ button, a, input, select, textarea { touch-action: manipulation; }
 
 @media (max-width: 767px) {
   .newspaper-shell { width: min(100% - 1.25rem, 1480px); }
-  .masthead-wordmark { letter-spacing: -.045em; }
+  #hgn-masthead > div:first-child { display: none; }
+  #hgn-masthead > div:last-child { padding-top: .8rem; padding-bottom: .8rem; }
+  .masthead-wordmark { font-size: clamp(2.15rem, 10vw, 3rem); letter-spacing: -.045em; line-height: .95; }
+  #hgn-masthead .masthead-wordmark + div { margin-top: .35rem; font-size: .55rem; letter-spacing: .19em; line-height: 1.35; }
+  .newspaper-section-heading { padding-top: .55rem; padding-bottom: .45rem; }
+  .newspaper-section-heading h2 { font-size: 1.45rem; line-height: 1.05; }
+  .mobile-headline-strip { scrollbar-width: none; -ms-overflow-style: none; }
+  .mobile-headline-strip::-webkit-scrollbar { display: none; }
+  .mobile-compact-section { margin-bottom: 0; }
 }
+
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }

@@ -95,20 +95,20 @@ export default function HomePoll() {
   if (!poll) return null
 
   return (
-    <section className="border-y border-stone-400 py-5">
+    <section className="border-y border-stone-400 py-4 sm:py-5">
       <p className="newspaper-kicker text-hgnRed">Reader Poll</p>
-      <h2 className="mt-2 font-serif text-3xl font-bold leading-tight">{poll.question}</h2>
+      <h2 className="mt-2 font-serif text-2xl font-bold leading-[1.08] sm:text-3xl">{poll.question}</h2>
       {poll.description ? <p className="mt-2 text-sm leading-6 text-slate-600">{poll.description}</p> : null}
 
-      <div className="mt-4 grid gap-3">
+      <div className="mt-4 grid gap-2 sm:gap-3">
         {(poll.poll_options || []).map((option) => {
           const count = votes[option.id] || 0
           const percent = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0
 
           return (
-            <div key={option.id} className="border-b border-stone-300 py-3">
+            <div key={option.id} className="border border-stone-300 px-3 py-2.5 sm:border-x-0 sm:border-t-0 sm:px-0 sm:py-3">
               {!voted ? (
-                <button onClick={() => vote(option.id)} className="w-full text-left text-sm font-bold hover:text-hgnBlue">
+                <button onClick={() => vote(option.id)} className="min-h-10 w-full text-left text-sm font-bold hover:text-hgnBlue">
                   {option.label}
                 </button>
               ) : (

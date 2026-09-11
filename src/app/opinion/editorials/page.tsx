@@ -3,7 +3,8 @@ import { supabase } from "@/lib/supabase"
 import { articleExcerpt, articleAuthor, isEditorial } from "@/lib/article-routing"
 import { formatPublishingDate, getPublishingSettings } from "@/lib/publishing-settings"
 
-export const revalidate = 60
+export const dynamic = "force-dynamic"
+export const revalidate = 0
 
 export default async function EditorialsPage() {
   const publishingSettings = await getPublishingSettings()

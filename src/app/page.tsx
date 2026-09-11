@@ -4,10 +4,12 @@ import AdSlot from "@/components/AdSlot"
 import Link from "next/link"
 import { supabase } from "@/lib/supabase"
 import { smartExcerpt } from "@/lib/text"
+import { isColumn, isEditorial } from "@/lib/article-routing"
 import { getArticleImage } from "@/lib/article-images"
 import { formatFreshness, formatPublishingDate, getPublishingSettings, type PublishingSettings } from "@/lib/publishing-settings"
 
-export const revalidate = 60
+export const dynamic = "force-dynamic"
+export const revalidate = 0
 
 type FrontPageSettings = {
   lead_article_id?: string | null
@@ -30,6 +32,10 @@ type Article = {
   author_name?: string | null
   category?: string | null
   section?: string | null
+  subcategory?: string | null
+  column_name?: string | null
+  type?: string | null
+  vertical?: string | null
   image_url?: string | null
   image_alt?: string | null
   image_caption?: string | null
@@ -94,7 +100,7 @@ export default async function Home() {
   const frontPageHref = managedRelatedArticle ? `/articles/${managedRelatedArticle.slug}` : null
   const featured = ((featuredStories?.length ? featuredStories : latestStories) || []).filter((a: Article) => a.slug !== main?.slug) as Article[]
   const secondary = featured.slice(0, 2)
-  const opinion = [...featured, ...(latestStories || [])].find((article: Article) => /opinion|editorial|column/i.test(`${article.category || ""} ${article.section || ""}`) && article.slug !== main?.slug)
+  const opinion = [...featured, ...(latestStories || [])].find((article: Article) => (isEditorial(article) || isColumn(article) || /opinion/i.test(`${article.category || ""} ${article.section || ""} ${article.subcategory || ""}`)) && article.slug !== main?.slug)
   const used = new Set([main?.slug, ...secondary.map((a) => a.slug), opinion?.slug].filter(Boolean))
   const latest = (latestStories || []).filter((a: Article) => !used.has(a.slug)) as Article[]
   const briefs = latest.slice(0, 5)
@@ -103,26 +109,26 @@ export default async function Home() {
   const moreLocalStories = latest.slice(9, 19)
 
   return (
-    <main className="newspaper-shell py-5 md:py-7">
+    <main className="newspaper-shell py-3 md:py-7">
       <section className="border-b border-stone-900 pb-3">
-        <div className="flex items-center gap-4 overflow-hidden whitespace-nowrap text-xs">
-          <span className="font-bold uppercase tracking-[0.16em] text-hgnRed">Latest</span>
-          <div className="flex min-w-0 gap-5 overflow-hidden text-stone-700">
-            {briefs.slice(0, 3).map((article) => <Link key={article.id} href={`/articles/${article.slug}`} className="truncate hover:text-hgnRed">{article.title}</Link>)}
+        <div className="flex items-center gap-3 whitespace-nowrap text-xs">
+          <span className="shrink-0 font-bold uppercase tracking-[0.16em] text-hgnRed">Latest</span>
+          <div className="mobile-headline-strip flex min-w-0 flex-1 gap-5 overflow-x-auto text-stone-700">
+            {briefs.slice(0, 3).map((article) => <Link key={article.id} href={`/articles/${article.slug}`} className="shrink-0 max-w-[18rem] overflow-hidden text-ellipsis hover:text-hgnRed md:max-w-[24rem]">{article.title}</Link>)}
           </div>
           <Link href="/articles" className="ml-auto shrink-0 font-bold">All stories →</Link>
         </div>
       </section>
 
-      <section className="grid items-start gap-8 py-5 lg:grid-cols-[minmax(0,1fr)_minmax(280px,.34fr)]">
+      <section className="grid items-start gap-6 py-4 md:gap-8 md:py-5 lg:grid-cols-[minmax(0,1fr)_minmax(280px,.34fr)]">
         <div className="min-w-0">
           <section className={`grid items-start border-b border-stone-400 pb-5 ${frontPageImage ? "lg:grid-cols-[.78fr_1.22fr]" : "grid-cols-1"}`}>
             {main ? (
               <article className={frontPageImage ? "pr-0 lg:border-r lg:border-stone-300 lg:pr-6" : "mx-auto w-full max-w-4xl"}>
                 <p className="newspaper-kicker">Top Story</p>
                 <Link href={`/articles/${main.slug}`} className="group">
-                  <h1 className="mt-2 max-w-[15ch] font-serif text-[2.2rem] font-bold leading-[1.01] tracking-[-0.035em] text-stone-950 group-hover:text-hgnRed sm:text-[2.75rem] lg:text-[3rem] xl:text-[3.2rem]">{main.title}</h1>
-                  <p className="mt-4 max-w-[42rem] text-base leading-7 text-stone-600">{plainExcerpt(main, 230)}</p>
+                  <h1 className="mt-2 max-w-[15ch] font-serif text-[1.95rem] font-bold leading-[1.02] tracking-[-0.035em] text-stone-950 group-hover:text-hgnRed sm:text-[2.75rem] lg:text-[3rem] xl:text-[3.2rem]">{main.title}</h1>
+                  <p className="mt-3 max-w-[42rem] text-sm leading-6 text-stone-600 line-clamp-4 sm:mt-4 sm:text-base sm:leading-7 sm:line-clamp-none">{plainExcerpt(main, 230)}</p>
                   <StoryMeta article={main} settings={publishingSettings} />
                   <span className="mt-5 inline-block text-xs font-bold uppercase tracking-[0.12em]">Read full story →</span>
                 </Link>
@@ -215,11 +221,11 @@ export default async function Home() {
           </section>
         </div>
 
-        <aside className="space-y-7 lg:border-l lg:border-stone-300 lg:pl-7">
+        <aside className="space-y-5 md:space-y-7 lg:border-l lg:border-stone-300 lg:pl-7">
           {opinion ? (
             <Link href={`/articles/${opinion.slug}`} className="group block">
               <p className="newspaper-kicker text-hgnRed">Opinion</p>
-              <h2 className="mt-2 font-serif text-3xl font-bold leading-[1.04] group-hover:text-hgnRed">{opinion.title}</h2>
+              <h2 className="mt-2 font-serif text-2xl font-bold leading-[1.06] group-hover:text-hgnRed sm:text-3xl">{opinion.title}</h2>
               <p className="mt-3 text-sm leading-6 text-stone-600">{plainExcerpt(opinion, 170)}</p>
               <span className="mt-3 inline-block text-[11px] font-bold uppercase tracking-[0.12em]">Read more →</span>
               <StoryMeta article={opinion} settings={publishingSettings} />

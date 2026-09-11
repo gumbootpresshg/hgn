@@ -40,6 +40,21 @@ export function dateFormatOptions(settings: PublishingSettings): Intl.DateTimeFo
   return { year: "numeric", month: "short", day: "numeric", timeZone: settings.newsroom_timezone };
 }
 
+
+export function publishingDateInputValue(value: string | Date | null | undefined, settings: PublishingSettings) {
+  if (!value) return "";
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    timeZone: settings.newsroom_timezone,
+  }).formatToParts(date);
+  const get = (type: string) => parts.find((part) => part.type === type)?.value || "";
+  return `${get("year")}-${get("month")}-${get("day")}`;
+}
+
 export function formatPublishingDate(value: string | Date | null | undefined, settings: PublishingSettings) {
   if (!value) return "";
   const date = value instanceof Date ? value : new Date(value);
