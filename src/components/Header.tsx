@@ -218,6 +218,7 @@ export function Header() {
     {
       label: "Opinion",
       children: [
+        { href: "/opinion/editorials", label: "Editorials" },
         { href: "/columns", label: "Columns", children: columns },
         { href: "/letters", label: "Letters to the Editor" },
         { href: "/submit-guest-opinion", label: "Submit a Guest Opinion" },

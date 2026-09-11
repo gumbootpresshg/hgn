@@ -4,7 +4,7 @@ import AdSlot from "@/components/AdSlot"
 import Link from "next/link"
 import { supabase } from "@/lib/supabase"
 import { smartExcerpt } from "@/lib/text"
-import { isLocalNews, isOpinion, sortArticlesNewest } from "@/lib/article-routing"
+import { isColumn, isLocalNews, isOpinion, isSports, sortArticlesNewest } from "@/lib/article-routing"
 import { getArticleImage } from "@/lib/article-images"
 import { formatFreshness, formatPublishingDate, getPublishingSettings, type PublishingSettings } from "@/lib/publishing-settings"
 
@@ -103,16 +103,40 @@ export default async function Home() {
   const secondary = featured.slice(0, 2)
   const opinion = chronological.find((article) => isOpinion(article) && article.slug !== main?.slug)
 
-  // "Latest" must stay literal: newest published stories, not leftovers after other homepage slots.
-  const briefs = chronological.filter((a) => a.slug !== main?.slug).slice(0, 5)
+  // Desktop composition is de-duplicated by reserving each visible story as it is assigned.
+  // Manual/prominent slots win first; Latest Headlines then takes the newest unused stories;
+  // lower news sections are built only from what remains.
+  const desktopUsed = new Set<string>()
+  if (main?.slug) desktopUsed.add(main.slug)
+  secondary.forEach((article) => desktopUsed.add(article.slug))
+  if (opinion?.slug) desktopUsed.add(opinion.slug)
 
-  const used = new Set([main?.slug, ...secondary.map((a) => a.slug), opinion?.slug].filter(Boolean))
-  const remaining = chronological.filter((a) => !used.has(a.slug))
+  const briefs = chronological.filter((article) => !desktopUsed.has(article.slug)).slice(0, 5)
+  briefs.forEach((article) => desktopUsed.add(article.slug))
+
   const photoRailStories = secondary
-  const localRemaining = remaining.filter(isLocalNews)
+  const localRemaining = chronological.filter((article) => isLocalNews(article) && !desktopUsed.has(article.slug))
   const secondaryStripStories = localRemaining.slice(0, 4)
-  const secondaryStripSlugs = new Set(secondaryStripStories.map((article) => article.slug))
-  const moreLocalStories = localRemaining.filter((article) => !secondaryStripSlugs.has(article.slug)).slice(0, 10)
+  secondaryStripStories.forEach((article) => desktopUsed.add(article.slug))
+  const moreLocalStories = chronological
+    .filter((article) => isLocalNews(article) && !desktopUsed.has(article.slug))
+    .slice(0, 10)
+
+  // Mobile has its own composition because the desktop feature rail is hidden there. Reserve
+  // Opinion before building Latest so a story never appears in both sections on the same phone page.
+  const mobileUsed = new Set<string>()
+  if (main?.slug) mobileUsed.add(main.slug)
+  if (opinion?.slug) mobileUsed.add(opinion.slug)
+
+  const mobileLatest = chronological.filter((article) => !mobileUsed.has(article.slug)).slice(0, 4)
+  mobileLatest.forEach((article) => mobileUsed.add(article.slug))
+  const mobileNews = chronological.filter((article) => isLocalNews(article) && !mobileUsed.has(article.slug)).slice(0, 4)
+  mobileNews.forEach((article) => mobileUsed.add(article.slug))
+  const mobileSports = chronological.filter((article) => isSports(article) && !mobileUsed.has(article.slug)).slice(0, 3)
+  mobileSports.forEach((article) => mobileUsed.add(article.slug))
+  const mobileColumns = chronological.filter((article) => isColumn(article) && !mobileUsed.has(article.slug)).slice(0, 3)
+  mobileColumns.forEach((article) => mobileUsed.add(article.slug))
+  const mobileMoreNews = chronological.filter((article) => isLocalNews(article) && !mobileUsed.has(article.slug)).slice(0, 6)
 
   return (
     <main className="newspaper-shell py-3 md:py-7">
@@ -126,7 +150,99 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className="grid items-start gap-6 py-4 md:gap-8 md:py-5 lg:grid-cols-[minmax(0,1fr)_minmax(280px,.34fr)]">
+      <section className="py-4 lg:hidden">
+        {main ? (
+          <article className="border-b border-stone-400 pb-5">
+            <p className="newspaper-kicker">Top Story</p>
+            <Link href={`/articles/${main.slug}`} className="group block">
+              <h1 className="mt-2 max-w-[16ch] font-serif text-[2rem] font-bold leading-[1.01] tracking-[-0.035em] group-hover:text-hgnRed">{main.title}</h1>
+              <p className="mt-3 line-clamp-4 text-[15px] leading-6 text-stone-600">{plainExcerpt(main, 210)}</p>
+              <StoryMeta article={main} settings={publishingSettings} />
+              <span className="mt-4 inline-block text-xs font-bold uppercase tracking-[0.12em]">Read full story →</span>
+            </Link>
+            {frontPageImage ? (
+              <div className="mt-5">
+                {frontPageHref ? <Link href={frontPageHref}><img src={frontPageImage} alt={frontPageAlt || main.title} className="aspect-[16/9] w-full object-cover" /></Link> : <img src={frontPageImage} alt={frontPageAlt || main.title} className="aspect-[16/9] w-full object-cover" />}
+                {(frontPageCaption || frontPageCredit) ? <p className="mt-2 text-[11px] leading-4 text-stone-500">{frontPageCaption || ""}{frontPageCredit ? ` · Photo: ${frontPageCredit}` : ""}</p> : null}
+              </div>
+            ) : null}
+          </article>
+        ) : null}
+
+        <section className="border-b border-stone-400 py-5">
+          <div className="newspaper-section-heading"><h2>Latest Headlines</h2><Link href="/articles">View all →</Link></div>
+          <div>
+            {mobileLatest.map((article) => (
+              <Link key={article.id} href={`/articles/${article.slug}`} className="grid grid-cols-[1fr_auto] gap-3 border-b border-stone-200 py-3 last:border-b-0">
+                <span className="font-serif text-lg font-bold leading-tight">{article.title}</span>
+                <span className="whitespace-nowrap pt-1 text-[10px] uppercase text-stone-500">{articleFreshness(article, publishingSettings)}</span>
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        {opinion ? (
+          <section className="border-b border-stone-400 py-5">
+            <div className="newspaper-section-heading"><h2>Opinion</h2><Link href="/opinion">All opinion →</Link></div>
+            <Link href={`/articles/${opinion.slug}`} className="group block">
+              <p className="newspaper-kicker text-hgnRed">{opinion.subcategory || opinion.category || "Opinion"}</p>
+              <h2 className="mt-2 font-serif text-[1.7rem] font-bold leading-[1.04] group-hover:text-hgnRed">{opinion.title}</h2>
+              <p className="mt-2 line-clamp-3 text-sm leading-6 text-stone-600">{plainExcerpt(opinion, 155)}</p>
+              <StoryMeta article={opinion} settings={publishingSettings} />
+            </Link>
+          </section>
+        ) : null}
+
+        {mobileNews.length ? (
+          <section className="border-b border-stone-400 py-5">
+            <div className="newspaper-section-heading"><h2>More News</h2><Link href="/news">All news →</Link></div>
+            {mobileNews.map((article) => <Link key={article.id} href={`/articles/${article.slug}`} className="block border-b border-stone-200 py-3 last:border-b-0"><p className="newspaper-kicker">{article.subcategory || article.category || "News"}</p><h3 className="mt-1 font-serif text-xl font-bold leading-tight">{article.title}</h3><StoryMeta article={article} settings={publishingSettings} /></Link>)}
+          </section>
+        ) : null}
+
+        {mobileSports.length ? (
+          <section className="border-b border-stone-400 py-5">
+            <div className="newspaper-section-heading"><h2>Sports</h2><Link href="/sports">All sports →</Link></div>
+            {mobileSports.map((article) => <Link key={article.id} href={`/articles/${article.slug}`} className="block border-b border-stone-200 py-3 last:border-b-0"><h3 className="font-serif text-xl font-bold leading-tight">{article.title}</h3><StoryMeta article={article} settings={publishingSettings} /></Link>)}
+          </section>
+        ) : null}
+
+        {mobileColumns.length ? (
+          <section className="border-b border-stone-400 py-5">
+            <div className="newspaper-section-heading"><h2>Columns</h2><Link href="/columns">All columns →</Link></div>
+            {mobileColumns.map((article) => <Link key={article.id} href={`/articles/${article.slug}`} className="block border-b border-stone-200 py-3 last:border-b-0"><p className="newspaper-kicker">{article.column_name || "Column"}</p><h3 className="font-serif text-xl font-bold leading-tight">{article.title}</h3><StoryMeta article={article} settings={publishingSettings} /></Link>)}
+          </section>
+        ) : null}
+
+        <HomeUpcomingEvents hideWhenEmpty />
+        <HomePoll />
+
+        {mobileMoreNews.length ? (
+          <section className="border-b border-stone-400 py-5">
+            <div className="newspaper-section-heading"><h2>More Local News</h2><Link href="/articles">All stories →</Link></div>
+            {mobileMoreNews.map((article) => <Link key={article.id} href={`/articles/${article.slug}`} className="block border-b border-stone-200 py-3 last:border-b-0"><h3 className="font-serif text-lg font-bold leading-tight">{article.title}</h3><StoryMeta article={article} settings={publishingSettings} /></Link>)}
+          </section>
+        ) : null}
+
+        <section className="border-b border-stone-400 py-5">
+          <div className="newspaper-section-heading"><h2>Community & Marketplace</h2></div>
+          <div className="grid grid-cols-2 gap-2 text-sm font-bold">
+            <Link href="/events" className="border border-stone-300 px-3 py-3">Events →</Link>
+            <Link href="/marketplace" className="border border-stone-300 px-3 py-3">Marketplace →</Link>
+            <Link href="/explore" className="border border-stone-300 px-3 py-3">Island Guide →</Link>
+            <Link href="/obituaries" className="border border-stone-300 px-3 py-3">Obituaries →</Link>
+          </div>
+        </section>
+
+        <section className="py-5">
+          <p className="newspaper-kicker text-hgnRed">Support local journalism</p>
+          <h2 className="mt-2 font-serif text-2xl font-bold leading-tight">Independent reporting matters.</h2>
+          <p className="mt-2 text-sm leading-6 text-stone-600">Help keep Haida Gwaii news and community information accessible.</p>
+          <Link href="/support-us" className="newspaper-button mt-4">Support HGN</Link>
+        </section>
+      </section>
+
+      <section className="hidden items-start gap-6 py-4 md:gap-8 md:py-5 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(280px,.34fr)]">
         <div className="min-w-0">
           <section className={`grid items-start border-b border-stone-400 pb-5 ${frontPageImage ? "lg:grid-cols-[.78fr_1.22fr]" : "grid-cols-1"}`}>
             {main ? (
