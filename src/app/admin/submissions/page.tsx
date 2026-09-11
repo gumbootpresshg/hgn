@@ -1,130 +1,216 @@
 "use client"
 
+import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
 import { supabase } from "@/lib/supabase"
 
 type AnyItem = Record<string, any>
 
 type QueueItem = AnyItem & {
-  _table: "submission_inbox" | "classified_submissions" | "classifieds" | "marketplace_posts" | "marketplace" | "job_submissions"
+  _table: string
   _kind: "submission" | "classified" | "job"
+  _submissionType: string
+  _sourceLabel: string
+  _workspaceHref: string
+  _canModerateHere?: boolean
 }
 
-const MARKETPLACE_TYPES = new Set([
-  "classified",
-  "classifieds",
-  "marketplace",
-  "marketplace_post",
-  "realty",
-  "real_estate",
-])
+type SourceSpec = {
+  table: string
+  submissionType: string
+  sourceLabel: string
+  workspaceHref: (row: AnyItem) => string
+  normalize: (row: AnyItem) => Partial<QueueItem>
+  kind?: QueueItem["_kind"]
+  canModerateHere?: boolean
+}
 
-const JOB_TYPES = new Set(["job", "jobs", "job_post", "job_submission"])
+const SOURCES: SourceSpec[] = [
+  {
+    table: "letters_to_editor",
+    submissionType: "letter",
+    sourceLabel: "Letters to the Editor",
+    workspaceHref: () => "/admin/letters",
+    normalize: (r) => ({ title: "Letter to the Editor", sender_name: r.name, sender_email: r.email, message: r.letter, status: r.status || "new" }),
+  },
+  {
+    table: "event_submissions",
+    submissionType: "event",
+    sourceLabel: "Events",
+    workspaceHref: (r) => r.id ? `/admin/events/${r.id}` : "/admin/events",
+    normalize: (r) => ({ title: r.title || "Event submission", sender_name: r.organizer_name, sender_email: r.organizer_email, message: r.description, status: r.status || "pending" }),
+  },
+  {
+    table: "story_tips",
+    submissionType: "story_tip",
+    sourceLabel: "Story Tips",
+    workspaceHref: () => "/admin/submissions",
+    normalize: (r) => ({ title: r.title || "Story tip", sender_name: r.name, sender_email: r.email, message: r.details, status: r.status || "new" }),
+    canModerateHere: true,
+  },
+  {
+    table: "correction_requests",
+    submissionType: "correction",
+    sourceLabel: "Corrections",
+    workspaceHref: () => "/admin/trust",
+    normalize: (r) => ({ title: r.story_url || r.article_url || r.article_title || "Correction request", sender_name: r.name || r.submitter_name, sender_email: r.email || r.submitter_email, message: r.details || r.message, status: r.status || "new" }),
+  },
+  {
+    table: "photo_submissions",
+    submissionType: "photo",
+    sourceLabel: "Reader Photos",
+    workspaceHref: () => "/admin/submissions",
+    normalize: (r) => ({ title: r.caption || "Reader photo", sender_name: r.name, sender_email: r.email, message: r.caption, status: r.status || "new" }),
+    canModerateHere: true,
+  },
+  {
+    table: "notices",
+    submissionType: "notice",
+    sourceLabel: "Community Notices",
+    workspaceHref: () => "/admin/submissions",
+    normalize: (r) => ({ title: r.title || "Community notice", sender_name: r.contact_name, sender_email: r.contact_email, message: r.body || r.message || r.details || r.notice, status: r.status || "pending" }),
+    canModerateHere: true,
+  },
+  {
+    table: "obituaries",
+    submissionType: "obituary",
+    sourceLabel: "Obituaries",
+    workspaceHref: () => "/admin/obituaries",
+    normalize: (r) => ({ title: r.name || r.title || "Obituary submission", sender_name: r.contact_name, sender_email: r.contact_email, message: r.details || r.notice || r.message, status: r.status || "pending" }),
+  },
+  {
+    table: "visitor_listings",
+    submissionType: "visitor_listing",
+    sourceLabel: "Visitor Guide",
+    workspaceHref: () => "/admin/visitor-guide",
+    normalize: (r) => ({ title: r.title || "Visitor Guide submission", sender_name: r.submitter_name, sender_email: r.submitter_email, message: r.description, status: r.status || "pending" }),
+  },
+  {
+    table: "live_map_items",
+    submissionType: "live_map",
+    sourceLabel: "Live Map",
+    workspaceHref: () => "/admin/live-map",
+    normalize: (r) => ({ title: r.title || "Live Map submission", sender_name: r.contact_name, sender_email: r.contact_email, message: r.details, status: r.status || "pending" }),
+  },
+  {
+    table: "classified_submissions",
+    submissionType: "classified",
+    sourceLabel: "Marketplace / Classifieds",
+    workspaceHref: () => "/admin/submissions",
+    normalize: normalizeMarketplaceItem,
+    kind: "classified",
+    canModerateHere: true,
+  },
+  {
+    table: "classifieds",
+    submissionType: "classified",
+    sourceLabel: "Marketplace / Classifieds",
+    workspaceHref: () => "/admin/submissions",
+    normalize: normalizeMarketplaceItem,
+    kind: "classified",
+    canModerateHere: true,
+  },
+  {
+    table: "marketplace_posts",
+    submissionType: "marketplace",
+    sourceLabel: "Marketplace",
+    workspaceHref: () => "/admin/submissions",
+    normalize: normalizeMarketplaceItem,
+    kind: "classified",
+    canModerateHere: true,
+  },
+  {
+    table: "marketplace",
+    submissionType: "marketplace",
+    sourceLabel: "Marketplace",
+    workspaceHref: () => "/admin/submissions",
+    normalize: normalizeMarketplaceItem,
+    kind: "classified",
+    canModerateHere: true,
+  },
+  {
+    table: "job_submissions",
+    submissionType: "job",
+    sourceLabel: "Jobs",
+    workspaceHref: () => "/admin/submissions",
+    normalize: (r) => ({ title: r.job_title || r.title || "Job submission", sender_name: r.employer || r.contact_name, sender_email: r.contact_email || r.email, message: r.description || r.message, status: r.status || "pending" }),
+    kind: "job",
+    canModerateHere: true,
+  },
+]
 
 export default function AdminSubmissionsPage() {
-  const [submissions, setSubmissions] = useState<QueueItem[]>([])
-  const [classifieds, setClassifieds] = useState<QueueItem[]>([])
-  const [jobs, setJobs] = useState<QueueItem[]>([])
+  const [items, setItems] = useState<QueueItem[]>([])
   const [loading, setLoading] = useState(true)
-  const [workingId, setWorkingId] = useState("")
+  const [workingKey, setWorkingKey] = useState("")
   const [message, setMessage] = useState("")
+  const [filter, setFilter] = useState<"all" | "submission" | "classified" | "job">("all")
 
   async function load() {
     setLoading(true)
     setMessage("")
 
-    const submissionRes = await supabase
+    const inboxPromise = supabase
       .from("submission_inbox")
       .select("*")
       .order("created_at", { ascending: false })
-      .limit(100)
+      .limit(150)
 
-    const classifiedSubmissionsRes = await supabase
-      .from("classified_submissions")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(100)
+    const sourcePromises = SOURCES.map(async (source) => {
+      const result = await supabase.from(source.table).select("*").order("created_at", { ascending: false }).limit(150)
+      return { source, ...result }
+    })
 
-    const classifiedsRes = await supabase
-      .from("classifieds")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(100)
+    const [inboxResult, ...sourceResults] = await Promise.all([inboxPromise, ...sourcePromises])
+    const next: QueueItem[] = []
+    const softErrors: string[] = []
 
-    const marketplacePostsRes = await supabase
-      .from("marketplace_posts")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(100)
-
-    const marketplaceRes = await supabase
-      .from("marketplace")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(100)
-
-    const jobRes = await supabase
-      .from("job_submissions")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(100)
-
-    const hardErrors = [
-      submissionRes.error,
-      classifiedSubmissionsRes.error,
-      classifiedsRes.error,
-      jobRes.error,
-    ].filter(Boolean)
-
-    if (hardErrors.length > 0) {
-      setMessage(hardErrors[0]?.message || "Could not load one or more submission queues.")
+    if (inboxResult.error) {
+      softErrors.push(`submission_inbox: ${inboxResult.error.message}`)
+    } else {
+      for (const row of inboxResult.data || []) {
+        const type = String(row.submission_type || "reader_submission").toLowerCase()
+        if (type === "contact_message") continue
+        const kind = classifyInboxKind(row)
+        next.push({
+          ...row,
+          _table: "submission_inbox",
+          _kind: kind,
+          _submissionType: type,
+          _sourceLabel: labelSubmissionType(type),
+          _workspaceHref: inboxWorkspace(type, row),
+          _canModerateHere: true,
+        })
+      }
     }
 
-    const inboxRows = (submissionRes.data || []).map((item) => ({
-      ...item,
-      _table: "submission_inbox" as const,
-      _kind: classifyInboxKind(item),
-    }))
+    for (const result of sourceResults as any[]) {
+      const source = result.source as SourceSpec
+      if (result.error) {
+        // Some historical installations may not contain every optional table.
+        softErrors.push(`${source.table}: ${result.error.message}`)
+        continue
+      }
+      for (const row of result.data || []) {
+        next.push({
+          ...row,
+          ...source.normalize(row),
+          _table: source.table,
+          _kind: source.kind || "submission",
+          _submissionType: source.submissionType,
+          _sourceLabel: source.sourceLabel,
+          _workspaceHref: source.workspaceHref(row),
+          _canModerateHere: source.canModerateHere || false,
+        })
+      }
+    }
 
-    const inboxReaderSubmissions = inboxRows.filter((item) => item._kind === "submission" && String(item.submission_type || "") !== "contact_message")
-    const inboxMarketplace = inboxRows.filter((item) => item._kind === "classified").map(normalizeMarketplaceItem)
-    const inboxJobs = inboxRows.filter((item) => item._kind === "job")
+    const deduped = dedupeSubmissionRows(next).sort((a, b) => rowTime(b) - rowTime(a))
+    setItems(deduped)
 
-    setSubmissions(inboxReaderSubmissions)
-
-    setClassifieds([
-      ...inboxMarketplace,
-      ...(classifiedSubmissionsRes.data || []).map((item) => ({
-        ...normalizeMarketplaceItem(item),
-        _table: "classified_submissions" as const,
-        _kind: "classified" as const,
-      })),
-      ...(classifiedsRes.data || []).map((item) => ({
-        ...normalizeMarketplaceItem(item),
-        _table: "classifieds" as const,
-        _kind: "classified" as const,
-      })),
-      ...(marketplacePostsRes.error ? [] : (marketplacePostsRes.data || []).map((item) => ({
-        ...normalizeMarketplaceItem(item),
-        _table: "marketplace_posts" as const,
-        _kind: "classified" as const,
-      }))),
-      ...(marketplaceRes.error ? [] : (marketplaceRes.data || []).map((item) => ({
-        ...normalizeMarketplaceItem(item),
-        _table: "marketplace" as const,
-        _kind: "classified" as const,
-      }))),
-    ])
-
-    setJobs([
-      ...inboxJobs,
-      ...(jobRes.data || []).map((item) => ({
-        ...item,
-        _table: "job_submissions" as const,
-        _kind: "job" as const,
-      })),
-    ])
-
+    if (softErrors.length) {
+      setMessage(`Loaded available queues. ${softErrors.length} optional source${softErrors.length === 1 ? "" : "s"} could not be read.`)
+    }
     setLoading(false)
   }
 
@@ -133,155 +219,135 @@ export default function AdminSubmissionsPage() {
   }, [])
 
   async function setStatus(item: QueueItem, status: "pending" | "approved" | "rejected") {
-    setWorkingId(item.id)
+    if (!item._canModerateHere) return
+    const key = `${item._table}:${item.id}`
+    setWorkingKey(key)
     setMessage("")
-
-    const { error } = await supabase
-      .from(item._table)
-      .update({ status, updated_at: new Date().toISOString() })
-      .eq("id", item.id)
-
-    if (error) {
-      setMessage(error.message)
-    } else {
-      await load()
-    }
-
-    setWorkingId("")
+    const { error } = await supabase.from(item._table).update({ status, updated_at: new Date().toISOString() }).eq("id", item.id)
+    if (error) setMessage(error.message)
+    else await load()
+    setWorkingKey("")
   }
 
   async function deleteItem(item: QueueItem) {
-    const ok = window.confirm("Delete this item? This cannot be undone.")
-    if (!ok) return
-
-    setWorkingId(item.id)
+    if (!item._canModerateHere) return
+    if (!window.confirm("Delete this item? This cannot be undone.")) return
+    const key = `${item._table}:${item.id}`
+    setWorkingKey(key)
     setMessage("")
-
     const { error } = await supabase.from(item._table).delete().eq("id", item.id)
-
-    if (error) {
-      setMessage(error.message)
-    } else {
-      await load()
-    }
-
-    setWorkingId("")
+    if (error) setMessage(error.message)
+    else await load()
+    setWorkingKey("")
   }
 
+  const visible = filter === "all" ? items : items.filter((item) => item._kind === filter)
   const counts = useMemo(() => ({
-    submissions: submissions.length,
-    classifieds: classifieds.length,
-    jobs: jobs.length,
-    pending:
-      submissions.filter((x) => (x.status || "pending") === "pending").length +
-      classifieds.filter((x) => (x.status || "pending") === "pending").length +
-      jobs.filter((x) => (x.status || "pending") === "pending").length,
-  }), [submissions, classifieds, jobs])
+    all: items.length,
+    submissions: items.filter((x) => x._kind === "submission").length,
+    classifieds: items.filter((x) => x._kind === "classified").length,
+    jobs: items.filter((x) => x._kind === "job").length,
+    pending: items.filter((x) => isPendingStatus(x.status)).length,
+  }), [items])
 
   return (
     <main className="mx-auto max-w-6xl space-y-8 px-6 py-10">
       <section className="rounded-3xl border bg-white p-8 shadow-sm">
-        <p className="text-sm font-semibold uppercase tracking-[0.25em] text-slate-500">
-          HGN Admin
-        </p>
-        <h1 className="mt-3 text-4xl font-bold tracking-tight">
-          Submissions Review
-        </h1>
+        <p className="text-sm font-semibold uppercase tracking-[0.25em] text-slate-500">HGN Admin</p>
+        <h1 className="mt-3 text-4xl font-bold tracking-tight">Public Submission Desk</h1>
         <p className="mt-3 max-w-3xl text-slate-600">
-          Editorial and community submissions are separated from general correspondence, marketplace/classifieds and jobs. General contact messages now live in Contact Messages.
+          One view of incoming public material across the real HGN submission tables. Open specialist workspaces for letters, events, corrections, obituaries, Guide items and Live Map reviews. General correspondence remains in Contact Messages.
         </p>
 
-        <div className="mt-6 grid gap-3 sm:grid-cols-4">
-          <Stat label="Reader submissions" value={counts.submissions} />
+        <div className="mt-6 grid gap-3 sm:grid-cols-5">
+          <Stat label="All incoming" value={counts.all} />
+          <Stat label="Editorial / community" value={counts.submissions} />
           <Stat label="Marketplace" value={counts.classifieds} />
           <Stat label="Jobs" value={counts.jobs} />
-          <Stat label="Pending" value={counts.pending} />
+          <Stat label="Open / pending" value={counts.pending} />
         </div>
 
-        <button
-          onClick={load}
-          className="mt-6 rounded-full bg-slate-950 px-5 py-2 text-sm font-semibold text-white"
-        >
-          Refresh
-        </button>
+        <div className="mt-6 flex flex-wrap gap-2">
+          <FilterButton active={filter === "all"} onClick={() => setFilter("all")}>All</FilterButton>
+          <FilterButton active={filter === "submission"} onClick={() => setFilter("submission")}>Editorial & community</FilterButton>
+          <FilterButton active={filter === "classified"} onClick={() => setFilter("classified")}>Marketplace</FilterButton>
+          <FilterButton active={filter === "job"} onClick={() => setFilter("job")}>Jobs</FilterButton>
+          <button onClick={load} className="hgn-btn-dark ml-auto">Refresh</button>
+        </div>
 
-        {message ? (
-          <p className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-            {message}
-          </p>
-        ) : null}
+        {message ? <p className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">{message}</p> : null}
       </section>
 
       {loading ? (
-        <p className="rounded-2xl border bg-white p-6 text-slate-600">Loading submissions...</p>
+        <p className="rounded-2xl border bg-white p-6 text-slate-600">Loading all public submission sources...</p>
+      ) : visible.length === 0 ? (
+        <p className="rounded-2xl border bg-white p-6 text-slate-500">No submissions in this view.</p>
       ) : (
-        <>
-          <GenericSection
-            title="Reader submissions"
-            empty="No reader tips, letters, events, notices, or obituaries yet."
-            items={submissions}
-            titleFor={(item) => item.title || labelSubmissionType(item.submission_type) || "Untitled submission"}
-            metaFor={(item) => `${labelSubmissionType(item.submission_type)} · ${item.sender_name || "Unknown sender"} · ${item.sender_email || "No email"} · ${item._table}`}
-            bodyFor={(item) => item.message}
-            workingId={workingId}
-            onStatus={setStatus}
-            onDelete={deleteItem}
-          />
-          <GenericSection
-            title="Marketplace / classifieds"
-            empty="No marketplace posts yet."
-            items={dedupeByTableAndId(classifieds)}
-            titleFor={(item) => item.title || item.name || item.item_title || "Untitled classified"}
-            metaFor={(item) =>
-              `${item.category || "marketplace"} · ${item.seller_name || item.contact_name || item.name || "Unknown seller"} · ${item.seller_email || item.email || item.contact_email || "No email"} · ${item._table}`
-            }
-            bodyFor={(item) => item.description || item.body || item.details || item.message}
-            workingId={workingId}
-            onStatus={setStatus}
-            onDelete={deleteItem}
-          />
-          <GenericSection
-            title="Job board posts"
-            empty="No job posts yet."
-            items={dedupeByTableAndId(jobs)}
-            titleFor={(item) => item.job_title || item.title || "Untitled job"}
-            metaFor={(item) => `${item.employer || "Unknown employer"} · ${item.contact_email || item.email || item.sender_email || "No email"} · ${item._table}`}
-            bodyFor={(item) => item.description || item.message}
-            workingId={workingId}
-            onStatus={setStatus}
-            onDelete={deleteItem}
-          />
-        </>
+        <section className="space-y-3">
+          {visible.map((item, index) => {
+            const key = `${item._table}:${item.id || index}`
+            return (
+              <article key={key} className="rounded-2xl border bg-white p-5 shadow-sm">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-slate-600">{item._sourceLabel}</span>
+                      <span className={statusClass(item.status || "pending")}>{item.status || "pending"}</span>
+                    </div>
+                    <h2 className="mt-3 text-xl font-bold">{submissionTitle(item)}</h2>
+                    <p className="mt-1 text-sm text-slate-500">{formatSubmissionMeta(item)}</p>
+                  </div>
+                  <Link href={item._workspaceHref} className="hgn-btn-dark text-sm">Open workspace →</Link>
+                </div>
+
+                {submissionBody(item) ? <p className="mt-4 line-clamp-4 whitespace-pre-wrap text-sm leading-6 text-slate-700">{submissionBody(item)}</p> : null}
+
+                {item.photo_url || item.image_url ? (
+                  <a href={item.photo_url || item.image_url} target="_blank" rel="noreferrer" className="mt-3 inline-block text-sm font-bold underline">View submitted image →</a>
+                ) : null}
+
+                {item._canModerateHere ? (
+                  <div className="mt-5 flex flex-wrap gap-2">
+                    <button disabled={workingKey === key} onClick={() => setStatus(item, "approved")} className="rounded-full bg-emerald-600 px-4 py-2 text-xs font-bold uppercase tracking-wide text-white disabled:opacity-50">Approve</button>
+                    <button disabled={workingKey === key} onClick={() => setStatus(item, "pending")} className="rounded-full bg-slate-200 px-4 py-2 text-xs font-bold uppercase tracking-wide text-slate-700 disabled:opacity-50">Pending</button>
+                    <button disabled={workingKey === key} onClick={() => setStatus(item, "rejected")} className="rounded-full bg-amber-500 px-4 py-2 text-xs font-bold uppercase tracking-wide text-white disabled:opacity-50">Reject</button>
+                    <button disabled={workingKey === key} onClick={() => deleteItem(item)} className="rounded-full bg-red-600 px-4 py-2 text-xs font-bold uppercase tracking-wide text-white disabled:opacity-50">Delete</button>
+                  </div>
+                ) : (
+                  <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-400">Review actions are handled in the specialist workspace.</p>
+                )}
+              </article>
+            )
+          })}
+        </section>
       )}
     </main>
   )
 }
 
-function classifyInboxKind(item: AnyItem): "submission" | "classified" | "job" {
+function inboxWorkspace(type: string, row: AnyItem) {
+  if (type.includes("letter")) return "/admin/letters"
+  if (type.includes("event")) return row.id ? `/admin/events/${row.id}` : "/admin/events"
+  if (type.includes("correction")) return "/admin/trust"
+  if (type.includes("obituary")) return "/admin/obituaries"
+  if (type.includes("visitor") || type.includes("guide")) return "/admin/visitor-guide"
+  if (type.includes("live_map")) return "/admin/live-map"
+  return "/admin/submissions"
+}
+
+function classifyInboxKind(item: AnyItem): QueueItem["_kind"] {
   const type = String(item.submission_type || "").toLowerCase()
   const payload = item.payload || {}
-
-  if (MARKETPLACE_TYPES.has(type)) return "classified"
-  if (JOB_TYPES.has(type)) return "job"
-
+  if (["classified", "classifieds", "marketplace", "marketplace_post", "realty", "real_estate"].includes(type)) return "classified"
+  if (["job", "jobs", "job_post", "job_submission"].includes(type)) return "job"
   const sourceTable = String(payload.source_table || "").toLowerCase()
   if (sourceTable.includes("classified") || sourceTable.includes("marketplace")) return "classified"
   if (sourceTable.includes("job")) return "job"
-
-  if (payload.classified_id || payload.price || payload.seller_email) return "classified"
-  if (payload.job_title || payload.employer || payload.how_to_apply) return "job"
-
   return "submission"
 }
 
-function labelSubmissionType(type: string | null | undefined) {
-  const value = String(type || "reader_submission").replaceAll("_", " ")
-  return value.charAt(0).toUpperCase() + value.slice(1)
-}
-
-function normalizeMarketplaceItem(item: AnyItem): QueueItem {
+function normalizeMarketplaceItem(item: AnyItem) {
   return {
-    ...item,
     title: item.title || item.name || item.item_title,
     description: item.description || item.body || item.details || item.message,
     seller_name: item.seller_name || item.contact_name || item.name || item.sender_name,
@@ -289,117 +355,62 @@ function normalizeMarketplaceItem(item: AnyItem): QueueItem {
     seller_phone: item.seller_phone || item.contact_phone || item.phone || item.sender_phone,
     category: item.category || "marketplace",
     status: item.status || "pending",
-    _table: item._table || "classifieds",
-    _kind: "classified",
   }
 }
 
-function dedupeByTableAndId(items: QueueItem[]) {
+function dedupeSubmissionRows(items: QueueItem[]) {
   const seen = new Set<string>()
   return items.filter((item) => {
-    const key = `${item._table}:${item.id}`
-    if (seen.has(key)) return false
-    seen.add(key)
+    const explicitSourceId = String(item.payload?.source_id || item.payload?.record_id || item.source_id || "").trim()
+    const exactKey = explicitSourceId ? `${item._submissionType}:${explicitSourceId}` : `${item._table}:${item.id}`
+    if (seen.has(exactKey)) return false
+    seen.add(exactKey)
     return true
   })
 }
 
-function GenericSection({
-  title,
-  empty,
-  items,
-  titleFor,
-  metaFor,
-  bodyFor,
-  workingId,
-  onStatus,
-  onDelete,
-}: {
-  title: string
-  empty: string
-  items: QueueItem[]
-  titleFor: (item: QueueItem) => string
-  metaFor: (item: QueueItem) => string
-  bodyFor: (item: QueueItem) => string | null | undefined
-  workingId: string
-  onStatus: (item: QueueItem, status: "pending" | "approved" | "rejected") => void
-  onDelete: (item: QueueItem) => void
-}) {
-  return (
-    <section className="space-y-3">
-      <h2 className="text-2xl font-bold">{title}</h2>
-      {items.length === 0 ? (
-        <p className="rounded-2xl border bg-white p-5 text-sm text-slate-500">{empty}</p>
-      ) : (
-        items.map((item, index) => (
-          <article key={item.id || `${title}-${index}`} className="rounded-2xl border bg-white p-5 shadow-sm">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <h3 className="font-semibold">{titleFor(item)}</h3>
-              <span className={statusClass(item.status || "pending")}>
-                {item.status || "pending"}
-              </span>
-            </div>
+function rowTime(item: AnyItem) {
+  const value = item.created_at || item.submitted_at || item.updated_at || item.published_at
+  const parsed = value ? new Date(value).getTime() : 0
+  return Number.isFinite(parsed) ? parsed : 0
+}
 
-            <p className="mt-2 text-sm text-slate-600">{metaFor(item)}</p>
+function submissionTitle(item: QueueItem) {
+  return item.title || item.name || item.job_title || item.caption || labelSubmissionType(item._submissionType) || "Untitled submission"
+}
 
-            {bodyFor(item) ? (
-              <p className="mt-3 line-clamp-3 text-sm text-slate-700">{bodyFor(item)}</p>
-            ) : null}
+function submissionBody(item: QueueItem) {
+  return item.message || item.details || item.description || item.body || item.letter || item.notice || item.caption || ""
+}
 
-            <div className="mt-5 flex flex-wrap gap-2">
-              <button
-                disabled={workingId === item.id}
-                onClick={() => onStatus(item, "approved")}
-                className="rounded-full bg-emerald-600 px-4 py-2 text-xs font-bold uppercase tracking-wide text-white disabled:opacity-50"
-              >
-                Approve
-              </button>
-              <button
-                disabled={workingId === item.id}
-                onClick={() => onStatus(item, "pending")}
-                className="rounded-full bg-slate-200 px-4 py-2 text-xs font-bold uppercase tracking-wide text-slate-700 disabled:opacity-50"
-              >
-                Pending
-              </button>
-              <button
-                disabled={workingId === item.id}
-                onClick={() => onStatus(item, "rejected")}
-                className="rounded-full bg-amber-500 px-4 py-2 text-xs font-bold uppercase tracking-wide text-white disabled:opacity-50"
-              >
-                Reject
-              </button>
-              <button
-                disabled={workingId === item.id}
-                onClick={() => onDelete(item)}
-                className="rounded-full bg-red-600 px-4 py-2 text-xs font-bold uppercase tracking-wide text-white disabled:opacity-50"
-              >
-                Delete
-              </button>
-            </div>
-          </article>
-        ))
-      )}
-    </section>
-  )
+function formatSubmissionMeta(item: QueueItem) {
+  const name = item.sender_name || item.submitter_name || item.contact_name || item.organizer_name || item.seller_name || item.employer || item.name || "Unknown sender"
+  const email = item.sender_email || item.submitter_email || item.contact_email || item.organizer_email || item.seller_email || item.email || "No email"
+  const dateValue = item.created_at || item.submitted_at
+  const date = dateValue ? new Date(dateValue).toLocaleString("en-CA", { dateStyle: "medium", timeStyle: "short" }) : "Date unavailable"
+  return `${name} · ${email} · ${date} · ${item._table}`
+}
+
+function labelSubmissionType(type: string | null | undefined) {
+  const value = String(type || "reader_submission").replaceAll("_", " ")
+  return value.charAt(0).toUpperCase() + value.slice(1)
+}
+
+function isPendingStatus(status: unknown) {
+  return ["", "new", "pending", "submitted", "review", "triage"].includes(String(status || "").toLowerCase())
+}
+
+function FilterButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  return <button onClick={onClick} className={active ? "rounded-full bg-slate-950 px-4 py-2 text-sm font-bold text-white" : "rounded-full bg-slate-100 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-200"}>{children}</button>
 }
 
 function Stat({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="rounded-2xl bg-slate-100 p-4">
-      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p>
-      <p className="mt-1 text-3xl font-bold">{value}</p>
-    </div>
-  )
+  return <div className="rounded-2xl bg-slate-100 p-4"><p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p><p className="mt-1 text-3xl font-bold">{value}</p></div>
 }
 
 function statusClass(status: string) {
-  if (status === "approved") {
-    return "rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-emerald-700"
-  }
-
-  if (status === "rejected") {
-    return "rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-amber-700"
-  }
-
+  const value = status.toLowerCase()
+  if (["approved", "accepted", "resolved", "published", "active"].includes(value)) return "rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-emerald-700"
+  if (["rejected", "declined", "archived"].includes(value)) return "rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-amber-700"
   return "rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-600"
 }
