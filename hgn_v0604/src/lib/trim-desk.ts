@@ -1,0 +1,49 @@
+import { supabase } from "@/lib/supabase";
+
+type Row = Record<string, any>;
+
+async function safeSelect(table: string, order = "sort_order", ascending = true, limit = 100) {
+  const { data, error } = await supabase.from(table).select("*").order(order, { ascending }).limit(limit);
+  if (error) return [] as Row[];
+  return (data || []) as Row[];
+}
+
+export function trimToneClasses(tone: string) {
+  if (tone === "good") return "border-emerald-200 bg-emerald-50 text-emerald-950";
+  if (tone === "warn") return "border-amber-200 bg-amber-50 text-amber-950";
+  if (tone === "bad") return "border-rose-200 bg-rose-50 text-rose-950";
+  if (tone === "blue") return "border-blue-200 bg-blue-50 text-blue-950";
+  return "border-slate-200 bg-white text-slate-900";
+}
+
+export function toneForTrimItem(item: Row) {
+  const status = String(item.trim_status || "").toLowerCase();
+  const priority = String(item.priority || "").toLowerCase();
+  if (status === "blocked" || priority === "urgent") return "bad";
+  if (status === "waiting" || priority === "high") return "warn";
+  if (status === "done" || item.is_done) return "good";
+  if (status === "active") return "blue";
+  return "neutral";
+}
+
+export async function getTrimDeskSnapshot() {
+  const [items, checks] = await Promise.all([
+    safeSelect("trim_desk_items", "sort_order", true, 100),
+    safeSelect("trim_desk_checks", "sort_order", true, 50),
+  ]);
+
+  const open = items.filter((item) => !item.is_done && !["done", "dropped"].includes(String(item.trim_status || "").toLowerCase()));
+  const blockers = items.filter((item) => String(item.trim_status || "").toLowerCase() === "blocked" || String(item.priority || "").toLowerCase() === "urgent");
+  const active = items.filter((item) => String(item.trim_status || "").toLowerCase() === "active");
+  const readyChecks = checks.filter((check) => Boolean(check.is_ready)).length;
+  const checkScore = checks.length ? Math.round((readyChecks / checks.length) * 100) : 70;
+
+  let score = checkScore;
+  if (open.length > 0 && open.length <= 5) score += 8;
+  if (active.length > 0) score += 5;
+  if (open.length > 8) score -= 15;
+  if (blockers.length > 0) score -= 25;
+  score = Math.max(0, Math.min(100, Math.round(score)));
+
+  return { score, items, checks, open, blockers, active };
+}

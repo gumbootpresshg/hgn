@@ -1,0 +1,11 @@
+import Link from "next/link"
+import { adminGroups, adminTools } from "@/lib/admin-workspaces"
+
+export default function PlatformMapPage() {
+  const mobileCount = adminTools.filter(tool => tool.mobileRelevant).length
+  return <main className="mx-auto max-w-7xl space-y-7 px-4 py-8 sm:px-6">
+    <header className="rounded-3xl border bg-white p-8 shadow-sm"><p className="text-xs font-black uppercase tracking-[.18em] text-hgnBlue">Platform audit</p><h1 className="mt-3 font-serif text-5xl font-bold">Connected tools map</h1><p className="mt-3 max-w-3xl text-slate-600">A practical index of the core production tools that are intentionally connected to the new role-based admin workspace. Experimental and legacy pages remain in the codebase, but they no longer crowd the main route through the building.</p></header>
+    <section className="grid gap-4 sm:grid-cols-3"><article className="rounded-2xl border bg-white p-5"><p className="text-xs font-black uppercase tracking-widest text-slate-500">Connected core tools</p><strong className="mt-2 block text-4xl">{adminTools.length}</strong></article><article className="rounded-2xl border bg-white p-5"><p className="text-xs font-black uppercase tracking-widest text-slate-500">Work areas</p><strong className="mt-2 block text-4xl">{adminGroups.length}</strong></article><article className="rounded-2xl border bg-white p-5"><p className="text-xs font-black uppercase tracking-widest text-slate-500">Mobile-app relevant</p><strong className="mt-2 block text-4xl">{mobileCount}</strong></article></section>
+    {adminGroups.map(group => <section key={group} className="rounded-3xl border bg-white p-6"><h2 className="font-serif text-3xl font-bold">{group}</h2><div className="mt-4 grid gap-3 md:grid-cols-2">{adminTools.filter(tool=>tool.group===group).map(tool=><Link key={tool.href} href={tool.href} className="rounded-xl border p-4 hover:border-hgnBlue"><div className="flex items-start justify-between gap-3"><div><strong>{tool.label}</strong><p className="mt-1 text-sm text-slate-600">{tool.description}</p></div><span className="rounded-full bg-emerald-100 px-2 py-1 text-[10px] font-black uppercase tracking-wider text-emerald-800">Connected</span></div><p className="mt-2 break-all font-mono text-xs text-slate-400">{tool.href}</p></Link>)}</div></section>)}
+  </main>
+}
