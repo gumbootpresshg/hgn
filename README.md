@@ -153,4 +153,4 @@ Adds visible save/publish feedback, local unsaved-draft recovery, tab/background
 
 ## Current release
 
-HGN v0.61.4 adds the Writers & Columns system. See `CHANGELOG-v0.61.4.md` and `DEPLOYMENT-v0.61.4.md`.
+HGN v0.62.0 resets AI Desk around a human-controlled research workflow, tightens Event Finder quality, separates AI findings from reader submissions, and adds source-quality controls. See `CHANGELOG-v0.62.0.md`, `AI-DESK-AUDIT-v0.62.0.md`, and `DEPLOYMENT-v0.62.0.md`.

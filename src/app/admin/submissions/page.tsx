@@ -238,6 +238,7 @@ export default function AdminSubmissionsPage() {
         continue
       }
       for (const row of result.data || []) {
+        if (source.table === "event_submissions" && /^(AI Desk research promotion|Created from AI Desk item)/.test(String(row.admin_notes || ""))) continue
         next.push({
           ...row,
           ...source.normalize(row),
