@@ -153,7 +153,7 @@ export default function AdminSubmissionsPage() {
   const [view, setView] = useState<QueueState>("active")
   const [filter, setFilter] = useState<"all" | "submission" | "classified" | "job">("all")
 
-  async function authHeaders() {
+  async function authHeaders(): Promise<Record<string, string>> {
     const { data } = await supabase.auth.getSession()
     const token = data.session?.access_token
     return token ? { authorization: `Bearer ${token}` } : {}
