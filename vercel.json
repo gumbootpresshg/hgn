@@ -1,0 +1,5 @@
+{
+  "crons": [
+    { "path": "/api/ai-desk/event-source-discovery/cron", "schedule": "17 16 * * *" }
+  ]
+}

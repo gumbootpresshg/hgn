@@ -1,6 +1,7 @@
 import Link from "next/link"
 
 const settings = [
+  ["Site configuration", "/admin/site-configuration", "Edit navigation, public sections, feature switches and visibility rules for this publication."],
   ["Publishing dates & time", "/admin/settings/publishing", "Set the newsroom timezone plus the date and time styles used across publishing and public story displays."],
   ["Contact & notifications", "/admin/settings/contact", "Choose contact destinations, topic routing, form availability and Operations notifications."],
   ["Newsletter settings", "/admin/newsletter", "Automatic or manual production, schedule, sections and test sends."],

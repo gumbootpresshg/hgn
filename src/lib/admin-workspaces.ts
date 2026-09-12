@@ -40,6 +40,7 @@ export const adminTools: AdminTool[] = [
   { href: "/explore/map", label: "View Public Map", description: "Open the live visitor map exactly as readers see it.", group: "Island Guide", roles: ["publisher", "editor", "sales"], keywords: ["map", "markers", "near me"], mobileRelevant: true },
 
   { href: "/admin/media", label: "Media", description: "Manage uploaded photos and reusable media.", group: "Platform", roles: ["publisher", "editor"], keywords: ["images", "photos", "uploads"] },
+  { href: "/admin/site-configuration", label: "Site Configuration", description: "Edit menus, sections, feature switches and visibility without code.", group: "Platform", roles: ["publisher"], keywords: ["navigation", "menus", "sections", "features", "visibility", "configuration"], mobileRelevant: true },
   { href: "/admin/theme-studio", label: "Theme Studio", description: "Change approved themes, colours, typography and public site labels without code.", group: "Platform", roles: ["publisher"], keywords: ["theme", "colors", "colours", "fonts", "labels", "branding"], mobileRelevant: true },
   { href: "/admin/settings", label: "Settings", description: "Open site, publishing and notification settings.", group: "Platform", roles: ["publisher"], keywords: ["configuration", "site", "publishing"] },
   { href: "/admin/app-readiness", label: "App Readiness", description: "Track what must be stable before the first iOS and Android release.", group: "Platform", roles: ["publisher", "editor", "sales"], keywords: ["ios", "android", "mobile", "api"], mobileRelevant: true },

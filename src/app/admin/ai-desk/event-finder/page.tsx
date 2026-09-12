@@ -17,6 +17,11 @@ type Source = {
   max_candidates?: number | null
   last_candidate_count?: number | null
   last_duplicate_count?: number | null
+  source_lifecycle?: "candidate" | "trusted" | "watch" | "one_time" | "ignored"
+  review_status?: "candidate" | "approved" | "ignored"
+  discovered_query?: string | null
+  discovered_at?: string | null
+  discovery_note?: string | null
 }
 
 async function headers(): Promise<Record<string, string>> {
@@ -41,7 +46,8 @@ export default function EventFinder() {
   const [selected, setSelected] = useState<string[]>([])
   const [message, setMessage] = useState("")
   const [busy, setBusy] = useState(false)
-  const activeSources = useMemo(() => sources.filter((s) => s.active), [sources])
+  const activeSources = useMemo(() => sources.filter((s) => s.active && (s.review_status || "approved") === "approved"), [sources])
+  const candidateSources = useMemo(() => sources.filter((s) => s.review_status === "candidate" || s.source_lifecycle === "candidate"), [sources])
 
   async function load() {
     const response = await fetch("/api/ai-desk/event-scan", { cache: "no-store", headers: await headers() })
@@ -67,6 +73,31 @@ export default function EventFinder() {
       ? `${data.found} research candidates added. ${data.duplicates} likely duplicates skipped. ${data.failed} sources failed.`
       : data.error)
     setBusy(false)
+    await load()
+  }
+
+
+  async function discoverSources() {
+    setBusy(true)
+    const response = await fetch("/api/ai-desk/event-scan", {
+      method: "POST",
+      headers: { ...(await headers()), "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "discover_sources" }),
+    })
+    const data = await response.json().catch(() => ({}))
+    setMessage(response.ok ? `${data.added || 0} new candidate sources discovered. Review them below before trusting.` : data.error || "Source discovery failed.")
+    setBusy(false)
+    await load()
+  }
+
+  async function reviewSource(source: Source, source_lifecycle: "trusted" | "watch" | "one_time" | "ignored") {
+    const response = await fetch("/api/ai-desk/event-scan", {
+      method: "POST",
+      headers: { ...(await headers()), "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "review_source", id: source.id, source_lifecycle, quality_score: source_lifecycle === "trusted" ? 0.8 : 0.6, max_candidates: source_lifecycle === "one_time" ? 5 : 8 }),
+    })
+    const data = await response.json().catch(() => ({}))
+    setMessage(response.ok ? `Source marked ${source_lifecycle.replaceAll("_", " ")}.` : data.error || "Could not review source.")
     await load()
   }
 
@@ -111,6 +142,21 @@ export default function EventFinder() {
 
     {message && <p className="rounded-2xl border bg-white p-4 font-bold">{message}</p>}
 
+    <section className="rounded-3xl border bg-gradient-to-br from-slate-950 to-slate-800 p-6 text-white">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="max-w-3xl"><p className="text-xs font-black uppercase tracking-[.18em] text-blue-300">Source Discovery</p><h2 className="mt-2 font-serif text-3xl font-bold">Find new event sources outside the current list</h2><p className="mt-2 text-sm leading-6 text-slate-300">Search the wider web for calendars, organizations and event pages. New finds stay as candidates until you choose Trusted, Watch, One-time or Ignore. A scheduled discovery also runs daily when CRON_SECRET is configured in Vercel.</p></div>
+        <button type="button" disabled={busy} onClick={() => void discoverSources()} className="rounded-full bg-white px-5 py-3 font-black text-slate-950 disabled:opacity-50">{busy ? "Searching…" : "Discover event sources"}</button>
+      </div>
+    </section>
+
+    {candidateSources.length ? <section className="rounded-3xl border bg-amber-50 p-6">
+      <div className="flex items-end justify-between gap-3"><div><p className="text-xs font-black uppercase tracking-[.16em] text-amber-800">Needs review</p><h2 className="mt-2 font-serif text-3xl font-bold">Candidate sources</h2><p className="mt-1 text-sm text-slate-600">These were discovered automatically and will not be scanned until approved.</p></div><span className="rounded-full bg-white px-3 py-1 text-sm font-black">{candidateSources.length}</span></div>
+      <div className="mt-5 grid gap-3">{candidateSources.map(source => <article key={source.id} className="rounded-2xl border bg-white p-4">
+        <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-center"><div><strong className="text-lg">{source.name}</strong><a href={source.url} target="_blank" rel="noreferrer" className="mt-1 block break-all text-sm text-hgnBlue">{source.url}</a><p className="mt-2 text-xs text-slate-500">Found from: {source.discovered_query || "web discovery"}</p></div>
+        <div className="flex flex-wrap gap-2"><button type="button" onClick={()=>void reviewSource(source,"trusted")} className="rounded-full bg-slate-950 px-4 py-2 text-sm font-black text-white">Trust long-term</button><button type="button" onClick={()=>void reviewSource(source,"watch")} className="rounded-full border px-4 py-2 text-sm font-black">Watch</button><button type="button" onClick={()=>void reviewSource(source,"one_time")} className="rounded-full border px-4 py-2 text-sm font-black">One-time</button><button type="button" onClick={()=>void reviewSource(source,"ignored")} className="rounded-full border px-4 py-2 text-sm font-black text-red-700">Ignore</button></div></div>
+      </article>)}</div>
+    </section> : null}
+
     <section className="grid gap-6 lg:grid-cols-[1.1fr_.9fr]">
       <form onSubmit={scan} className="grid content-start gap-4 rounded-3xl border bg-white p-6">
         <div>
@@ -127,7 +173,7 @@ export default function EventFinder() {
             {activeSources.map((source) => <label key={source.id} className="flex gap-3 rounded-xl border p-3">
               <input type="checkbox" checked={selected.includes(source.id)} onChange={(e) => setSelected((value) => e.target.checked ? [...value, source.id] : value.filter((x) => x !== source.id))} />
               <span>
-                <strong>{source.name}</strong>
+                <strong>{source.name}</strong><small className="ml-2 rounded-full bg-slate-100 px-2 py-1 text-[10px] font-black uppercase">{source.source_lifecycle || "trusted"}</small>
                 <small className="block text-slate-500">{source.community || "All islands"} · quality {Math.round(Number(source.quality_score ?? .5) * 100)}% · max {source.max_candidates || 8}</small>
                 <small className="block text-slate-500">Last scan: {source.last_candidate_count || 0} candidates · {source.last_duplicate_count || 0} duplicates</small>
                 {source.last_error && <small className="block text-red-700">{source.last_error}</small>}
@@ -154,12 +200,12 @@ export default function EventFinder() {
     <section className="rounded-3xl border bg-white p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="font-serif text-3xl font-bold">Source quality</h2>
+          <h2 className="font-serif text-3xl font-bold">Trusted & watched sources</h2>
           <p className="mt-1 text-sm text-slate-600">Disable noisy sources or lower their candidate cap instead of letting them flood AI Research.</p>
         </div>
       </div>
       <div className="mt-5 grid gap-3">
-        {sources.map((source) => <div key={source.id} className="grid gap-3 rounded-2xl border p-4 md:grid-cols-[1fr_150px_150px_auto] md:items-end">
+        {sources.filter((source) => source.review_status !== "candidate").map((source) => <div key={source.id} className="grid gap-3 rounded-2xl border p-4 md:grid-cols-[1fr_150px_150px_auto] md:items-end">
           <div>
             <strong>{source.name}</strong>
             <a href={source.url} target="_blank" rel="noreferrer" className="block truncate text-sm text-hgnBlue">{source.url}</a>

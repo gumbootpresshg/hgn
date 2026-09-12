@@ -7,6 +7,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import { slugify } from "@/lib/article-routing"
 import { useSiteTheme } from "@/components/theme/SiteThemeProvider"
 import { supabase } from "@/lib/supabase"
+import { defaultNavigation, type SiteNavEntry } from "@/lib/site-platform-config"
 
 const utilityLinks = [
   { href: "/newsletter", label: "Newsletter" },
@@ -154,6 +155,19 @@ export function Header() {
   const [today, setToday] = useState("")
   const fallbackColumnLinks = useMemo(() => fallbackColumns.map((name) => ({ href: `/columns/${slugify(name)}`, label: name })), [])
   const [columns, setColumns] = useState<NavLink[]>(fallbackColumnLinks)
+  const [configuredNav, setConfiguredNav] = useState<SiteNavEntry[] | null>(null)
+
+  useEffect(() => {
+    let active = true
+    ;(async () => {
+      try {
+        const response = await fetch("/api/site-config", { cache: "no-store" })
+        const data = await response.json()
+        if (active && Array.isArray(data?.platform?.navigation)) setConfiguredNav(data.platform.navigation)
+      } catch {}
+    })()
+    return () => { active = false }
+  }, [])
 
   useEffect(() => {
     let active = true
@@ -222,59 +236,18 @@ export function Header() {
     }
   }, [])
 
-  const navItems: NavItem[] = useMemo(() => [
-    {
-      label: labels.news,
-      children: [
-        { href: "/articles", label: "Latest Stories" },
-        { href: "/news", label: "Local News" },
-        { href: "/mountie-minute", label: "Mountie Minute" },
-        { href: "/sports", label: "Sports" },
-      ],
-    },
-    {
-      label: "Opinion",
-      children: [
-        { href: "/opinion/editorials", label: "Editorials" },
-        { href: "/columns", label: "Columns", children: columns },
-        { href: "/letters", label: "Letters to the Editor" },
-        { href: "/submit-guest-opinion", label: "Submit a Guest Opinion" },
-      ],
-    },
-    { label: labels.weather, href: "/weather" },
-    {
-      label: labels.community,
-      children: [
-        { href: "/events", label: "Events" },
-        { href: "/obituaries", label: "Obituaries" },
-        { href: "/ferry-info", label: "Ferry Info" },
-      ],
-    },
-    {
-      label: labels.marketplace,
-      children: [
-        { href: "/marketplace", label: "All Listings" },
-        { href: "/marketplace/post", label: "Post Ad" },
-        { href: "/marketplace/my-listings", label: "My Listings" },
-        { href: "/marketplace?category=vehicles-boats", label: "Vehicles & Boats" },
-        { href: "/marketplace?category=real-estate", label: "Real Estate" },
-        { href: "/marketplace?category=rentals", label: "Rentals" },
-        { href: "/marketplace?category=jobs", label: "Jobs" },
-        { href: "/marketplace?category=services", label: "Services" },
-      ],
-    },
-    { label: labels.horoscopes, href: "/horoscope" },
-    {
-      label: labels.guide,
-      children: [
-        { href: "/explore", label: "Guide Home" },
-        { href: "/explore/map", label: "Island Map" },
-        { href: "/explore/travel", label: "Ferries & Travel" },
-        { href: "/explore/cams", label: "Island Cams" },
-        { href: "/explore/directory", label: "Directory" },
-      ],
-    },
-  ], [columns, labels])
+  const navItems: NavItem[] = useMemo(() => {
+    const fallback: SiteNavEntry[] = defaultNavigation
+    const source = configuredNav?.length ? configuredNav : fallback
+    const visible = source.filter((item) => item.enabled && item.visibility !== "disabled" && item.visibility !== "staff")
+    return visible.map((item) => {
+      const children = (item.children || []).filter((child) => child.enabled && child.visibility !== "disabled" && child.visibility !== "staff").map((child) => {
+        if (child.id === "columns") return { href: child.href || "/columns", label: child.label, children: columns }
+        return { href: child.href || "/", label: child.label }
+      })
+      return children.length ? { label: item.label, children } : { label: item.label, href: item.href || "/" }
+    })
+  }, [columns, configuredNav])
 
   const closeAllMenus = () => {
     setOpenDesktopMenu(null)

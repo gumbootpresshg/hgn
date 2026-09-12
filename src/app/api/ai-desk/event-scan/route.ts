@@ -58,6 +58,28 @@ function similarity(a: string, b: string) {
   return intersection / Math.max(A.size, B.size)
 }
 
+
+function absoluteDuckUrl(value: string) {
+  try {
+    const decoded = decodeURIComponent(value)
+    const match = decoded.match(/[?&]uddg=([^&]+)/)
+    return match ? decodeURIComponent(match[1]) : decoded
+  } catch { return value }
+}
+
+function discoveryCandidates(html: string) {
+  const out: { name: string; url: string }[] = []
+  const re = /<a[^>]+class=["'][^"']*result__a[^"']*["'][^>]+href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi
+  let m: RegExpExecArray | null
+  while ((m = re.exec(html)) && out.length < 20) {
+    const url = absoluteDuckUrl(m[1]).replace(/&amp;/g, "&")
+    const name = cleanText(m[2]).slice(0, 140)
+    if (!/^https?:\/\//i.test(url) || !name) continue
+    out.push({ name, url })
+  }
+  return out
+}
+
 function buildCandidates(body: string, start: string, end: string, source: any) {
   const plain = cleanText(body)
   const yearHint = Number(start.slice(0, 4)) || new Date().getFullYear()
@@ -134,6 +156,55 @@ export async function POST(req: NextRequest) {
     const { db, user } = await clients(req)
     const body = await req.json()
 
+    if (body.action === "discover_sources") {
+      const rawQueries = Array.isArray(body.queries) ? body.queries : []
+      const queries = rawQueries.length ? rawQueries.slice(0, 6) : [
+        "Haida Gwaii events calendar", "Haida Gwaii community events", "Haida Gwaii festival events",
+        "Haida Gwaii recreation events", "Haida Gwaii arts events", "Haida Gwaii school events",
+      ]
+      const { data: existing } = await db.from("hgn_event_sources").select("id,url")
+      const known = new Set((existing || []).map((x: any) => { try { return new URL(x.url).hostname.replace(/^www\./, "") } catch { return String(x.url || "") } }))
+      let added = 0
+      let skipped = 0
+      const discovered: any[] = []
+      for (const query of queries) {
+        try {
+          const response = await fetch(`https://html.duckduckgo.com/html/?q=${encodeURIComponent(String(query))}`, {
+            cache: "no-store", headers: { "User-Agent": "HaidaGwaiiNews/1.0 source discovery" }, signal: AbortSignal.timeout(12000),
+          })
+          if (!response.ok) continue
+          const html = await response.text()
+          for (const candidate of discoveryCandidates(html)) {
+            let host = ""
+            try { host = new URL(candidate.url).hostname.replace(/^www\./, "") } catch { continue }
+            if (!host || known.has(host) || /facebook\.com|instagram\.com|youtube\.com|x\.com|twitter\.com/i.test(host)) { skipped++; continue }
+            known.add(host)
+            const row = {
+              name: candidate.name, url: candidate.url, community: null, active: false, source_type: "discovered",
+              quality_score: 0.5, max_candidates: 5, source_lifecycle: "candidate", review_status: "candidate",
+              discovered_at: new Date().toISOString(), last_discovered_at: new Date().toISOString(), discovered_query: String(query),
+              discovery_note: "Automatically discovered by AI Desk source discovery. Review before trusting.",
+            }
+            const { data, error } = await db.from("hgn_event_sources").insert(row).select().single()
+            if (!error && data) { discovered.push(data); added++; }
+          }
+        } catch {}
+      }
+      return NextResponse.json({ added, skipped, discovered })
+    }
+
+    if (body.action === "review_source") {
+      const lifecycle = ["trusted","watch","one_time","ignored"].includes(body.source_lifecycle) ? body.source_lifecycle : "trusted"
+      const ignored = lifecycle === "ignored"
+      const { error } = await db.from("hgn_event_sources").update({
+        source_lifecycle: lifecycle, review_status: ignored ? "ignored" : "approved", active: !ignored,
+        quality_score: ignored ? 0 : Math.min(1, Math.max(0.3, Number(body.quality_score ?? 0.7))),
+        max_candidates: Math.min(12, Math.max(3, Number(body.max_candidates ?? 5))), updated_at: new Date().toISOString(),
+      }).eq("id", body.id)
+      if (error) throw error
+      return NextResponse.json({ ok: true })
+    }
+
     if (body.action === "add_source") {
       const { data, error } = await db.from("hgn_event_sources").insert({
         name: body.name,
@@ -162,7 +233,7 @@ export async function POST(req: NextRequest) {
     const end = String(body.end_date || "")
     if (!start || !end || end < start) return NextResponse.json({ error: "Choose a valid date range." }, { status: 400 })
 
-    let q = db.from("hgn_event_sources").select("*").eq("active", true)
+    let q = db.from("hgn_event_sources").select("*").eq("active", true).eq("review_status", "approved")
     if (Array.isArray(body.source_ids) && body.source_ids.length) q = q.in("id", body.source_ids)
     const { data: sources, error } = await q
     if (error) throw error
@@ -231,6 +302,7 @@ export async function POST(req: NextRequest) {
         await db.from("hgn_event_sources").update({
           last_checked_at: new Date().toISOString(),
           last_status: "success",
+          active: source.source_lifecycle === "one_time" ? false : source.active,
           last_error: null,
           last_candidate_count: sourceFound,
           last_duplicate_count: sourceDuplicates,
