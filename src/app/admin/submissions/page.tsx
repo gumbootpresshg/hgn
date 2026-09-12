@@ -59,7 +59,7 @@ const SOURCES: SourceSpec[] = [
     table: "photo_submissions",
     submissionType: "photo",
     sourceLabel: "Reader Photos",
-    workspaceHref: () => "/admin/submissions",
+    workspaceHref: () => "/admin/island-lens",
     normalize: (r) => ({ title: r.caption || "Reader photo", sender_name: r.name, sender_email: r.email, message: r.caption, status: r.status || "new" }),
     canModerateHere: true,
   },
@@ -96,7 +96,7 @@ const SOURCES: SourceSpec[] = [
     table: "classified_submissions",
     submissionType: "classified",
     sourceLabel: "Marketplace / Classifieds",
-    workspaceHref: () => "/admin/submissions",
+    workspaceHref: () => "/admin/marketplace",
     normalize: normalizeMarketplaceItem,
     kind: "classified",
     canModerateHere: true,
@@ -105,7 +105,7 @@ const SOURCES: SourceSpec[] = [
     table: "classifieds",
     submissionType: "classified",
     sourceLabel: "Marketplace / Classifieds",
-    workspaceHref: () => "/admin/submissions",
+    workspaceHref: () => "/admin/marketplace",
     normalize: normalizeMarketplaceItem,
     kind: "classified",
     canModerateHere: true,
@@ -114,7 +114,7 @@ const SOURCES: SourceSpec[] = [
     table: "marketplace_posts",
     submissionType: "marketplace",
     sourceLabel: "Marketplace",
-    workspaceHref: () => "/admin/submissions",
+    workspaceHref: () => "/admin/marketplace",
     normalize: normalizeMarketplaceItem,
     kind: "classified",
     canModerateHere: true,
@@ -123,7 +123,7 @@ const SOURCES: SourceSpec[] = [
     table: "marketplace",
     submissionType: "marketplace",
     sourceLabel: "Marketplace",
-    workspaceHref: () => "/admin/submissions",
+    workspaceHref: () => "/admin/marketplace",
     normalize: normalizeMarketplaceItem,
     kind: "classified",
     canModerateHere: true,
@@ -132,7 +132,7 @@ const SOURCES: SourceSpec[] = [
     table: "job_submissions",
     submissionType: "job",
     sourceLabel: "Jobs",
-    workspaceHref: () => "/admin/submissions",
+    workspaceHref: () => "/admin/marketplace",
     normalize: (r) => ({ title: r.job_title || r.title || "Job submission", sender_name: r.employer || r.contact_name, sender_email: r.contact_email || r.email, message: r.description || r.message, status: r.status || "pending" }),
     kind: "job",
     canModerateHere: true,
@@ -142,7 +142,6 @@ const SOURCES: SourceSpec[] = [
 export default function AdminSubmissionsPage() {
   const [items, setItems] = useState<QueueItem[]>([])
   const [loading, setLoading] = useState(true)
-  const [workingKey, setWorkingKey] = useState("")
   const [message, setMessage] = useState("")
   const [filter, setFilter] = useState<"all" | "submission" | "classified" | "job">("all")
 
@@ -218,29 +217,6 @@ export default function AdminSubmissionsPage() {
     load()
   }, [])
 
-  async function setStatus(item: QueueItem, status: "pending" | "approved" | "rejected") {
-    if (!item._canModerateHere) return
-    const key = `${item._table}:${item.id}`
-    setWorkingKey(key)
-    setMessage("")
-    const { error } = await supabase.from(item._table).update({ status, updated_at: new Date().toISOString() }).eq("id", item.id)
-    if (error) setMessage(error.message)
-    else await load()
-    setWorkingKey("")
-  }
-
-  async function deleteItem(item: QueueItem) {
-    if (!item._canModerateHere) return
-    if (!window.confirm("Delete this item? This cannot be undone.")) return
-    const key = `${item._table}:${item.id}`
-    setWorkingKey(key)
-    setMessage("")
-    const { error } = await supabase.from(item._table).delete().eq("id", item.id)
-    if (error) setMessage(error.message)
-    else await load()
-    setWorkingKey("")
-  }
-
   const visible = filter === "all" ? items : items.filter((item) => item._kind === filter)
   const counts = useMemo(() => ({
     all: items.length,
@@ -254,17 +230,17 @@ export default function AdminSubmissionsPage() {
     <main className="mx-auto max-w-6xl space-y-8 px-6 py-10">
       <section className="rounded-3xl border bg-white p-8 shadow-sm">
         <p className="text-sm font-semibold uppercase tracking-[0.25em] text-slate-500">HGN Admin</p>
-        <h1 className="mt-3 text-4xl font-bold tracking-tight">Public Submission Desk</h1>
+        <h1 className="mt-3 text-4xl font-bold tracking-tight">Submissions</h1>
         <p className="mt-3 max-w-3xl text-slate-600">
-          One view of incoming public material across the real HGN submission tables. Open specialist workspaces for letters, events, corrections, obituaries, Guide items and Live Map reviews. General correspondence remains in Contact Messages.
+          Reader material that may become published content or a public listing. This page is a clean intake overview; editing, approval and publishing happen in the proper specialist workspace. General correspondence belongs in Inbox.
         </p>
 
         <div className="mt-6 grid gap-3 sm:grid-cols-5">
-          <Stat label="All incoming" value={counts.all} />
+          <Stat label="All submissions" value={counts.all} />
           <Stat label="Editorial / community" value={counts.submissions} />
           <Stat label="Marketplace" value={counts.classifieds} />
           <Stat label="Jobs" value={counts.jobs} />
-          <Stat label="Open / pending" value={counts.pending} />
+          <Stat label="Needs review" value={counts.pending} />
         </div>
 
         <div className="mt-6 flex flex-wrap gap-2">
@@ -279,7 +255,7 @@ export default function AdminSubmissionsPage() {
       </section>
 
       {loading ? (
-        <p className="rounded-2xl border bg-white p-6 text-slate-600">Loading all public submission sources...</p>
+        <p className="rounded-2xl border bg-white p-6 text-slate-600">Loading submissions...</p>
       ) : visible.length === 0 ? (
         <p className="rounded-2xl border bg-white p-6 text-slate-500">No submissions in this view.</p>
       ) : (
@@ -292,12 +268,12 @@ export default function AdminSubmissionsPage() {
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-slate-600">{item._sourceLabel}</span>
-                      <span className={statusClass(item.status || "pending")}>{item.status || "pending"}</span>
+                      <span className={statusClass(item.status || "pending")}>{plainStatus(item.status)}</span>
                     </div>
                     <h2 className="mt-3 text-xl font-bold">{submissionTitle(item)}</h2>
                     <p className="mt-1 text-sm text-slate-500">{formatSubmissionMeta(item)}</p>
                   </div>
-                  <Link href={item._workspaceHref} className="hgn-btn-dark text-sm">Open workspace →</Link>
+                  <Link href={item._workspaceHref} className="hgn-btn-dark text-sm">Review →</Link>
                 </div>
 
                 {submissionBody(item) ? <p className="mt-4 line-clamp-4 whitespace-pre-wrap text-sm leading-6 text-slate-700">{submissionBody(item)}</p> : null}
@@ -306,16 +282,7 @@ export default function AdminSubmissionsPage() {
                   <a href={item.photo_url || item.image_url} target="_blank" rel="noreferrer" className="mt-3 inline-block text-sm font-bold underline">View submitted image →</a>
                 ) : null}
 
-                {item._canModerateHere ? (
-                  <div className="mt-5 flex flex-wrap gap-2">
-                    <button disabled={workingKey === key} onClick={() => setStatus(item, "approved")} className="rounded-full bg-emerald-600 px-4 py-2 text-xs font-bold uppercase tracking-wide text-white disabled:opacity-50">Approve</button>
-                    <button disabled={workingKey === key} onClick={() => setStatus(item, "pending")} className="rounded-full bg-slate-200 px-4 py-2 text-xs font-bold uppercase tracking-wide text-slate-700 disabled:opacity-50">Pending</button>
-                    <button disabled={workingKey === key} onClick={() => setStatus(item, "rejected")} className="rounded-full bg-amber-500 px-4 py-2 text-xs font-bold uppercase tracking-wide text-white disabled:opacity-50">Reject</button>
-                    <button disabled={workingKey === key} onClick={() => deleteItem(item)} className="rounded-full bg-red-600 px-4 py-2 text-xs font-bold uppercase tracking-wide text-white disabled:opacity-50">Delete</button>
-                  </div>
-                ) : (
-                  <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-400">Review actions are handled in the specialist workspace.</p>
-                )}
+                <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-400">Review and publishing actions are handled in the linked workspace.</p>
               </article>
             )
           })}
@@ -388,7 +355,7 @@ function formatSubmissionMeta(item: QueueItem) {
   const email = item.sender_email || item.submitter_email || item.contact_email || item.organizer_email || item.seller_email || item.email || "No email"
   const dateValue = item.created_at || item.submitted_at
   const date = dateValue ? new Date(dateValue).toLocaleString("en-CA", { dateStyle: "medium", timeStyle: "short" }) : "Date unavailable"
-  return `${name} · ${email} · ${date} · ${item._table}`
+  return `${name} · ${email} · ${date}`
 }
 
 function labelSubmissionType(type: string | null | undefined) {
@@ -406,6 +373,16 @@ function FilterButton({ active, onClick, children }: { active: boolean; onClick:
 
 function Stat({ label, value }: { label: string; value: number }) {
   return <div className="rounded-2xl bg-slate-100 p-4"><p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p><p className="mt-1 text-3xl font-bold">{value}</p></div>
+}
+
+function plainStatus(status: unknown) {
+  const value = String(status || "").toLowerCase()
+  if (["", "new", "pending", "submitted", "review", "triage"].includes(value)) return "Needs review"
+  if (["approved", "accepted", "published", "active"].includes(value)) return "Completed"
+  if (["resolved", "replied", "done", "complete", "completed"].includes(value)) return "Completed"
+  if (["rejected", "declined"].includes(value)) return "Closed"
+  if (["archived"].includes(value)) return "Archived"
+  return "In progress"
 }
 
 function statusClass(status: string) {

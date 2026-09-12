@@ -11,6 +11,7 @@ export default function AdminDashboardPage() {
   const [name, setName] = useState("")
   const [query, setQuery] = useState("")
   const [showAll, setShowAll] = useState(false)
+  const [incoming, setIncoming] = useState({ unread: 0, submissions: 0 })
 
   useEffect(() => {
     let active = true
@@ -22,6 +23,25 @@ export default function AdminDashboardPage() {
       if (!active) return
       setRole(normalizeAdminRole(data?.admin_role || data?.account_type))
       setName(String(data?.display_name || data?.full_name || ""))
+    })()
+    return () => { active = false }
+  }, [])
+
+  useEffect(() => {
+    let active = true
+    void (async () => {
+      const [contacts, letters, events, tips, obits] = await Promise.all([
+        supabase.from("submission_inbox").select("id", { count: "exact", head: true }).eq("submission_type", "contact_message").is("archived_at", null).is("read_at", null),
+        supabase.from("letters_to_editor").select("id", { count: "exact", head: true }).in("status", ["new", "pending", "submitted", "review"]),
+        supabase.from("event_submissions").select("id", { count: "exact", head: true }).in("status", ["new", "pending", "submitted", "review"]),
+        supabase.from("story_tips").select("id", { count: "exact", head: true }).in("status", ["new", "pending", "submitted", "review"]),
+        supabase.from("obituaries").select("id", { count: "exact", head: true }).in("status", ["new", "pending", "submitted", "review"]),
+      ])
+      if (!active) return
+      setIncoming({
+        unread: contacts.count || 0,
+        submissions: (letters.count || 0) + (events.count || 0) + (tips.count || 0) + (obits.count || 0),
+      })
     })()
     return () => { active = false }
   }, [])
@@ -48,6 +68,20 @@ export default function AdminDashboardPage() {
         <button type="button" onClick={() => setShowAll(true)} className={`rounded-full px-4 py-2 text-sm font-black ${showAll ? "bg-white text-slate-950" : "border border-slate-600"}`}>All connected tools</button>
         <a href="https://office.haidagwaiinews.com" target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full bg-blue-300 px-4 py-2 text-sm font-black text-slate-950 hover:bg-blue-200">HGN Operations <ExternalLink size={15}/></a>
       </div>
+    </section>
+
+
+    <section className="grid gap-4 sm:grid-cols-2">
+      <Link href="/admin/inbox" className="rounded-3xl border bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-hgnBlue hover:shadow-md">
+        <p className="text-xs font-black uppercase tracking-[.18em] text-hgnBlue">Incoming</p>
+        <div className="mt-2 flex items-end justify-between gap-4"><h2 className="font-serif text-3xl font-bold">Inbox</h2><strong className="text-4xl">{incoming.unread}</strong></div>
+        <p className="mt-2 text-sm text-slate-600">Unread reader messages that may need a reply.</p>
+      </Link>
+      <Link href="/admin/submissions" className="rounded-3xl border bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-hgnBlue hover:shadow-md">
+        <p className="text-xs font-black uppercase tracking-[.18em] text-hgnBlue">Incoming</p>
+        <div className="mt-2 flex items-end justify-between gap-4"><h2 className="font-serif text-3xl font-bold">Submissions</h2><strong className="text-4xl">{incoming.submissions}</strong></div>
+        <p className="mt-2 text-sm text-slate-600">Items waiting for editorial or community review.</p>
+      </Link>
     </section>
 
     <section>

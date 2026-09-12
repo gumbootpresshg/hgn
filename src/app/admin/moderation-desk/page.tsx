@@ -106,7 +106,7 @@ export default async function ModerationDeskPage() {
   return <main className="mx-auto max-w-7xl px-4 py-10">
     <div className="flex flex-col gap-5 border-b pb-6 lg:flex-row lg:items-end lg:justify-between">
       <div><p className="text-sm font-black uppercase tracking-widest text-hgnBlue">v87 Moderation Desk</p><h1 className="mt-2 text-5xl font-black text-hgnNavy">Moderation Desk</h1><p className="mt-3 max-w-3xl text-slate-700">Triage reader submissions, community listings and sensitive reports before the beta opens to more people.</p></div>
-      <div className="flex flex-wrap gap-2"><Link href="/community-standards" className="hgn-btn-primary">Community standards</Link><Link href="/admin/submission-desk" className="hgn-btn-dark">Submissions</Link><Link href="/admin/trust" className="hgn-btn-dark">Trust Desk</Link></div>
+      <div className="flex flex-wrap gap-2"><Link href="/community-standards" className="hgn-btn-primary">Community standards</Link><Link href="/admin/submissions" className="hgn-btn-dark">Submissions</Link><Link href="/admin/trust" className="hgn-btn-dark">Trust Desk</Link></div>
     </div>
 
     <section className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-4">{stats.map(([label, value, helper, tone]) => <div key={label} className={`rounded-2xl border p-5 shadow-sm ${moderationToneClasses(String(tone))}`}><div className="text-xs font-black uppercase tracking-widest opacity-70">{label}</div><div className="mt-2 text-4xl font-black">{value}</div><p className="mt-2 text-sm opacity-80">{helper}</p></div>)}</section>
