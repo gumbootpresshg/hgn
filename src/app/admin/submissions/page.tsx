@@ -6,6 +6,8 @@ import { supabase } from "@/lib/supabase"
 
 type AnyItem = Record<string, any>
 
+type QueueState = "active" | "archived" | "deleted"
+
 type QueueItem = AnyItem & {
   _table: string
   _kind: "submission" | "classified" | "job"
@@ -13,6 +15,9 @@ type QueueItem = AnyItem & {
   _sourceLabel: string
   _workspaceHref: string
   _canModerateHere?: boolean
+  _queueTable?: string
+  _queueId?: string
+  _queueState?: QueueState
 }
 
 type SourceSpec = {
@@ -143,7 +148,40 @@ export default function AdminSubmissionsPage() {
   const [items, setItems] = useState<QueueItem[]>([])
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState("")
+  const [working, setWorking] = useState(false)
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [view, setView] = useState<QueueState>("active")
   const [filter, setFilter] = useState<"all" | "submission" | "classified" | "job">("all")
+
+  async function authHeaders() {
+    const { data } = await supabase.auth.getSession()
+    const token = data.session?.access_token
+    return token ? { authorization: `Bearer ${token}` } : {}
+  }
+
+  function itemKey(item: QueueItem) {
+    return `${item._queueTable || item._table}:${item._queueId || String(item.id || item.source_id || "")}`
+  }
+
+  async function queueAction(action: "archive" | "delete" | "restore" | "reviewed", targets: QueueItem[]) {
+    if (!targets.length) return
+    if (action === "delete" && !window.confirm(`Move ${targets.length === 1 ? "this submission" : `${targets.length} submissions`} to Trash? Source records stay intact in their specialist workspaces.`)) return
+    setWorking(true)
+    setMessage("")
+    const response = await fetch("/api/admin/incoming-state", {
+      method: "POST",
+      headers: { ...(await authHeaders()), "Content-Type": "application/json" },
+      body: JSON.stringify({ action, items: targets.map((item) => ({ source_table: item._queueTable || item._table, source_id: item._queueId || String(item.id || item.source_id || "") })) }),
+    })
+    const result = await response.json().catch(() => ({}))
+    if (!response.ok) setMessage(result.error || "Queue action failed.")
+    else {
+      setMessage(action === "archive" ? "Archived." : action === "delete" ? "Moved to Trash." : action === "restore" ? "Restored." : "Marked reviewed.")
+      setSelected(new Set())
+      await load()
+    }
+    setWorking(false)
+  }
 
   async function load() {
     setLoading(true)
@@ -160,7 +198,14 @@ export default function AdminSubmissionsPage() {
       return { source, ...result }
     })
 
-    const [inboxResult, ...sourceResults] = await Promise.all([inboxPromise, ...sourcePromises])
+    const statePromise = fetch("/api/admin/incoming-state", { headers: await authHeaders() }).then(async (response) => ({ response, body: await response.json().catch(() => ({})) }))
+    const [inboxResult, ...restResults] = await Promise.all([inboxPromise, ...sourcePromises, statePromise])
+    const stateResult = restResults.pop() as any
+    const sourceResults = restResults as any[]
+    const stateMap = new Map<string, QueueState>()
+    if (stateResult?.response?.ok) {
+      for (const row of stateResult.body.states || []) stateMap.set(`${row.source_table}:${row.source_id}`, row.queue_state as QueueState)
+    }
     const next: QueueItem[] = []
     const softErrors: string[] = []
 
@@ -179,6 +224,8 @@ export default function AdminSubmissionsPage() {
           _sourceLabel: labelSubmissionType(type),
           _workspaceHref: inboxWorkspace(type, row),
           _canModerateHere: true,
+          _queueTable: String(row.payload?.source_table || "").trim() || "submission_inbox",
+          _queueId: String(row.payload?.source_id || row.payload?.record_id || "").trim() || String(row.id || ""),
         })
       }
     }
@@ -200,11 +247,15 @@ export default function AdminSubmissionsPage() {
           _sourceLabel: source.sourceLabel,
           _workspaceHref: source.workspaceHref(row),
           _canModerateHere: source.canModerateHere || false,
+          _queueTable: source.table,
+          _queueId: String(row.id || row.source_id || ""),
         })
       }
     }
 
-    const deduped = dedupeSubmissionRows(next).sort((a, b) => rowTime(b) - rowTime(a))
+    const deduped = dedupeSubmissionRows(next)
+      .map((item) => ({ ...item, _queueState: stateMap.get(`${item._queueTable || item._table}:${item._queueId || String(item.id || item.source_id || "")}`) || "active" as QueueState }))
+      .sort((a, b) => rowTime(b) - rowTime(a))
     setItems(deduped)
 
     if (softErrors.length) {
@@ -217,14 +268,18 @@ export default function AdminSubmissionsPage() {
     load()
   }, [])
 
-  const visible = filter === "all" ? items : items.filter((item) => item._kind === filter)
+  const inView = items.filter((item) => (item._queueState || "active") === view)
+  const visible = filter === "all" ? inView : inView.filter((item) => item._kind === filter)
+  const selectedItems = visible.filter((item) => selected.has(itemKey(item)))
   const counts = useMemo(() => ({
-    all: items.length,
-    submissions: items.filter((x) => x._kind === "submission").length,
-    classifieds: items.filter((x) => x._kind === "classified").length,
-    jobs: items.filter((x) => x._kind === "job").length,
-    pending: items.filter((x) => isPendingStatus(x.status)).length,
-  }), [items])
+    all: items.filter((x) => (x._queueState || "active") === "active").length,
+    archived: items.filter((x) => x._queueState === "archived").length,
+    deleted: items.filter((x) => x._queueState === "deleted").length,
+    submissions: inView.filter((x) => x._kind === "submission").length,
+    classifieds: inView.filter((x) => x._kind === "classified").length,
+    jobs: inView.filter((x) => x._kind === "job").length,
+    pending: inView.filter((x) => isPendingStatus(x.status)).length,
+  }), [items, inView])
 
   return (
     <main className="mx-auto max-w-6xl space-y-8 px-6 py-10">
@@ -235,21 +290,37 @@ export default function AdminSubmissionsPage() {
           Reader material that may become published content or a public listing. This page is a clean intake overview; editing, approval and publishing happen in the proper specialist workspace. General correspondence belongs in Inbox.
         </p>
 
-        <div className="mt-6 grid gap-3 sm:grid-cols-5">
-          <Stat label="All submissions" value={counts.all} />
+        <div className="mt-6 grid gap-3 sm:grid-cols-6">
+          <Stat label="Active" value={counts.all} />
+          <Stat label="Needs review" value={counts.pending} />
           <Stat label="Editorial / community" value={counts.submissions} />
           <Stat label="Marketplace" value={counts.classifieds} />
-          <Stat label="Jobs" value={counts.jobs} />
-          <Stat label="Needs review" value={counts.pending} />
+          <Stat label="Archived" value={counts.archived} />
+          <Stat label="Trash" value={counts.deleted} />
         </div>
 
-        <div className="mt-6 flex flex-wrap gap-2">
-          <FilterButton active={filter === "all"} onClick={() => setFilter("all")}>All</FilterButton>
+        <div className="mt-6 flex flex-wrap gap-2 border-b pb-4">
+          <FilterButton active={view === "active"} onClick={() => { setView("active"); setSelected(new Set()) }}>Active</FilterButton>
+          <FilterButton active={view === "archived"} onClick={() => { setView("archived"); setSelected(new Set()) }}>Archived</FilterButton>
+          <FilterButton active={view === "deleted"} onClick={() => { setView("deleted"); setSelected(new Set()) }}>Trash</FilterButton>
+        </div>
+
+        <div className="mt-4 flex flex-wrap gap-2">
+          <FilterButton active={filter === "all"} onClick={() => setFilter("all")}>All types</FilterButton>
           <FilterButton active={filter === "submission"} onClick={() => setFilter("submission")}>Editorial & community</FilterButton>
           <FilterButton active={filter === "classified"} onClick={() => setFilter("classified")}>Marketplace</FilterButton>
           <FilterButton active={filter === "job"} onClick={() => setFilter("job")}>Jobs</FilterButton>
           <button onClick={load} className="hgn-btn-dark ml-auto">Refresh</button>
         </div>
+
+        {visible.length ? <div className="mt-4 flex flex-wrap items-center gap-2 rounded-2xl bg-slate-50 p-3">
+          <label className="mr-2 flex items-center gap-2 text-sm font-semibold"><input type="checkbox" checked={visible.length > 0 && visible.every((item) => selected.has(itemKey(item)))} onChange={(event) => setSelected(event.target.checked ? new Set(visible.map(itemKey)) : new Set())} /> Select all in view</label>
+          {selectedItems.length ? <span className="text-sm text-slate-500">{selectedItems.length} selected</span> : null}
+          {view === "active" ? <>
+            <button disabled={working || !selectedItems.length} onClick={() => queueAction("archive", selectedItems)} className="rounded-full bg-slate-200 px-4 py-2 text-sm font-semibold disabled:opacity-40">Archive</button>
+            <button disabled={working || !selectedItems.length} onClick={() => queueAction("delete", selectedItems)} className="rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 disabled:opacity-40">Delete</button>
+          </> : <button disabled={working || !selectedItems.length} onClick={() => queueAction("restore", selectedItems)} className="rounded-full bg-emerald-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-40">Restore</button>}
+        </div> : null}
 
         {message ? <p className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">{message}</p> : null}
       </section>
@@ -265,15 +336,24 @@ export default function AdminSubmissionsPage() {
             return (
               <article key={key} className="rounded-2xl border bg-white p-5 shadow-sm">
                 <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
+                  <div className="flex min-w-0 flex-1 items-start gap-3">
+                    <input aria-label="Select submission" type="checkbox" className="mt-1" checked={selected.has(key)} onChange={(event) => setSelected((current) => { const next = new Set(current); event.target.checked ? next.add(key) : next.delete(key); return next })} />
+                    <div>
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-slate-600">{item._sourceLabel}</span>
                       <span className={statusClass(item.status || "pending")}>{plainStatus(item.status)}</span>
                     </div>
                     <h2 className="mt-3 text-xl font-bold">{submissionTitle(item)}</h2>
                     <p className="mt-1 text-sm text-slate-500">{formatSubmissionMeta(item)}</p>
+                    </div>
                   </div>
-                  <Link href={item._workspaceHref} className="hgn-btn-dark text-sm">Review →</Link>
+                  <div className="flex flex-wrap gap-2">
+                    <Link href={item._workspaceHref} className="hgn-btn-dark text-sm">Review →</Link>
+                    {view === "active" ? <>
+                      <button disabled={working} onClick={() => queueAction("archive", [item])} className="rounded-full bg-slate-200 px-4 py-2 text-sm font-semibold disabled:opacity-40">Archive</button>
+                      <button disabled={working} onClick={() => queueAction("delete", [item])} className="rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 disabled:opacity-40">Delete</button>
+                    </> : <button disabled={working} onClick={() => queueAction("restore", [item])} className="rounded-full bg-emerald-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-40">Restore</button>}
+                  </div>
                 </div>
 
                 {submissionBody(item) ? <p className="mt-4 line-clamp-4 whitespace-pre-wrap text-sm leading-6 text-slate-700">{submissionBody(item)}</p> : null}
@@ -282,7 +362,7 @@ export default function AdminSubmissionsPage() {
                   <a href={item.photo_url || item.image_url} target="_blank" rel="noreferrer" className="mt-3 inline-block text-sm font-bold underline">View submitted image →</a>
                 ) : null}
 
-                <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-400">Review and publishing actions are handled in the linked workspace.</p>
+                <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-400">Archive/Delete only cleans this intake queue. Publishing actions stay in the linked workspace.</p>
               </article>
             )
           })}

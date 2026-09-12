@@ -72,6 +72,31 @@ export default function ContactMessagesPage() {
     setReplyBody(`Hi ${item.sender_name || "there"},\n\n\n\nThanks,\nHaida Gwaii News`);
   }
 
+  async function deleteMessage(item: ContactMessage) {
+    const ok = window.confirm(`Delete this message from ${item.sender_name || item.sender_email || "the sender"}? This cannot be undone.`);
+    if (!ok) return;
+    setWorking(item.id);
+    setMessage("");
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData.session?.access_token;
+    if (!token) {
+      setMessage("Your login session could not be verified. Please sign in again.");
+      setWorking("");
+      return;
+    }
+    const response = await fetch(`/api/admin/contact/${encodeURIComponent(item.id)}/delete`, {
+      method: "DELETE",
+      headers: { authorization: `Bearer ${token}` },
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) setMessage(result.error || "Message could not be deleted.");
+    else {
+      setMessage("Message deleted.");
+      await load();
+    }
+    setWorking("");
+  }
+
   async function sendReply(item: ContactMessage) {
     setWorking(item.id);
     setMessage("");
@@ -143,6 +168,7 @@ export default function ContactMessagesPage() {
                 {isUnread ? <button disabled={working === item.id} onClick={() => updateItem(item.id, { read_at: new Date().toISOString(), status: "read" })} className="rounded-full border px-4 py-2 text-sm font-semibold">Mark read</button> : <button disabled={working === item.id} onClick={() => updateItem(item.id, { read_at: null, status: "new" })} className="rounded-full border px-4 py-2 text-sm font-semibold">Mark unread</button>}
                 {currentEmail && item.assigned_to !== currentEmail ? <button disabled={working === item.id} onClick={() => updateItem(item.id, { assigned_to: currentEmail })} className="rounded-full border px-4 py-2 text-sm font-semibold">Assign to me</button> : null}
                 {!showArchived ? <button disabled={working === item.id} onClick={() => updateItem(item.id, { archived_at: new Date().toISOString(), status: item.replied_at ? "replied" : "archived" })} className="rounded-full bg-slate-200 px-4 py-2 text-sm font-semibold">Archive</button> : <button disabled={working === item.id} onClick={() => updateItem(item.id, { archived_at: null, status: item.replied_at ? "replied" : "read" })} className="rounded-full bg-slate-200 px-4 py-2 text-sm font-semibold">Restore</button>}
+                <button disabled={working === item.id} onClick={() => deleteMessage(item)} className="rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-100">Delete</button>
               </div>
 
               {replyingId === item.id ? (
