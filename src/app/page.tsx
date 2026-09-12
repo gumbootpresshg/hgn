@@ -115,12 +115,21 @@ export default async function Home() {
   briefs.forEach((article) => desktopUsed.add(article.slug))
 
   const photoRailStories = secondary
+
+  // Desktop should read like an edited newspaper, not a long local-news feed. Reserve
+  // fresh Sports and Columns stories before filling the next local-news blocks so variety
+  // appears immediately after the lead package, matching the stronger mobile rhythm.
+  const desktopSports = chronological.filter((article) => isSports(article) && !desktopUsed.has(article.slug)).slice(0, 3)
+  desktopSports.forEach((article) => desktopUsed.add(article.slug))
+  const desktopColumns = chronological.filter((article) => isColumn(article) && !desktopUsed.has(article.slug)).slice(0, 3)
+  desktopColumns.forEach((article) => desktopUsed.add(article.slug))
+
   const localRemaining = chronological.filter((article) => isLocalNews(article) && !desktopUsed.has(article.slug))
-  const secondaryStripStories = localRemaining.slice(0, 4)
+  const secondaryStripStories = localRemaining.slice(0, 2)
   secondaryStripStories.forEach((article) => desktopUsed.add(article.slug))
   const moreLocalStories = chronological
     .filter((article) => isLocalNews(article) && !desktopUsed.has(article.slug))
-    .slice(0, 10)
+    .slice(0, 6)
 
   // Mobile has its own composition because the desktop feature rail is hidden there. Reserve
   // Opinion before building Latest so a story never appears in both sections on the same phone page.
@@ -303,6 +312,39 @@ export default async function Home() {
               </Link>
             ))}
           </section>
+
+          {(desktopSports.length || desktopColumns.length) ? (
+            <section className="grid border-b border-stone-400 py-6 md:grid-cols-2 md:gap-7">
+              <div className="min-w-0 md:border-r md:border-stone-300 md:pr-7">
+                <div className="newspaper-section-heading">
+                  <h2>Sports</h2>
+                  <Link href="/sports">All sports →</Link>
+                </div>
+                {desktopSports.length ? desktopSports.map((article) => (
+                  <Link key={article.id} href={`/articles/${article.slug}`} className="group block border-b border-stone-200 py-4 last:border-b-0">
+                    <h3 className="font-serif text-xl font-bold leading-tight group-hover:text-hgnRed">{article.title}</h3>
+                    <p className="mt-2 line-clamp-2 text-sm leading-6 text-stone-600">{plainExcerpt(article, 120)}</p>
+                    <StoryMeta article={article} settings={publishingSettings} />
+                  </Link>
+                )) : <p className="py-4 text-sm text-stone-500">More sports coverage coming soon.</p>}
+              </div>
+
+              <div className="min-w-0 pt-6 md:pt-0">
+                <div className="newspaper-section-heading">
+                  <h2>Columns</h2>
+                  <Link href="/columns">All columns →</Link>
+                </div>
+                {desktopColumns.length ? desktopColumns.map((article) => (
+                  <Link key={article.id} href={`/articles/${article.slug}`} className="group block border-b border-stone-200 py-4 last:border-b-0">
+                    <p className="newspaper-kicker text-hgnRed">{article.column_name || article.subcategory || "Column"}</p>
+                    <h3 className="mt-1 font-serif text-xl font-bold leading-tight group-hover:text-hgnRed">{article.title}</h3>
+                    <p className="mt-2 line-clamp-2 text-sm leading-6 text-stone-600">{plainExcerpt(article, 120)}</p>
+                    <StoryMeta article={article} settings={publishingSettings} />
+                  </Link>
+                )) : <p className="py-4 text-sm text-stone-500">More columns coming soon.</p>}
+              </div>
+            </section>
+          ) : null}
 
           <section className="py-7">
             <div className="newspaper-section-heading">
