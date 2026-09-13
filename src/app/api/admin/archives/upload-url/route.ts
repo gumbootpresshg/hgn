@@ -38,16 +38,16 @@ export async function POST(req: NextRequest) {
   const stamp = Date.now()
   const folder = kind === "pdf" ? "archives" : "archives/covers"
   const path = `${folder}/${issueDate}-${stamp}-${safeName(filename)}`
-  const { data, error } = await auth.db.storage.from("hgn-media").createSignedUploadUrl(path, { upsert: false })
+  const { data, error } = await auth.db.storage.from("hgn-archives").createSignedUploadUrl(path, { upsert: false })
   if (error || !data?.token) {
     return NextResponse.json({ error: error?.message || "Could not prepare the upload." }, { status: 500 })
   }
 
   return NextResponse.json({
-    bucket: "hgn-media",
+    bucket: "hgn-archives",
     path,
     token: data.token,
-    publicUrl: auth.db.storage.from("hgn-media").getPublicUrl(path).data.publicUrl,
+    publicUrl: auth.db.storage.from("hgn-archives").getPublicUrl(path).data.publicUrl,
     maxBytes: kind === "pdf" ? PDF_MAX : COVER_MAX,
   })
 }
