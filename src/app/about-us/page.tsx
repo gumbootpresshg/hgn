@@ -1,1 +1,5 @@
-export { default, revalidate } from "../about/page"
+import AboutPage from "../about/page"
+
+export const revalidate = 60
+
+export default AboutPage
