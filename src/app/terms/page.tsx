@@ -1,22 +1,5 @@
-import Link from "next/link";
-
-export default function TermsPage() {
-  return (
-    <main className="min-h-screen bg-zinc-950 px-6 py-12 text-white">
-      <div className="mx-auto max-w-4xl">
-        <Link href="/" className="text-sm font-bold text-blue-300">← PuckScope</Link>
-        <p className="mt-10 text-sm uppercase tracking-[0.3em] text-blue-300">Terms</p>
-        <h1 className="mt-4 text-5xl font-black tracking-tight">Terms of Service</h1>
-        <p className="mt-6 text-zinc-400">Last updated: April 27, 2026</p>
-        <div className="mt-10 space-y-6 text-sm leading-7 text-zinc-300">
-          <p>PuckScope provides hockey prospect rankings, scouting tools, draft simulations, articles, data views, and user-submitted profile workflows for informational and entertainment purposes.</p>
-          <p>Rankings, projections, scouting notes, fantasy reads, draft fits, and pipeline scores are opinions or estimates and should not be treated as official NHL, league, team, player, or scouting-service records.</p>
-          <p>Users submitting content confirm they have the right to submit it and that it may be reviewed, edited, approved, rejected, or removed by PuckScope.</p>
-          <p>Users may not submit unlawful, misleading, defamatory, abusive, infringing, or private personal information about another person.</p>
-          <p>PuckScope may change, remove, or restrict features at any time as the platform develops.</p>
-          <p className="text-zinc-500">This is a launch placeholder and should be reviewed by a qualified professional before heavy public traffic or paid memberships.</p>
-        </div>
-      </div>
-    </main>
-  );
-}
+import { supabase } from "@/lib/supabase"
+import { SitePageRenderer } from "@/components/cms/SitePageRenderer"
+export const revalidate = 30
+const fallback:any[]=[{id:'t1',type:'paragraph',content:'Haida Gwaii News provides journalism, community information, events, directories, marketplace tools and reader services for informational purposes.'},{id:'t2',type:'paragraph',content:'People submitting material confirm that they have the right to submit it and understand that HGN may review, edit, approve, reject, archive or remove submitted material according to editorial and community standards.'},{id:'t3',type:'paragraph',content:'Users may not submit unlawful, abusive, defamatory, infringing or deliberately misleading material, or private personal information about another person without permission.'},{id:'t4',type:'paragraph',content:'HGN may change or retire site features as the publication develops. Editorial decisions remain with Haida Gwaii News.'}]
+export default async function Terms(){const {data}=await supabase.from('hgn_site_pages').select('*').eq('system_key','terms').eq('status','published').eq('visibility','public').maybeSingle();return <main className="mx-auto max-w-5xl px-4 py-10"><p className="text-sm font-black uppercase tracking-[.2em] text-hgnBlue">Legal</p><h1 className="mt-2 font-serif text-5xl font-bold text-hgnNavy">{data?.title||'Terms of Use'}</h1><section className="mt-8 rounded-3xl border bg-white p-7 shadow-sm"><SitePageRenderer blocks={Array.isArray(data?.blocks)?data.blocks:fallback}/></section></main>}

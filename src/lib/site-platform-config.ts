@@ -21,10 +21,15 @@ export type SiteSectionConfig = {
 
 export type SiteFeatureConfig = Record<string, boolean>
 
+export type FooterLink = { id: string; label: string; href: string; enabled: boolean }
+export type FooterGroup = { id: string; title: string; enabled: boolean; links: FooterLink[] }
+export type SiteFooterConfig = { groups: FooterGroup[]; utilityLinks: FooterLink[] }
+
 export type SitePlatformConfig = {
   navigation: SiteNavEntry[]
   sections: SiteSectionConfig[]
   features: SiteFeatureConfig
+  footer: SiteFooterConfig
   updatedAt?: string
 }
 
@@ -46,6 +51,7 @@ export const defaultNavigation: SiteNavEntry[] = [
     { id: "events", label: "Events", href: "/events", enabled: true, visibility: "public" },
     { id: "obituaries", label: "Obituaries", href: "/obituaries", enabled: true, visibility: "public" },
     { id: "ferry", label: "Ferry Info", href: "/ferry-info", enabled: true, visibility: "public" },
+    { id: "notices", label: "Notices", href: "/notices", enabled: true, visibility: "public" },
   ]},
   { id: "marketplace", label: "Marketplace", href: "/marketplace", enabled: true, visibility: "public" },
   { id: "horoscopes", label: "Horoscopes", href: "/horoscope", enabled: true, visibility: "public" },
@@ -64,18 +70,48 @@ export const defaultSections: SiteSectionConfig[] = [
   ["island-lens","Island Lens","/island-lens"], ["archives","Archives","/digital-paper"], ["weather","Weather","/weather"],
 ].map(([id,label,route]) => ({ id, label, route, enabled: true, visibility: "public" as Visibility, includeInApp: true, includeOnHomepage: true }))
 
+
+export const defaultFooter: SiteFooterConfig = {
+  groups: [
+    { id: "news", title: "News", enabled: true, links: [
+      { id: "latest", label: "Latest Stories", href: "/articles", enabled: true },
+      { id: "opinion", label: "Opinion", href: "/opinion", enabled: true },
+      { id: "letters", label: "Letters", href: "/letters", enabled: true },
+      { id: "obituaries", label: "Obituaries", href: "/obituaries", enabled: true },
+    ]},
+    { id: "community", title: "Community", enabled: true, links: [
+      { id: "events", label: "Events", href: "/events", enabled: true },
+      { id: "notices", label: "Notices", href: "/notices", enabled: true },
+      { id: "marketplace", label: "Marketplace", href: "/marketplace", enabled: true },
+      { id: "archives", label: "Archives", href: "/digital-paper", enabled: true },
+    ]},
+    { id: "about", title: "About", enabled: true, links: [
+      { id: "about", label: "About HGN", href: "/about", enabled: true },
+      { id: "contact", label: "Contact", href: "/contact", enabled: true },
+      { id: "advertise", label: "Advertise", href: "/advertise", enabled: true },
+      { id: "standards", label: "Community Standards", href: "/community-standards", enabled: true },
+    ]},
+  ],
+  utilityLinks: [
+    { id: "privacy", label: "Privacy", href: "/privacy", enabled: true },
+    { id: "terms", label: "Terms", href: "/terms", enabled: true },
+    { id: "corrections", label: "Corrections", href: "/corrections", enabled: true },
+  ],
+}
+
 export const defaultFeatures: SiteFeatureConfig = {
   marketplace: true, events: true, guide: true, obituaries: true, polls: true, newsletter: true,
   reader_accounts: true, membership: true, weather: true, tides: true, emergency_alerts: true, island_lens: true,
 }
 
-export const defaultSitePlatformConfig: SitePlatformConfig = { navigation: defaultNavigation, sections: defaultSections, features: defaultFeatures }
+export const defaultSitePlatformConfig: SitePlatformConfig = { navigation: defaultNavigation, sections: defaultSections, features: defaultFeatures, footer: defaultFooter }
 
 export function normalizeSitePlatformConfig(value: Partial<SitePlatformConfig> | null | undefined): SitePlatformConfig {
   return {
     navigation: Array.isArray(value?.navigation) ? value!.navigation : defaultNavigation,
     sections: Array.isArray(value?.sections) ? value!.sections : defaultSections,
     features: { ...defaultFeatures, ...(value?.features || {}) },
+    footer: value?.footer && Array.isArray(value.footer.groups) ? value.footer : defaultFooter,
     updatedAt: value?.updatedAt,
   }
 }

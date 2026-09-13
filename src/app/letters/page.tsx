@@ -26,6 +26,7 @@ type ArticleLetter = {
   title: string | null
   author: string | null
   category: string | null
+  subcategory?: string | null
   body: string | null
   content: string | null
   excerpt: string | null
@@ -46,9 +47,9 @@ export default async function LettersPage() {
 
   const articleLettersRes = await supabase
     .from("articles")
-    .select("id,title,author,category,body,content,excerpt,dek,status,published_at,created_at,slug")
+    .select("id,title,author,category,subcategory,body,content,excerpt,dek,status,published_at,created_at,slug")
     .in("status", ["published", "approved", "public", "active", "live"])
-    .or("category.ilike.%letter%,category.ilike.%opinion%,title.ilike.%letter to the editor%,title.ilike.%letter:%")
+    .or("category.eq.Letters to the Editor,category.eq.Letters,subcategory.eq.Letters to the Editor,subcategory.eq.Letters,title.ilike.Letter to the Editor:%")
     .order("published_at", { ascending: false, nullsFirst: false })
     .order("created_at", { ascending: false })
     .limit(100)

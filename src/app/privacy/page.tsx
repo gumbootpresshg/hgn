@@ -1,22 +1,5 @@
-import Link from "next/link";
-
-export default function PrivacyPage() {
-  return (
-    <main className="min-h-screen bg-zinc-950 px-6 py-12 text-white">
-      <div className="mx-auto max-w-4xl">
-        <Link href="/" className="text-sm font-bold text-blue-300">← PuckScope</Link>
-        <p className="mt-10 text-sm uppercase tracking-[0.3em] text-blue-300">Privacy Policy</p>
-        <h1 className="mt-4 text-5xl font-black tracking-tight">Privacy Policy</h1>
-        <p className="mt-6 text-zinc-400">Last updated: April 27, 2026</p>
-        <div className="mt-10 space-y-6 text-sm leading-7 text-zinc-300">
-          <p>PuckScope collects information users choose to submit, including account email addresses, player profile submissions, scouting notes saved to an account, article or contributor inquiries, and contact details included in forms.</p>
-          <p>Information is used to operate the site, manage accounts, review profile claims, publish approved content, improve tools, and communicate with users about PuckScope-related requests.</p>
-          <p>Player profile submissions and claimed profile details are reviewed before public display. Do not submit private information that should not appear publicly.</p>
-          <p>PuckScope may use third-party services such as Supabase, hosting providers, analytics tools, and email providers to operate the platform.</p>
-          <p>To request updates or removal of information, contact PuckScope through the contact page.</p>
-          <p className="text-zinc-500">This is a launch placeholder and should be reviewed by a qualified professional before heavy public traffic or paid memberships.</p>
-        </div>
-      </div>
-    </main>
-  );
-}
+import { supabase } from "@/lib/supabase"
+import { SitePageRenderer } from "@/components/cms/SitePageRenderer"
+export const revalidate = 30
+const fallback:any[]=[{id:'p1',type:'paragraph',content:'Haida Gwaii News collects information readers choose to provide through accounts, newsletter subscriptions, contact forms, community submissions, marketplace activity and other public features.'},{id:'p2',type:'paragraph',content:'We use this information to operate the publication, respond to requests, manage reader accounts, review submissions, send newsletters and improve our services. We do not publish private personal information unless it is intentionally supplied for publication and approved through an editorial workflow.'},{id:'p3',type:'paragraph',content:'We use service providers such as Supabase, Vercel and Resend to operate parts of the website. Requests about personal information can be sent through our Contact page.'}]
+export default async function Privacy(){const {data}=await supabase.from('hgn_site_pages').select('*').eq('system_key','privacy').eq('status','published').eq('visibility','public').maybeSingle();return <main className="mx-auto max-w-5xl px-4 py-10"><p className="text-sm font-black uppercase tracking-[.2em] text-hgnBlue">Legal</p><h1 className="mt-2 font-serif text-5xl font-bold text-hgnNavy">{data?.title||'Privacy Policy'}</h1><section className="mt-8 rounded-3xl border bg-white p-7 shadow-sm"><SitePageRenderer blocks={Array.isArray(data?.blocks)?data.blocks:fallback}/></section></main>}

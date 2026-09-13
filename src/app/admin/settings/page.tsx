@@ -1,6 +1,9 @@
 import Link from "next/link"
 
 const settings = [
+  ["Pages", "/admin/pages", "Create and edit public pages with the block-based Page Builder."],
+  ["Footer", "/admin/footer", "Control the bottom navigation, legal links and external links."],
+  ["Archive newsstand", "/admin/archives", "Upload PDF editions and manage the public newspaper archive."],
   ["Site configuration", "/admin/site-configuration", "Edit navigation, public sections, feature switches and visibility rules for this publication."],
   ["Publishing dates & time", "/admin/settings/publishing", "Set the newsroom timezone plus the date and time styles used across publishing and public story displays."],
   ["Contact & notifications", "/admin/settings/contact", "Choose contact destinations, topic routing, form availability and Operations notifications."],
