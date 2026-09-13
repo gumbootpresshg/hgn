@@ -21,9 +21,13 @@ function applyTheme(theme: SiteThemeConfig) {
   root.dataset.masthead = theme.mastheadStyle
 }
 
-export function SiteThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<SiteThemeConfig>(() => ({ ...themePresets["island-newspaper"], labels: defaultLabels }))
+export function SiteThemeProvider({ children, initialTheme }: { children: React.ReactNode; initialTheme?: SiteThemeConfig }) {
+  const [theme, setTheme] = useState<SiteThemeConfig>(() => initialTheme ? normalizeThemeConfig(initialTheme) : ({ ...themePresets["island-newspaper"], labels: defaultLabels }))
   useEffect(() => {
+    if (initialTheme) {
+      applyTheme(normalizeThemeConfig(initialTheme))
+      return
+    }
     let active = true
     fetch("/api/site-config", { cache: "no-store" })
       .then(r => r.ok ? r.json() : null)
@@ -35,7 +39,7 @@ export function SiteThemeProvider({ children }: { children: React.ReactNode }) {
       })
       .catch(() => {})
     return () => { active = false }
-  }, [])
+  }, [initialTheme])
   useEffect(() => { applyTheme(theme) }, [theme])
   const value = useMemo(() => theme, [theme])
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>

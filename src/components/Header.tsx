@@ -7,7 +7,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import { slugify } from "@/lib/article-routing"
 import { useSiteTheme } from "@/components/theme/SiteThemeProvider"
 import { supabase } from "@/lib/supabase"
-import { defaultNavigation, type SiteNavEntry } from "@/lib/site-platform-config"
+import { defaultNavigation, type SiteNavEntry, type SitePlatformConfig, type Visibility } from "@/lib/site-platform-config"
 
 const utilityLinks = [
   { href: "/newsletter", label: "Newsletter" },
@@ -145,7 +145,17 @@ function DesktopDropdown({ item, isOpen, onOpen, onClose, onNavigate }: DesktopD
   )
 }
 
-export function Header() {
+type HeaderAudience = { loggedIn: boolean; member: boolean; staff: boolean }
+
+function canSeeVisibility(visibility: Visibility, audience: HeaderAudience) {
+  if (visibility === "disabled") return false
+  if (visibility === "staff") return audience.staff
+  if (visibility === "members") return audience.member || audience.staff
+  if (visibility === "logged_in") return audience.loggedIn || audience.staff
+  return true
+}
+
+export function Header({ initialPlatformConfig }: { initialPlatformConfig?: SitePlatformConfig }) {
   const { labels } = useSiteTheme()
   const pathname = usePathname()
   const navRef = useRef<HTMLElement | null>(null)
@@ -155,18 +165,36 @@ export function Header() {
   const [today, setToday] = useState("")
   const fallbackColumnLinks = useMemo(() => fallbackColumns.map((name) => ({ href: `/columns/${slugify(name)}`, label: name })), [])
   const [columns, setColumns] = useState<NavLink[]>(fallbackColumnLinks)
-  const [configuredNav, setConfiguredNav] = useState<SiteNavEntry[] | null>(null)
+  const [configuredNav] = useState<SiteNavEntry[] | null>(() => initialPlatformConfig?.navigation || null)
+  const [audience, setAudience] = useState<HeaderAudience>({ loggedIn: false, member: false, staff: false })
 
   useEffect(() => {
     let active = true
     ;(async () => {
       try {
-        const response = await fetch("/api/site-config", { cache: "no-store" })
-        const data = await response.json()
-        if (active && Array.isArray(data?.platform?.navigation)) setConfiguredNav(data.platform.navigation)
+        const { data: userData } = await supabase.auth.getUser()
+        const user = userData.user
+        if (!active || !user) return
+        const { data: profile } = await supabase
+          .from("hgn_profiles")
+          .select("account_type,admin_role,is_admin,can_access_publisher_tools")
+          .eq("user_id", user.id)
+          .maybeSingle()
+        if (!active) return
+        const accountType = String(profile?.account_type || "").toLowerCase()
+        const adminRole = String(profile?.admin_role || "").toLowerCase()
+        const staff = Boolean(profile?.is_admin || profile?.can_access_publisher_tools || ["admin", "publisher", "editor", "sales"].includes(accountType) || ["admin", "publisher", "editor", "sales"].includes(adminRole))
+        const member = staff || accountType === "paid_individual" || accountType === "business_organization" || accountType === "member" || accountType.startsWith("paid_")
+        setAudience({ loggedIn: true, member, staff })
       } catch {}
     })()
-    return () => { active = false }
+    const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session?.user && active) setAudience({ loggedIn: false, member: false, staff: false })
+    })
+    return () => {
+      active = false
+      subscription.subscription.unsubscribe()
+    }
   }, [])
 
   useEffect(() => {
@@ -239,15 +267,15 @@ export function Header() {
   const navItems: NavItem[] = useMemo(() => {
     const fallback: SiteNavEntry[] = defaultNavigation
     const source = configuredNav?.length ? configuredNav : fallback
-    const visible = source.filter((item) => item.enabled && item.visibility !== "disabled" && item.visibility !== "staff")
+    const visible = source.filter((item) => item.enabled && canSeeVisibility(item.visibility, audience))
     return visible.map((item) => {
-      const children = (item.children || []).filter((child) => child.enabled && child.visibility !== "disabled" && child.visibility !== "staff").map((child) => {
+      const children = (item.children || []).filter((child) => child.enabled && canSeeVisibility(child.visibility, audience)).map((child) => {
         if (child.id === "columns") return { href: child.href || "/columns", label: child.label, children: columns }
         return { href: child.href || "/", label: child.label }
       })
       return children.length ? { label: item.label, children } : { label: item.label, href: item.href || "/" }
     })
-  }, [columns, configuredNav])
+  }, [audience, columns, configuredNav])
 
   const closeAllMenus = () => {
     setOpenDesktopMenu(null)

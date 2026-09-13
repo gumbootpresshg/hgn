@@ -7,6 +7,7 @@ import TsunamiAlertBanner from "@/components/TsunamiAlertBanner";
 import EarthquakeAlertBanner from "@/components/EarthquakeAlertBanner";
 import { absoluteUrl, SITE } from "@/lib/site";
 import { SiteThemeProvider } from "@/components/theme/SiteThemeProvider";
+import { getPublicSiteConfig } from "@/lib/server/public-site-config";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE.url),
@@ -22,8 +23,10 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#ffffff", colorScheme: "light" };
+export const revalidate = 10;
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const siteConfig = await getPublicSiteConfig();
   const organization = { "@context": "https://schema.org", "@type": "NewsMediaOrganization", name: SITE.name, url: SITE.url, logo: absoluteUrl("/hgn-logo.png"), sameAs: [], publishingPrinciples: absoluteUrl("/community-standards") };
-  return <html lang="en-CA"><body><SiteThemeProvider><a href="#main-content" className="skip-link">Skip to main content</a><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organization) }} /><BreakingAlertBar /><Header /><TsunamiAlertBanner /><EarthquakeAlertBanner /><div id="main-content">{children}</div><Footer /></SiteThemeProvider></body></html>;
+  return <html lang="en-CA"><body><SiteThemeProvider initialTheme={siteConfig.theme}><a href="#main-content" className="skip-link">Skip to main content</a><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organization) }} /><BreakingAlertBar /><Header initialPlatformConfig={siteConfig.platform} /><TsunamiAlertBanner /><EarthquakeAlertBanner /><div id="main-content">{children}</div><Footer /></SiteThemeProvider></body></html>;
 }
