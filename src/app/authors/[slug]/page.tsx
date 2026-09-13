@@ -4,10 +4,22 @@ import { notFound } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { getPublishingSettings, formatPublishingDate } from "@/lib/publishing-settings";
 import { HgnAuthor } from "@/lib/writers";
+import { absoluteUrl, SITE } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
 
 type PageProps = { params: Promise<{ slug: string }> };
+
+
+export async function generateMetadata({ params }: PageProps) {
+  const { slug } = await params;
+  const { data: author } = await supabase.from("hgn_authors").select("display_name,short_bio,photo_url,is_active").eq("slug", slug).eq("is_active", true).maybeSingle();
+  if (!author) return { title: `Writer | ${SITE.name}` };
+  const title = `${author.display_name} | ${SITE.name}`;
+  const description = author.short_bio || `Articles and reporting by ${author.display_name} for ${SITE.name}.`;
+  const url = absoluteUrl(`/authors/${slug}`);
+  return { title, description, alternates: { canonical: url }, openGraph: { title, description, url, type: "profile", images: author.photo_url ? [{ url: absoluteUrl(author.photo_url) }] : undefined } };
+}
 
 type ArticleRow = {
   id: string;
@@ -51,8 +63,11 @@ export default async function AuthorProfilePage({ params }: PageProps) {
 
   const stories = (articles || []) as ArticleRow[];
 
+  const personJsonLd = { "@context": "https://schema.org", "@type": "Person", name: typedAuthor.display_name, url: absoluteUrl(`/authors/${typedAuthor.slug}`), ...(typedAuthor.photo_url ? { image: absoluteUrl(typedAuthor.photo_url) } : {}), ...(typedAuthor.short_bio ? { description: typedAuthor.short_bio } : {}), worksFor: { "@type": "NewsMediaOrganization", name: SITE.name, url: SITE.url } };
+
   return (
     <main className="mx-auto max-w-5xl px-5 py-10 md:px-8">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(personJsonLd) }} />
       <Link href="/authors" className="text-sm font-bold uppercase tracking-wide text-stone-600 hover:underline">← All writers</Link>
 
       <section className="mt-6 grid gap-7 border-b-4 border-double border-black pb-8 md:grid-cols-[180px_1fr] md:items-start">

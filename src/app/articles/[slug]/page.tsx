@@ -121,7 +121,7 @@ export default async function ArticlePage({ params }: PageProps) {
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-10">
-      <NewsArticleJsonLd article={typed} />
+      <NewsArticleJsonLd article={typed} authorUrl={writer?.slug && writer?.is_active !== false ? `/authors/${writer.slug}` : null} />
 
       <Link href="/articles" className="text-sm font-bold text-hgnBlue hover:underline">
         {`← ${articleBackLabel(typed)}`}

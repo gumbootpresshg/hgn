@@ -21,7 +21,7 @@ type Article = {
   google_news_headline?: string | null;
 };
 
-export default function NewsArticleJsonLd({ article }: { article: Article }) {
+export default function NewsArticleJsonLd({ article, authorUrl }: { article: Article; authorUrl?: string | null }) {
   const headline = article.google_news_headline || article.seo_title || article.title || SITE.name;
   const description =
     article.meta_description ||
@@ -40,7 +40,7 @@ export default function NewsArticleJsonLd({ article }: { article: Article }) {
     ...(image ? { image: [absoluteUrl(image)] } : {}),
     datePublished: article.published_at || undefined,
     dateModified: article.updated_at || article.published_at || undefined,
-    author: [{ "@type": "Person", name: authorName }],
+    author: [{ "@type": "Person", name: authorName, ...(authorUrl ? { url: absoluteUrl(authorUrl) } : {}) }],
     publisher: {
       "@type": "NewsMediaOrganization",
       name: SITE.name,

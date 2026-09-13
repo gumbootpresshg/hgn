@@ -139,6 +139,19 @@ const blankArticle: Article = {
   seo_generated_at: null,
 };
 
+async function notifyIndexNow(path: string) {
+  try {
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.access_token;
+    if (!token) return;
+    await fetch("/api/distribution/indexnow", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ url: path }),
+    });
+  } catch {}
+}
+
 export default function ArticleEditorPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
@@ -473,6 +486,7 @@ export default function ArticleEditorPage() {
         setMessage(`${status === "published" ? "Article published" : "Article saved"}, but you made newer edits while it was saving. Those edits are still protected and need another save.`);
       }
       setLastSavedAt(savedAt);
+      if (status === "published" && slug) void notifyIndexNow(`/articles/${slug}`);
       if (isNew && savedId) router.replace(`/admin/articles/${savedId}`);
     }
     setSaving(false);
