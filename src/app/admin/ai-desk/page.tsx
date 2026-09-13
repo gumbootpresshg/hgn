@@ -38,7 +38,6 @@ type Profile = { user_id: string; display_name: string | null; full_name: string
 type Comment = { id: string; item_id: string; body: string; created_at: string; created_by: string | null }
 type Activity = { id: string; item_id: string; action: string; detail: string | null; created_at: string }
 
-const statuses = ["pending", "approved", "completed", "rejected", "archived"]
 const types = ["all", "news_lead", "event"]
 
 function slugify(value: string) { return value.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") }
@@ -67,6 +66,7 @@ export default function AiDeskPage() {
   const [busy, setBusy] = useState("")
   const [mine, setMine] = useState(false)
   const [highConfidenceOnly, setHighConfidenceOnly] = useState(true)
+  const [showAdvanced, setShowAdvanced] = useState(false)
   const [userId, setUserId] = useState<string | null>(null)
 
   async function load() {
@@ -102,6 +102,10 @@ export default function AiDeskPage() {
   }
 
   useEffect(() => { void load() }, [status])
+  useEffect(() => {
+    const requested = new URLSearchParams(window.location.search).get("type")
+    if (requested === "event" || requested === "news_lead") setType(requested)
+  }, [])
 
   async function loadDetails(itemId: string) {
     const [notes, history] = await Promise.all([
@@ -127,6 +131,9 @@ export default function AiDeskPage() {
 
   const current = items.find((item) => item.id === selected) || null
   const pendingLowConfidence = items.filter((item) => item.status === "pending" && item.confidence != null && item.confidence < .65)
+  const storyLeadCount = items.filter((item) => item.status === "pending" && item.item_type === "news_lead").length
+  const eventCount = items.filter((item) => item.status === "pending" && item.item_type === "event").length
+  const needsCheckCount = items.filter((item) => item.status === "pending" && item.verification_status !== "verified").length
 
   async function log(itemId: string, action: string, detail?: string) {
     await supabase.from("ai_desk_activity").insert({ item_id: itemId, action, detail: detail || null, actor_id: userId })
@@ -316,31 +323,36 @@ export default function AiDeskPage() {
     <header className="rounded-3xl border bg-slate-950 p-7 text-white shadow-sm sm:p-9">
       <div className="flex flex-wrap items-start justify-between gap-5">
         <div>
-          <p className="text-xs font-black uppercase tracking-[.2em] text-blue-300">Human-controlled newsroom research</p>
+          <p className="text-xs font-black uppercase tracking-[.2em] text-blue-300">Newsroom assistant</p>
           <h1 className="mt-2 font-serif text-5xl font-bold">AI Desk</h1>
-          <p className="mt-3 max-w-3xl text-slate-300">AI findings stay here until a person verifies and promotes them. They are research, not reader submissions, and nothing publishes automatically.</p>
+          <p className="mt-3 max-w-3xl text-slate-300">A simple review desk for things HGN finds or wants checked. Nothing publishes automatically. Open an item, verify the source, then decide whether it becomes a draft.</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Link href="/admin/ai-desk/event-finder" className="rounded-full bg-blue-300 px-4 py-2 text-sm font-black text-slate-950">Event Finder</Link>
-          <Link href="/admin/ai-desk/connections" className="rounded-full border border-slate-600 px-4 py-2 text-sm font-black">Connections</Link>
-          <button onClick={() => setShowAdd((value) => !value)} className="rounded-full bg-white px-4 py-2 text-sm font-black text-slate-950">{showAdd ? "Close form" : "Add research item"}</button>
+          <Link href="/admin/ai-desk/event-finder" className="rounded-full bg-blue-300 px-4 py-2 text-sm font-black text-slate-950">Find local events</Link>
+          <button onClick={() => setShowAdd((value) => !value)} className="rounded-full bg-white px-4 py-2 text-sm font-black text-slate-950">{showAdd ? "Close" : "Add a lead"}</button>
         </div>
       </div>
     </header>
 
     {message && <p className="rounded-2xl border border-amber-300 bg-amber-50 p-4 font-bold text-amber-900">{message}</p>}
 
-    <section className="grid gap-3 sm:grid-cols-3 lg:grid-cols-5">
-      {statuses.map((value) => <button key={value} onClick={() => setStatus(value)} className={`rounded-2xl border p-4 text-left shadow-sm ${status === value ? "border-hgnBlue bg-blue-50" : "bg-white"}`}>
-        <span className="text-xs font-black uppercase tracking-widest text-slate-500">{pretty(value)}</span>
-      </button>)}
+    <section className="grid gap-4 md:grid-cols-3">
+      <button onClick={() => { setStatus("pending"); setType("news_lead") }} className={`rounded-3xl border p-5 text-left shadow-sm ${status === "pending" && type === "news_lead" ? "border-hgnBlue bg-blue-50" : "bg-white"}`}><span className="text-xs font-black uppercase tracking-widest text-hgnBlue">Story Leads</span><strong className="mt-2 block font-serif text-3xl">{storyLeadCount}</strong><span className="mt-1 block text-sm font-normal text-slate-600">Possible stories worth looking into.</span></button>
+      <button onClick={() => { setStatus("pending"); setType("event") }} className={`rounded-3xl border p-5 text-left shadow-sm ${status === "pending" && type === "event" ? "border-hgnBlue bg-blue-50" : "bg-white"}`}><span className="text-xs font-black uppercase tracking-widest text-hgnBlue">Events Found</span><strong className="mt-2 block font-serif text-3xl">{eventCount}</strong><span className="mt-1 block text-sm font-normal text-slate-600">Local events found automatically for review.</span></button>
+      <button onClick={() => { setStatus("pending"); setType("all"); setHighConfidenceOnly(false) }} className="rounded-3xl border bg-white p-5 text-left shadow-sm"><span className="text-xs font-black uppercase tracking-widest text-hgnBlue">Things to Check</span><strong className="mt-2 block font-serif text-3xl">{needsCheckCount}</strong><span className="mt-1 block text-sm font-normal text-slate-600">Items that still need a person to verify the source.</span></button>
     </section>
 
-    <section className="grid gap-3 rounded-2xl border bg-white p-4 shadow-sm lg:grid-cols-[1fr_auto_auto_auto]">
-      <label className="flex items-center gap-2 rounded-xl border px-3"><Search size={18} /><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search research, source or notes" className="min-w-0 flex-1 py-3 outline-none" /></label>
-      <select value={type} onChange={(e) => setType(e.target.value)} className="rounded-xl border px-3 py-3 font-bold">{types.map((value) => <option key={value} value={value}>{pretty(value)}</option>)}</select>
-      <label className="flex items-center gap-2 rounded-xl border px-3 py-3 text-sm font-bold"><input type="checkbox" checked={mine} onChange={(e) => setMine(e.target.checked)} />Assigned to me</label>
-      <label className="flex items-center gap-2 rounded-xl border px-3 py-3 text-sm font-bold"><input type="checkbox" checked={highConfidenceOnly} onChange={(e) => setHighConfidenceOnly(e.target.checked)} />65%+ confidence</label>
+    <section className="rounded-2xl border bg-white p-4 shadow-sm">
+      <div className="grid gap-3 lg:grid-cols-[1fr_auto]">
+        <label className="flex items-center gap-2 rounded-xl border px-3"><Search size={18} /><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search leads and events" className="min-w-0 flex-1 py-3 outline-none" /></label>
+        <button type="button" onClick={() => setShowAdvanced((value) => !value)} className="rounded-xl border px-4 py-3 text-sm font-black">{showAdvanced ? "Hide filters" : "More filters"}</button>
+      </div>
+      {showAdvanced && <div className="mt-3 grid gap-3 border-t pt-3 sm:grid-cols-2 lg:grid-cols-4">
+        <select value={status} onChange={(e) => setStatus(e.target.value)} className="rounded-xl border px-3 py-3 font-bold">{["pending","approved","completed","rejected","archived","all"].map((value) => <option key={value} value={value}>{value === "pending" ? "New" : pretty(value)}</option>)}</select>
+        <select value={type} onChange={(e) => setType(e.target.value)} className="rounded-xl border px-3 py-3 font-bold">{types.map((value) => <option key={value} value={value}>{value === "news_lead" ? "Story Leads" : value === "event" ? "Events" : "All types"}</option>)}</select>
+        <label className="flex items-center gap-2 rounded-xl border px-3 py-3 text-sm font-bold"><input type="checkbox" checked={mine} onChange={(e) => setMine(e.target.checked)} />Assigned to me</label>
+        <label className="flex items-center gap-2 rounded-xl border px-3 py-3 text-sm font-bold"><input type="checkbox" checked={highConfidenceOnly} onChange={(e) => setHighConfidenceOnly(e.target.checked)} />Hide weak matches</label>
+      </div>}
     </section>
 
     {status === "pending" && <section className="flex flex-wrap items-center gap-3 rounded-2xl border bg-white p-4">
@@ -415,7 +427,7 @@ export default function AiDeskPage() {
 
           <div className="grid gap-3">
             <label className="grid gap-1 text-sm font-black">Assign to<select value={current.assigned_to || ""} onChange={(e) => void patch(current, { assigned_to: e.target.value || null }, "assignment_changed", e.target.value)}><option value="">Unassigned</option>{profiles.map((profile) => <option key={profile.user_id} value={profile.user_id}>{profileName(profile)}</option>)}</select></label>
-            <label className="grid gap-1 text-sm font-black">Source verification<select value={current.verification_status || "unverified"} onChange={(e) => void patch(current, { verification_status: e.target.value }, "verification_changed", e.target.value)}><option value="unverified">Unverified</option><option value="needs_check">Needs check</option><option value="verified">Verified</option><option value="disputed">Disputed</option></select></label>
+            <label className="grid gap-1 text-sm font-black">Checked against source<select value={current.verification_status || "unverified"} onChange={(e) => void patch(current, { verification_status: e.target.value }, "verification_changed", e.target.value)}><option value="unverified">Needs checking</option><option value="needs_check">Needs checking</option><option value="verified">Verified</option><option value="disputed">Source problem</option></select></label>
           </div>
 
           <div className="flex flex-wrap gap-2">
