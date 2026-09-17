@@ -38,7 +38,8 @@ export default async function NoticesPage() {
             <h2 className="mt-2 text-2xl font-black text-slate-950">{notice.title || notice.name || "Notice"}</h2>
             <p className="mt-2 text-sm text-slate-500">{[notice.organization, notice.town || "Haida Gwaii"].filter(Boolean).join(" · ")}</p>
             <p className="mt-3 whitespace-pre-wrap text-slate-700">{notice.body || notice.message || notice.details || notice.notice}</p>
-            <div className="mt-4 flex flex-wrap gap-3 text-sm font-bold">{notice.link_url && <a href={notice.link_url} target="_blank" rel="noreferrer" className="text-hgnBlue underline">More information</a>}{notice.attachment_url && <a href={notice.attachment_url} target="_blank" rel="noreferrer" className="text-hgnBlue underline">View attachment</a>}</div>
+            {notice.attachment_url && !String(notice.attachment_url).toLowerCase().includes('.pdf') && <a href={notice.attachment_url} target="_blank" rel="noreferrer" className="mt-4 block overflow-hidden rounded-xl border bg-slate-50"><img src={notice.attachment_url} alt={`${notice.title || "Notice"} attachment`} className="max-h-[520px] w-full object-contain"/></a>}
+            <div className="mt-4 flex flex-wrap gap-3 text-sm font-bold">{notice.link_url && <a href={notice.link_url} target="_blank" rel="noreferrer" className="text-hgnBlue underline">More information</a>}{notice.attachment_url && <a href={notice.attachment_url} target="_blank" rel="noreferrer" className="rounded-full border border-hgnBlue px-3 py-1.5 text-hgnBlue">{String(notice.attachment_url).toLowerCase().includes('.pdf') ? 'Open notice PDF' : 'Open full notice'}</a>}</div>
           </article>
         )) : <div className="rounded-2xl border bg-white p-6 text-slate-600">No published notices yet.</div>}
       </section>

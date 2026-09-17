@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
-import { Archive, Eye, Plus, Save, Search, Trash2 } from "lucide-react"
+import { Archive, Eye, FileText, Image as ImageIcon, Plus, Save, Search, Trash2, Upload } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 
 type Notice = {
@@ -41,6 +41,8 @@ export default function NoticesAdminPage() {
   const [q,setQ]=useState("")
   const [busy,setBusy]=useState(false)
   const [message,setMessage]=useState("")
+  const [uploading,setUploading]=useState(false)
+  const [uploadProgress,setUploadProgress]=useState(0)
 
   async function load(){
     const r=await fetch("/api/admin/notices",{headers:await authHeaders(),cache:"no-store"})
@@ -69,6 +71,36 @@ export default function NoticesAdminPage() {
     if(r.ok){setMessage(creating?"Notice created.":"Notice saved.");await load();setSelected({...empty})}else setMessage(j.error||"Could not save notice.")
     setBusy(false)
   }
+  async function uploadAttachment(file: File) {
+    if (!file || !file.size) return
+    setUploading(true)
+    setUploadProgress(10)
+    setMessage("")
+    try {
+      const prep = await fetch("/api/admin/notices/upload-url", {
+        method: "POST",
+        headers: { ...(await authHeaders()), "Content-Type": "application/json" },
+        body: JSON.stringify({ filename: file.name, contentType: file.type, size: file.size }),
+      })
+      const prepared = await prep.json().catch(() => ({}))
+      if (!prep.ok) throw new Error(prepared.error || "Could not prepare notice upload.")
+      setUploadProgress(35)
+      const { error } = await supabase.storage
+        .from(prepared.bucket)
+        .uploadToSignedUrl(prepared.path, prepared.token, file, { contentType: file.type || undefined, upsert: false })
+      if (error) throw new Error(error.message)
+      setUploadProgress(90)
+      setSelected((current) => ({ ...current, attachment_url: String(prepared.publicUrl || "") }))
+      setUploadProgress(100)
+      setMessage("Notice attachment uploaded. Save or publish the notice to keep it attached.")
+    } catch (error: any) {
+      setMessage(error?.message || "Could not upload notice attachment.")
+      setUploadProgress(0)
+    } finally {
+      setUploading(false)
+    }
+  }
+
   async function remove(n:Notice){
     if(!confirm(`Delete “${n.title||"this notice"}”? This cannot be undone.`))return
     const r=await fetch(`/api/admin/notices/${n.id}`,{method:"DELETE",headers:await authHeaders()})
@@ -99,7 +131,20 @@ export default function NoticesAdminPage() {
           <label className="grid gap-1 text-sm font-bold">Notice text<textarea rows={8} value={selected.body||selected.message||""} onChange={e=>setSelected(x=>({...x,body:e.target.value,message:e.target.value}))} className="rounded-xl border px-3 py-2.5"/></label>
           <div className="grid gap-4 md:grid-cols-2"><label className="grid gap-1 text-sm font-bold">Starts<input type="datetime-local" value={selected.starts_at||""} onChange={e=>setSelected(x=>({...x,starts_at:e.target.value}))} className="rounded-xl border px-3 py-2.5"/></label><label className="grid gap-1 text-sm font-bold">Expires<input type="datetime-local" value={selected.expires_at||""} onChange={e=>setSelected(x=>({...x,expires_at:e.target.value}))} className="rounded-xl border px-3 py-2.5"/></label></div>
           <label className="grid gap-1 text-sm font-bold">Link<input value={selected.link_url||""} onChange={e=>setSelected(x=>({...x,link_url:e.target.value}))} placeholder="https://..." className="rounded-xl border px-3 py-2.5"/></label>
-          <label className="grid gap-1 text-sm font-bold">Image / PDF URL<input value={selected.attachment_url||""} onChange={e=>setSelected(x=>({...x,attachment_url:e.target.value}))} placeholder="Optional uploaded image or document URL" className="rounded-xl border px-3 py-2.5"/></label>
+          <div className="rounded-2xl border bg-slate-50 p-4">
+            <div className="flex items-center gap-2 text-sm font-black"><Upload size={16}/> Upload notice file</div>
+            <p className="mt-1 text-xs text-slate-500">Upload a PDF, JPG, PNG, WebP or GIF directly from your computer. PDFs can be up to 40 MB and images up to 20 MB.</p>
+            <input
+              type="file"
+              accept="application/pdf,image/jpeg,image/png,image/webp,image/gif"
+              disabled={uploading}
+              onChange={e=>{const file=e.target.files?.[0];if(file)void uploadAttachment(file);e.currentTarget.value=""}}
+              className="mt-3 block w-full rounded-xl border bg-white px-3 py-2.5 text-sm"
+            />
+            {uploading&&<div className="mt-3"><div className="flex justify-between text-xs font-bold"><span>Uploading…</span><span>{uploadProgress}%</span></div><div className="mt-1 h-2 overflow-hidden rounded-full bg-slate-200"><div className="h-full bg-hgnNavy transition-all" style={{width:`${uploadProgress}%`}}/></div></div>}
+            {selected.attachment_url&&<div className="mt-3 rounded-xl border bg-white p-3 text-sm"><div className="flex items-center gap-2 font-bold">{selected.attachment_url.toLowerCase().includes('.pdf')?<FileText size={16}/>:<ImageIcon size={16}/>} Attachment ready</div><div className="mt-2 flex flex-wrap gap-2"><a href={selected.attachment_url} target="_blank" rel="noreferrer" className="rounded-full border px-3 py-1.5 text-xs font-black">Preview</a><button type="button" onClick={()=>setSelected(x=>({...x,attachment_url:""}))} className="rounded-full border px-3 py-1.5 text-xs font-black text-red-700">Remove</button></div></div>}
+          </div>
+          <label className="grid gap-1 text-sm font-bold">Or paste an attachment URL<input value={selected.attachment_url||""} onChange={e=>setSelected(x=>({...x,attachment_url:e.target.value}))} placeholder="Optional external image or PDF URL" className="rounded-xl border px-3 py-2.5"/></label>
           <label className="flex items-center gap-2 text-sm font-bold"><input type="checkbox" checked={!!selected.featured} onChange={e=>setSelected(x=>({...x,featured:e.target.checked}))}/> Feature / mark important</label>
           <div className="flex flex-wrap gap-2 border-t pt-4"><button disabled={busy} onClick={()=>void save("draft")} className="inline-flex items-center gap-2 rounded-full border px-4 py-2 font-black"><Save size={16}/>Save Draft</button><button disabled={busy} onClick={()=>void save("published")} className="hgn-btn-primary">{busy?"Saving…":"Publish"}</button>{selected.id!=="new"&&<button disabled={busy} onClick={()=>void save("archived")} className="inline-flex items-center gap-2 rounded-full border px-4 py-2 font-black"><Archive size={16}/>Archive</button>}</div>
         </div>
