@@ -24,6 +24,7 @@ export const adminTools: AdminTool[] = [
   { href: "/admin/events", label: "Events", description: "Review, edit and publish community events.", group: "Community", roles: ["publisher", "editor"], keywords: ["calendar", "community", "coming up"], priority: true, mobileRelevant: true },
   { href: "/admin/letters", label: "Letters", description: "Review and publish Letters to the Editor.", group: "Community", roles: ["publisher", "editor"], keywords: ["letters", "opinion", "reader"], mobileRelevant: true },
   { href: "/admin/obituaries", label: "Obituaries", description: "Review and publish obituary notices.", group: "Community", roles: ["publisher", "editor"], keywords: ["notices", "memorial"], mobileRelevant: true },
+  { href: "/admin/notices", label: "Notices", description: "Create, publish, archive and manage community and public notices.", group: "Community", roles: ["publisher", "editor"], keywords: ["notices", "announcements", "public notice", "community"], priority: true, mobileRelevant: true },
   { href: "/admin/island-lens", label: "Island Lens", description: "Manage reader photos and photo features.", group: "Community", roles: ["publisher", "editor"], keywords: ["photos", "gallery"], mobileRelevant: true },
   { href: "/admin/polls", label: "Polls", description: "Create and manage reader polls.", group: "Community", roles: ["publisher", "editor"], keywords: ["vote", "question"] },
 
