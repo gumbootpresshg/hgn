@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
 import { Archive, Eye, FileText, Image as ImageIcon, Plus, Save, Search, Trash2, Upload } from "lucide-react"
 import { supabase } from "@/lib/supabase"
@@ -27,6 +27,7 @@ type Notice = {
 const types = ["Community", "Public Notice", "Government", "Road / Transportation", "Service Interruption", "Meeting", "School", "Emergency", "Business", "Other"]
 const towns = ["Haida Gwaii", "Masset", "Old Massett", "Port Clements", "Tlell", "Skidegate", "Daajing Giids", "Sandspit", "Moresby Island", "Other"]
 const empty: Notice = { id: "new", title: "", body: "", type: "Community", category: "Community", town: "Haida Gwaii", organization: "", starts_at: "", expires_at: "", link_url: "", attachment_url: "", featured: false, status: "draft" }
+const DRAFT_KEY = "hgn:notices:working-draft:v1"
 
 async function authHeaders(): Promise<Record<string,string>> {
   const { data } = await supabase.auth.getSession()
@@ -43,13 +44,34 @@ export default function NoticesAdminPage() {
   const [message,setMessage]=useState("")
   const [uploading,setUploading]=useState(false)
   const [uploadProgress,setUploadProgress]=useState(0)
+  const restoredDraft=useRef(false)
 
   async function load(){
     const r=await fetch("/api/admin/notices",{headers:await authHeaders(),cache:"no-store"})
     const j=await r.json()
     if(r.ok)setItems(j.notices||[]); else setMessage(j.error||"Could not load notices.")
   }
-  useEffect(()=>{void load()},[])
+  useEffect(()=>{
+    void load()
+    try {
+      const raw=window.localStorage.getItem(DRAFT_KEY)
+      if(raw){
+        const parsed=JSON.parse(raw) as Notice
+        if(parsed && typeof parsed === "object") {
+          setSelected({...empty,...parsed})
+          setMessage("Restored your unfinished notice automatically.")
+        }
+      }
+    } catch {}
+    restoredDraft.current=true
+  },[])
+
+  useEffect(()=>{
+    if(!restoredDraft.current)return
+    try {
+      window.localStorage.setItem(DRAFT_KEY, JSON.stringify(selected))
+    } catch {}
+  },[selected])
 
   const visible=useMemo(()=>items.filter(n=>{
     if(filter==="published" && n.status!=="published")return false
@@ -61,6 +83,11 @@ export default function NoticesAdminPage() {
   }),[items,filter,q])
 
   function edit(n:Notice){setSelected({...n,starts_at:inputDate(n.starts_at),expires_at:inputDate(n.expires_at)});setMessage("")}
+  function startNew(){
+    setSelected({...empty})
+    setMessage("")
+    try{window.localStorage.removeItem(DRAFT_KEY)}catch{}
+  }
   async function save(status?:string){
     setBusy(true);setMessage("")
     const payload={...selected,status:status||selected.status}
@@ -68,7 +95,7 @@ export default function NoticesAdminPage() {
     const url=creating?"/api/admin/notices":`/api/admin/notices/${selected.id}`
     const r=await fetch(url,{method:creating?"POST":"PUT",headers:{...(await authHeaders()),"Content-Type":"application/json"},body:JSON.stringify(payload)})
     const j=await r.json().catch(()=>({}))
-    if(r.ok){setMessage(creating?"Notice created.":"Notice saved.");await load();setSelected({...empty})}else setMessage(j.error||"Could not save notice.")
+    if(r.ok){setMessage(creating?"Notice created.":"Notice saved.");await load();setSelected({...empty});try{window.localStorage.removeItem(DRAFT_KEY)}catch{}}else setMessage(j.error||"Could not save notice.")
     setBusy(false)
   }
   async function uploadAttachment(file: File) {
@@ -117,7 +144,7 @@ export default function NoticesAdminPage() {
 
     <div className="grid gap-6 lg:grid-cols-[1fr_1.25fr]">
       <section className="rounded-3xl border bg-white p-5 shadow-sm">
-        <div className="flex flex-wrap items-center gap-2"><button onClick={()=>setSelected({...empty})} className="hgn-btn-primary inline-flex items-center gap-2"><Plus size={16}/>Add Notice</button><div className="relative min-w-[180px] flex-1"><Search className="absolute left-3 top-3 text-slate-400" size={16}/><input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search notices" className="w-full rounded-xl border py-2.5 pl-9 pr-3"/></div></div>
+        <div className="flex flex-wrap items-center gap-2"><button onClick={startNew} className="hgn-btn-primary inline-flex items-center gap-2"><Plus size={16}/>Add Notice</button><div className="relative min-w-[180px] flex-1"><Search className="absolute left-3 top-3 text-slate-400" size={16}/><input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search notices" className="w-full rounded-xl border py-2.5 pl-9 pr-3"/></div></div>
         <div className="mt-4 flex flex-wrap gap-2">{["active","published","draft","archived","all"].map(x=><button key={x} onClick={()=>setFilter(x)} className={`rounded-full px-3 py-1.5 text-xs font-black capitalize ${filter===x?"bg-hgnNavy text-white":"border bg-white"}`}>{x}</button>)}</div>
         <div className="mt-4 space-y-2">{visible.map(n=><button key={n.id} onClick={()=>edit(n)} className={`w-full rounded-2xl border p-4 text-left transition hover:border-hgnBlue hover:shadow-sm ${selected.id===n.id?"border-hgnBlue ring-2 ring-blue-100":""}`}><div className="flex items-start justify-between gap-3"><div><div className="text-xs font-black uppercase tracking-wide text-hgnBlue">{n.type||n.category||"Notice"} · {n.status||"draft"}</div><div className="mt-1 text-lg font-black text-slate-950">{n.title||"Untitled"}</div><div className="mt-1 text-xs text-slate-500">{n.organization||n.town||"Haida Gwaii"}</div></div>{n.featured&&<span className="rounded-full bg-amber-100 px-2 py-1 text-[10px] font-black text-amber-900">FEATURED</span>}</div></button>)}{!visible.length&&<div className="rounded-2xl border border-dashed p-6 text-sm text-slate-500">No notices in this view.</div>}</div>
       </section>
@@ -125,10 +152,10 @@ export default function NoticesAdminPage() {
       <section className="rounded-3xl border bg-white p-6 shadow-sm">
         <div className="flex items-center justify-between gap-3"><div><p className="text-xs font-black uppercase tracking-[.18em] text-hgnBlue">{selected.id==="new"?"New notice":"Edit notice"}</p><h2 className="mt-1 text-3xl font-black">{selected.title||"Untitled Notice"}</h2></div>{selected.id!=="new"&&<button onClick={()=>void remove(selected)} className="rounded-full border border-red-200 p-2 text-red-700 hover:bg-red-50" title="Delete"><Trash2 size={18}/></button>}</div>
         <div className="mt-5 grid gap-4">
-          <label className="grid gap-1 text-sm font-bold">Title<input value={selected.title||""} onChange={e=>setSelected(x=>({...x,title:e.target.value}))} className="rounded-xl border px-3 py-2.5"/></label>
+          <label className="grid gap-1 text-sm font-bold">Title <span className="font-normal text-slate-500">(optional when the uploaded file contains the full notice)</span><input value={selected.title||""} onChange={e=>setSelected(x=>({...x,title:e.target.value}))} className="rounded-xl border px-3 py-2.5"/></label>
           <div className="grid gap-4 md:grid-cols-2"><label className="grid gap-1 text-sm font-bold">Notice type<select value={selected.type||selected.category||"Community"} onChange={e=>setSelected(x=>({...x,type:e.target.value,category:e.target.value}))} className="rounded-xl border px-3 py-2.5">{types.map(t=><option key={t}>{t}</option>)}</select></label><label className="grid gap-1 text-sm font-bold">Town / Area<select value={selected.town||"Haida Gwaii"} onChange={e=>setSelected(x=>({...x,town:e.target.value}))} className="rounded-xl border px-3 py-2.5">{towns.map(t=><option key={t}>{t}</option>)}</select></label></div>
           <label className="grid gap-1 text-sm font-bold">Organization / source<input value={selected.organization||""} onChange={e=>setSelected(x=>({...x,organization:e.target.value}))} placeholder="Village, school, business, organization..." className="rounded-xl border px-3 py-2.5"/></label>
-          <label className="grid gap-1 text-sm font-bold">Notice text<textarea rows={8} value={selected.body||selected.message||""} onChange={e=>setSelected(x=>({...x,body:e.target.value,message:e.target.value}))} className="rounded-xl border px-3 py-2.5"/></label>
+          <label className="grid gap-1 text-sm font-bold">Notice text <span className="font-normal text-slate-500">(optional when the uploaded file contains the full notice)</span><textarea rows={8} value={selected.body||selected.message||""} onChange={e=>setSelected(x=>({...x,body:e.target.value,message:e.target.value}))} className="rounded-xl border px-3 py-2.5"/></label>
           <div className="grid gap-4 md:grid-cols-2"><label className="grid gap-1 text-sm font-bold">Starts<input type="datetime-local" value={selected.starts_at||""} onChange={e=>setSelected(x=>({...x,starts_at:e.target.value}))} className="rounded-xl border px-3 py-2.5"/></label><label className="grid gap-1 text-sm font-bold">Expires<input type="datetime-local" value={selected.expires_at||""} onChange={e=>setSelected(x=>({...x,expires_at:e.target.value}))} className="rounded-xl border px-3 py-2.5"/></label></div>
           <label className="grid gap-1 text-sm font-bold">Link<input value={selected.link_url||""} onChange={e=>setSelected(x=>({...x,link_url:e.target.value}))} placeholder="https://..." className="rounded-xl border px-3 py-2.5"/></label>
           <div className="rounded-2xl border bg-slate-50 p-4">
@@ -146,7 +173,7 @@ export default function NoticesAdminPage() {
           </div>
           <label className="grid gap-1 text-sm font-bold">Or paste an attachment URL<input value={selected.attachment_url||""} onChange={e=>setSelected(x=>({...x,attachment_url:e.target.value}))} placeholder="Optional external image or PDF URL" className="rounded-xl border px-3 py-2.5"/></label>
           <label className="flex items-center gap-2 text-sm font-bold"><input type="checkbox" checked={!!selected.featured} onChange={e=>setSelected(x=>({...x,featured:e.target.checked}))}/> Feature / mark important</label>
-          <div className="flex flex-wrap gap-2 border-t pt-4"><button disabled={busy} onClick={()=>void save("draft")} className="inline-flex items-center gap-2 rounded-full border px-4 py-2 font-black"><Save size={16}/>Save Draft</button><button disabled={busy} onClick={()=>void save("published")} className="hgn-btn-primary">{busy?"Saving…":"Publish"}</button>{selected.id!=="new"&&<button disabled={busy} onClick={()=>void save("archived")} className="inline-flex items-center gap-2 rounded-full border px-4 py-2 font-black"><Archive size={16}/>Archive</button>}</div>
+          <p className="text-xs text-slate-500">Your work is saved automatically in this browser while you edit, including if the tab reloads or you switch away and return.</p><div className="flex flex-wrap gap-2 border-t pt-4"><button disabled={busy} onClick={()=>void save("draft")} className="inline-flex items-center gap-2 rounded-full border px-4 py-2 font-black"><Save size={16}/>Save Draft</button><button disabled={busy} onClick={()=>void save("published")} className="hgn-btn-primary">{busy?"Saving…":"Publish"}</button>{selected.id!=="new"&&<button disabled={busy} onClick={()=>void save("archived")} className="inline-flex items-center gap-2 rounded-full border px-4 py-2 font-black"><Archive size={16}/>Archive</button>}</div>
         </div>
       </section>
     </div>

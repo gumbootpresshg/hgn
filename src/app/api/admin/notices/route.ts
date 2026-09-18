@@ -15,6 +15,21 @@ function iso(value: unknown) {
   return Number.isNaN(date.getTime()) ? null : date.toISOString()
 }
 
+
+function fallbackTitle(body: any) {
+  const direct = clean(body.title, 220)
+  if (direct) return direct
+  const attachment = clean(body.attachment_url, 1000)
+  if (attachment) {
+    try {
+      const url = new URL(attachment)
+      const last = decodeURIComponent(url.pathname.split("/").filter(Boolean).pop() || "")
+      const base = last.replace(/\.[a-z0-9]{2,8}$/i, "").replace(/[-_]+/g, " ").trim()
+      if (base) return base.slice(0, 220)
+    } catch {}
+  }
+  return clean(body.organization, 180) || clean(body.type || body.category, 80) || "Public Notice"
+}
 export async function GET(req: NextRequest) {
   const auth = await requirePublisher(req)
   if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status })
@@ -27,9 +42,10 @@ export async function POST(req: NextRequest) {
   const auth = await requirePublisher(req)
   if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status })
   const body = await req.json().catch(() => ({}))
-  const title = clean(body.title, 220)
+  const title = fallbackTitle(body)
   const details = clean(body.body || body.message, 12000)
-  if (!title || !details) return NextResponse.json({ error: "Title and notice text are required." }, { status: 400 })
+  const attachment = clean(body.attachment_url, 1000)
+  if (!attachment && (!title || !details)) return NextResponse.json({ error: "Add a title and notice text, or upload a notice file." }, { status: 400 })
   const status = body.status === "published" ? "published" : "draft"
   const row = {
     title,
@@ -42,7 +58,7 @@ export async function POST(req: NextRequest) {
     starts_at: iso(body.starts_at),
     expires_at: iso(body.expires_at),
     link_url: clean(body.link_url, 1000),
-    attachment_url: clean(body.attachment_url, 1000),
+    attachment_url: attachment,
     featured: body.featured === true,
     status,
     source: "staff",

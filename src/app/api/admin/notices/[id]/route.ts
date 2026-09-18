@@ -14,6 +14,21 @@ function iso(value: unknown) {
   return Number.isNaN(date.getTime()) ? null : date.toISOString()
 }
 
+
+function fallbackTitle(body: any) {
+  const direct = clean(body.title, 220)
+  if (direct) return direct
+  const attachment = clean(body.attachment_url, 1000)
+  if (attachment) {
+    try {
+      const url = new URL(attachment)
+      const last = decodeURIComponent(url.pathname.split("/").filter(Boolean).pop() || "")
+      const base = last.replace(/\.[a-z0-9]{2,8}$/i, "").replace(/[-_]+/g, " ").trim()
+      if (base) return base.slice(0, 220)
+    } catch {}
+  }
+  return clean(body.organization, 180) || clean(body.type || body.category, 80) || "Public Notice"
+}
 export async function PUT(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   const auth = await requirePublisher(req)
   if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status })
@@ -21,7 +36,7 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
   const body = await req.json().catch(() => ({}))
   const status = ["draft", "pending", "published", "archived"].includes(String(body.status)) ? String(body.status) : "draft"
   const update = {
-    title: clean(body.title, 220),
+    title: fallbackTitle(body),
     body: clean(body.body || body.message, 12000),
     message: clean(body.body || body.message, 12000),
     type: clean(body.type || body.category, 80),
@@ -37,7 +52,7 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
     published_at: status === "published" ? (body.published_at || new Date().toISOString()) : body.published_at || null,
     updated_at: new Date().toISOString(),
   }
-  if (!update.title || !update.body) return NextResponse.json({ error: "Title and notice text are required." }, { status: 400 })
+  if (!update.attachment_url && (!update.title || !update.body)) return NextResponse.json({ error: "Add a title and notice text, or upload a notice file." }, { status: 400 })
   const { data, error } = await auth.db.from("notices").update(update).eq("id", id).select().single()
   if (error) return NextResponse.json({ error: `Notice could not be saved: ${error.message}` }, { status: 500 })
   return NextResponse.json({ notice: data })
