@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
   const auth = await requirePublisher(req)
   if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status })
   const { data, error } = await auth.db.from("notices").select("*").order("created_at", { ascending: false }).limit(300)
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: `Notice could not be saved: ${error.message}` }, { status: 500 })
   return NextResponse.json({ notices: data || [] })
 }
 
@@ -51,6 +51,6 @@ export async function POST(req: NextRequest) {
     requires_approval: false,
   }
   const { data, error } = await auth.db.from("notices").insert(row).select().single()
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: `Notice could not be saved: ${error.message}` }, { status: 500 })
   return NextResponse.json({ notice: data })
 }

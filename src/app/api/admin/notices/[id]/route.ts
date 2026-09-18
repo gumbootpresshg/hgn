@@ -39,7 +39,7 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
   }
   if (!update.title || !update.body) return NextResponse.json({ error: "Title and notice text are required." }, { status: 400 })
   const { data, error } = await auth.db.from("notices").update(update).eq("id", id).select().single()
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: `Notice could not be saved: ${error.message}` }, { status: 500 })
   return NextResponse.json({ notice: data })
 }
 
@@ -48,6 +48,6 @@ export async function DELETE(req: NextRequest, context: { params: Promise<{ id: 
   if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status })
   const { id } = await context.params
   const { error } = await auth.db.from("notices").delete().eq("id", id)
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: `Notice could not be saved: ${error.message}` }, { status: 500 })
   return NextResponse.json({ ok: true })
 }
