@@ -1,13 +1,16 @@
 import { supabase } from "@/lib/supabase"
+import { isSystemPage } from "@/lib/cms/system-pages"
 
 export type SitePageBlock = {
   id: string
-  type: "heading" | "paragraph" | "image" | "quote" | "button" | "divider" | "callout"
+  type: "heading" | "paragraph" | "image" | "quote" | "button" | "table" | "divider" | "callout"
   content?: string
   level?: number
   url?: string
   label?: string
   alt?: string
+  tableHeaders?: string[]
+  tableRows?: string[][]
 }
 
 export type SitePageRecord = {
@@ -25,10 +28,11 @@ export type SitePageRecord = {
 }
 
 export async function loadPublicSitePage(keyOrSlug: string) {
+  const bySystemKey = isSystemPage(keyOrSlug)
   const { data } = await supabase
     .from("hgn_site_pages")
     .select("*")
-    .eq(keyOrSlug.includes("/") ? "slug" : "slug", keyOrSlug.replace(/^\//, ""))
+    .eq(bySystemKey ? "system_key" : "slug", keyOrSlug.replace(/^\//, ""))
     .eq("status", "published")
     .eq("visibility", "public")
     .maybeSingle()

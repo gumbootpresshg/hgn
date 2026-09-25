@@ -18,7 +18,10 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status })
   const { id } = await params
   const body = await req.json()
-  const slug = String(body.slug || body.title || "page").toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")
+  const { data: existing } = await auth.db.from("hgn_site_pages").select("system_key,slug").eq("id", id).maybeSingle()
+  if (!existing) return NextResponse.json({ error: "Page not found." }, { status: 404 })
+  const requestedSlug = String(body.slug || body.title || "page").toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")
+  const slug = existing.system_key ? existing.slug : requestedSlug
   const patch = {
     slug,
     title: String(body.title || "Untitled page").trim(),
