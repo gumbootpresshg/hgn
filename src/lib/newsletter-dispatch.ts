@@ -51,12 +51,11 @@ export async function getNewsletterDispatchSnapshot() {
 }
 
 export async function getPublicNewsletterEditions() {
-  const { data, error } = await supabase
-    .from("newsletter_editions")
-    .select("*")
-    .in("status", ["published", "sent"])
-    .order("published_at", { ascending: false, nullsFirst: false })
-    .limit(25);
+  const [{ data: products }, { data, error }] = await Promise.all([
+    supabase.from("hgn_newsletter_products").select("slug").eq("status","active").eq("show_public_archive",true),
+    supabase.from("newsletter_editions").select("*").in("status", ["published", "sent"]).order("published_at", { ascending: false, nullsFirst: false }).limit(25),
+  ]);
   if (error) return [] as NewsletterRow[];
-  return (data || []) as NewsletterRow[];
+  const visible = new Set((products || []).map((item:any)=>item.slug));
+  return (data || []).filter((item:any)=>!item.product_slug || visible.has(item.product_slug)) as NewsletterRow[];
 }

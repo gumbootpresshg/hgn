@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import type { NextRequest } from "next/server";
+import { utmUrl } from "@/lib/newsletters/utm";
 
 const allowed = new Set(["admin","administrator","publisher","editor","newsroom","super_admin","superadmin"]);
 
@@ -80,16 +81,19 @@ export function renderNewsletterHtml(opts: { edition:any; subscriber:any; siteUr
   const hero = articles[0];
   const more = articles.slice(1, 7);
   const issueDate = new Date(edition.date_to || edition.published_at || edition.created_at || Date.now()).toLocaleDateString("en-CA", { month: "long", day: "numeric", year: "numeric", timeZone: "America/Vancouver" });
+  const link = (path:string) => utmUrl(absoluteUrl(siteUrl, path), edition);
+  const ads = (content.ads || []) as any[];
+  const adHtml = (placement:string) => ads.filter((ad:any)=>ad.placement===placement).slice(0,1).map((ad:any)=>`<tr><td style="padding:14px 24px"><div style="padding:7px 0;font:700 10px Arial,sans-serif;letter-spacing:.12em;color:#666;text-transform:uppercase">Advertisement</div><a href="${escapeHtml(link(ad.destination_url || siteUrl))}" style="display:block;text-decoration:none;color:#10243b">${ad.creative_url?`<img src="${escapeHtml(absoluteUrl(siteUrl,ad.creative_url))}" alt="${escapeHtml(ad.alt_text||ad.advertiser_name)}" width="672" style="display:block;width:100%;height:auto;border:0">`:`<div style="border:1px solid #d8d2c8;padding:18px;font:700 18px Georgia,serif">${escapeHtml(ad.advertiser_name)}</div>`}</a></td></tr>`).join("");
 
   const heroHtml = hero ? `
     <tr><td style="padding:0 24px 22px">
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;border-bottom:1px solid #b8b0a3">
-        ${hero.image_url ? `<tr><td><a href="${escapeHtml(siteUrl + '/articles/' + hero.slug)}"><img src="${escapeHtml(absoluteUrl(siteUrl, hero.image_url))}" alt="${escapeHtml(hero.title)}" width="672" style="display:block;width:100%;max-width:672px;height:auto;border:0"></a></td></tr>` : ""}
+        ${hero.image_url ? `<tr><td><a href="${escapeHtml(link('/articles/' + hero.slug))}"><img src="${escapeHtml(absoluteUrl(siteUrl, hero.image_url))}" alt="${escapeHtml(hero.title)}" width="672" style="display:block;width:100%;max-width:672px;height:auto;border:0"></a></td></tr>` : ""}
         <tr><td style="padding:18px 0 22px">
           <div style="font:700 11px Arial,sans-serif;color:#1e5f94;text-transform:uppercase;letter-spacing:.15em">Lead story</div>
-          <h2 style="margin:6px 0 9px;font:700 34px/1.08 Georgia,'Times New Roman',serif;color:#101820"><a href="${escapeHtml(siteUrl + '/articles/' + hero.slug)}" style="color:#101820;text-decoration:none">${escapeHtml(hero.title)}</a></h2>
+          <h2 style="margin:6px 0 9px;font:700 34px/1.08 Georgia,'Times New Roman',serif;color:#101820"><a href="${escapeHtml(link('/articles/' + hero.slug))}" style="color:#101820;text-decoration:none">${escapeHtml(hero.title)}</a></h2>
           <p style="margin:0 0 14px;font:17px/1.5 Georgia,'Times New Roman',serif;color:#3b3b3b">${escapeHtml(hero.excerpt || "Read the full story on Haida Gwaii News.")}</p>
-          <a href="${escapeHtml(siteUrl + '/articles/' + hero.slug)}" style="font:700 12px Arial,sans-serif;color:#1e5f94;text-transform:uppercase;letter-spacing:.08em;text-decoration:none">Read the full story →</a>
+          <a href="${escapeHtml(link('/articles/' + hero.slug))}" style="font:700 12px Arial,sans-serif;color:#1e5f94;text-transform:uppercase;letter-spacing:.08em;text-decoration:none">Read the full story →</a>
         </td></tr>
       </table>
     </td></tr>` : `<tr><td style="padding:24px;font:16px Arial,sans-serif">No new stories matched your selected topics in this edition.</td></tr>`;
@@ -101,13 +105,13 @@ export function renderNewsletterHtml(opts: { edition:any; subscriber:any; siteUr
         ${more.map((a:any, index:number) => `
           <tr>
             <td width="${a.image_url ? "31%" : "0"}" valign="top" style="padding:${index ? "16px" : "0"} 14px 16px 0;border-bottom:1px solid #d8d2c8">
-              ${a.image_url ? `<a href="${escapeHtml(siteUrl + '/articles/' + a.slug)}"><img src="${escapeHtml(absoluteUrl(siteUrl, a.image_url))}" alt="" width="190" style="display:block;width:100%;max-width:190px;height:auto;border:0"></a>` : ""}
+              ${a.image_url ? `<a href="${escapeHtml(link('/articles/' + a.slug))}"><img src="${escapeHtml(absoluteUrl(siteUrl, a.image_url))}" alt="" width="190" style="display:block;width:100%;max-width:190px;height:auto;border:0"></a>` : ""}
             </td>
             <td valign="top" style="padding:${index ? "16px" : "0"} 0 16px;border-bottom:1px solid #d8d2c8">
               <div style="font:700 10px Arial,sans-serif;color:#1e5f94;text-transform:uppercase;letter-spacing:.12em">${escapeHtml(a.category || "News")}</div>
-              <h3 style="margin:5px 0 6px;font:700 21px/1.15 Georgia,'Times New Roman',serif"><a href="${escapeHtml(siteUrl + '/articles/' + a.slug)}" style="color:#101820;text-decoration:none">${escapeHtml(a.title)}</a></h3>
+              <h3 style="margin:5px 0 6px;font:700 21px/1.15 Georgia,'Times New Roman',serif"><a href="${escapeHtml(link('/articles/' + a.slug))}" style="color:#101820;text-decoration:none">${escapeHtml(a.title)}</a></h3>
               <p style="margin:0 0 8px;font:14px/1.45 Arial,sans-serif;color:#4b4b4b">${escapeHtml(a.excerpt || "Read the full story on Haida Gwaii News.")}</p>
-              <a href="${escapeHtml(siteUrl + '/articles/' + a.slug)}" style="font:700 11px Arial,sans-serif;color:#1e5f94;text-decoration:none">READ MORE →</a>
+              <a href="${escapeHtml(link('/articles/' + a.slug))}" style="font:700 11px Arial,sans-serif;color:#1e5f94;text-decoration:none">READ MORE →</a>
             </td>
           </tr>`).join("")}
       </table>
@@ -148,10 +152,10 @@ export function renderNewsletterHtml(opts: { edition:any; subscriber:any; siteUr
     <div style="margin-top:9px;font:700 13px Arial,sans-serif;color:#1e5f94;letter-spacing:.34em;text-transform:uppercase">News From the Edge</div>
   </td></tr>
   <tr><td class="pad" style="padding:15px 24px 18px"><p style="margin:0;font:16px/1.55 Georgia,'Times New Roman',serif;color:#333">${escapeHtml(edition.intro || "Here is your latest Haida Gwaii News update.")}</p></td></tr>
-  ${heroHtml}
+  ${adHtml("top_banner")}${heroHtml}
   ${storyRows}
-  ${eventsHtml}
-  <tr><td class="pad" style="padding:18px 24px;background:#f4f0e8;border-top:3px solid #101820">
+  ${adHtml("mid_banner")}${eventsHtml}${adHtml("business_card")}
+  ${adHtml("footer_sponsor")}<tr><td class="pad" style="padding:18px 24px;background:#f4f0e8;border-top:3px solid #101820">
     <table role="presentation" width="100%"><tr>
       <td width="84" valign="top"><img src="${escapeHtml(logoUrl)}" alt="Haida Gwaii News" width="68" style="display:block;width:68px;height:auto"></td>
       <td valign="top" style="font:12px/1.5 Arial,sans-serif;color:#555"><strong style="color:#101820">Haida Gwaii News</strong><br>Independent local reporting for our islands.<br><a href="${escapeHtml(siteUrl)}" style="color:#1e5f94">haidagwaiinews.com</a></td>

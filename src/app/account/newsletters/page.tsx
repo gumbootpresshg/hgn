@@ -19,6 +19,8 @@ export default function AccountNewslettersPage() {
   const [accountEmail, setAccountEmail] = useState("");
   const [interests, setInterests] = useState<string[]>(["news", "events"]);
   const [frequency, setFrequency] = useState("biweekly");
+  const [products, setProducts] = useState<any[]>([]);
+  const [productSlugs, setProductSlugs] = useState<string[]>([]);
   const [message, setMessage] = useState("Loading your newsletter settings…");
   const [busy, setBusy] = useState(false);
 
@@ -30,6 +32,8 @@ export default function AccountNewslettersPage() {
     if (!response.ok) { setMessage(data.error || "Could not load newsletter settings."); return; }
     setSubscriber(data.subscriber);
     setAccountEmail(data.account_email || "");
+    setProducts(data.products || []);
+    setProductSlugs(data.subscriber?.newsletter_product_slugs?.length ? data.subscriber.newsletter_product_slugs : (data.products || []).filter((p:any)=>p.featured).map((p:any)=>p.slug));
     if (data.subscriber?.interests?.length) setInterests(data.subscriber.interests);
     if (data.subscriber?.frequency) setFrequency(data.subscriber.frequency);
     setMessage("");
@@ -43,7 +47,7 @@ export default function AccountNewslettersPage() {
       const token = await accessToken();
       const response = await fetch("/api/newsletters/account", {
         method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ interests, frequency, unsubscribe }),
+        body: JSON.stringify({ interests, products: productSlugs, frequency, unsubscribe }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Could not save preferences.");
@@ -56,6 +60,7 @@ export default function AccountNewslettersPage() {
   function toggle(value: string) {
     setInterests((current) => current.includes(value) ? current.filter((item) => item !== value) : [...current, value]);
   }
+  function toggleProduct(value: string) { setProductSlugs((current)=>current.includes(value)?current.filter(item=>item!==value):[...current,value]); }
 
   return <main className="mx-auto max-w-4xl space-y-6 px-4 py-10">
     <section className="rounded-3xl border bg-white p-6 shadow-sm md:p-8">
@@ -66,7 +71,8 @@ export default function AccountNewslettersPage() {
       <div className="mt-7 grid gap-5">
         <label>Email<input value={accountEmail} readOnly className="bg-slate-100" /></label>
         <label>Delivery<select value={frequency} onChange={(event) => setFrequency(event.target.value)}><option value="biweekly">Biweekly digest</option><option value="alerts">Major alerts only</option></select></label>
-        <fieldset className="grid gap-3 rounded-2xl border p-5 sm:grid-cols-2"><legend className="px-2 font-black">What to include</legend>{choices.map(([value, label]) => <label key={value} className="flex items-center gap-3"><input className="w-auto" type="checkbox" checked={interests.includes(value)} onChange={() => toggle(value)} />{label}</label>)}</fieldset>
+        <fieldset className="grid gap-3 rounded-2xl border p-5"><legend className="px-2 font-black">My newsletters</legend>{products.map((product)=><label key={product.slug} className="flex items-start gap-3"><input className="mt-1 w-auto" type="checkbox" checked={productSlugs.includes(product.slug)} onChange={()=>toggleProduct(product.slug)}/><span><b>{product.name}</b>{product.frequency&&<span className="ml-2 text-sm text-slate-500">{product.frequency}</span>}{product.description&&<span className="block text-sm text-slate-600">{product.description}</span>}</span></label>)}</fieldset>
+        <fieldset className="grid gap-3 rounded-2xl border p-5 sm:grid-cols-2"><legend className="px-2 font-black">What to include</legend>{choices.filter(([value])=>value!=="guide").map(([value, label]) => <label key={value} className="flex items-center gap-3"><input className="w-auto" type="checkbox" checked={interests.includes(value)} onChange={() => toggle(value)} />{label}</label>)}</fieldset>
         <div className="flex flex-wrap gap-3"><button disabled={busy} onClick={() => save(false)} className="hgn-btn-primary">{subscriber?.status === "unsubscribed" ? "Resubscribe and save" : "Save preferences"}</button><button disabled={busy || subscriber?.status !== "active"} onClick={() => save(true)} className="rounded-xl border border-red-300 px-5 py-3 font-black text-red-700">Unsubscribe</button></div>
         {subscriber?.last_sent_at && <p className="text-sm text-slate-600">Last newsletter sent: {new Date(subscriber.last_sent_at).toLocaleString()}</p>}
       </div>

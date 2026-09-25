@@ -1,0 +1,3 @@
+import Link from "next/link";
+const links=[["Dashboard","/admin/newsletter"],["Build / Send","/admin/newsletter"],["Signup Page","/admin/newsletter/signup-page"],["Newsletter Products","/admin/newsletter/products"],["Advertising","/admin/newsletter/advertising"],["Subscribers","/admin/subscribers"],["Archive","/newsletter-archive"],["Settings","/admin/newsletter"]];
+export default function NewsletterAdminNav(){return <nav className="mt-5 flex flex-wrap gap-2">{links.map(([label,href])=><Link key={label} href={href} className="rounded-full border bg-white px-3 py-2 text-sm font-bold text-hgnNavy hover:bg-slate-50">{label}</Link>)}</nav>}

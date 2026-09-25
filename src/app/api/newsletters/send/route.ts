@@ -11,16 +11,20 @@ export async function POST(req: NextRequest) {
   if (!apiKey) return NextResponse.json({ error: "RESEND_API_KEY is not configured." }, { status: 503 });
 
   const { edition_id } = await req.json().catch(() => ({}));
-  const [{ data: edition }, { data: settings }, { data: subscribers }] = await Promise.all([
+  const [{ data: edition }, { data: settings }, { data: subscribers }, { data: product }] = await Promise.all([
     auth.db.from("newsletter_editions").select("*").eq("id", edition_id).single(),
     auth.db.from("hgn_newsletter_settings").select("*").eq("singleton_key", "default").single(),
-    auth.db.from("subscribers").select("id,email,name,interests,preference_token").eq("status", "active").eq("frequency", "biweekly").limit(1000),
+    auth.db.from("subscribers").select("id,email,name,interests,newsletter_product_slugs,preference_token").eq("status", "active").eq("frequency", "biweekly").limit(1000),
+    auth.db.from("hgn_newsletter_products").select("slug,name,sender_name,reply_to_email,allow_sending").eq("slug", "hgn-news").maybeSingle(),
   ]);
   if (!edition || !settings) return NextResponse.json({ error: "Edition or settings not found." }, { status: 404 });
   if (edition.status === "sent") return NextResponse.json({ error: "This edition is already marked sent." }, { status: 409 });
+  const editionProduct = await auth.db.from("hgn_newsletter_products").select("slug,name,sender_name,reply_to_email,allow_sending").eq("slug", edition.product_slug || "hgn-news").maybeSingle();
+  const activeProduct = editionProduct.data || product;
+  if (!activeProduct?.allow_sending) return NextResponse.json({error:"This newsletter product is paused or is not allowed to send."},{status:409});
   if (!(edition.content_json?.articles?.length || edition.content_json?.events?.length)) return NextResponse.json({ error: "This edition is empty. Rebuild it before sending." }, { status: 409 });
 
-  const people = (subscribers || []).filter((item: any) => item.email);
+  const people = (subscribers || []).filter((item: any) => item.email && (!item.newsletter_product_slugs?.length || item.newsletter_product_slugs.includes(activeProduct.slug)));
   if (!people.length) return NextResponse.json({ error: "There are no active biweekly subscribers to send to." }, { status: 409 });
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://haidagwaiinews.com";
@@ -31,9 +35,9 @@ export async function POST(req: NextRequest) {
   for (let index = 0; index < people.length; index += 100) {
     const chunk = people.slice(index, index + 100);
     const payload = chunk.map((person: any) => ({
-      from: `${settings.from_name} <${settings.from_email}>`,
+      from: `${activeProduct.sender_name || settings.from_name} <${settings.from_email}>`,
       to: [person.email],
-      reply_to: settings.reply_to || undefined,
+      reply_to: activeProduct.reply_to_email || settings.reply_to || undefined,
       subject: edition.subject_line || edition.title,
       html: renderNewsletterHtml({ edition, subscriber: person, siteUrl, logoUrl: `${siteUrl}/brand/hgn-news-seal.png` }),
     }));

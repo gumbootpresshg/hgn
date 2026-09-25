@@ -119,8 +119,17 @@ export async function buildNewsletterContent(options: BuildOptions) {
     });
   }
 
+  const today = now.toISOString().slice(0, 10);
+  const adsResult = await db.from("hgn_newsletter_ad_campaigns").select("id,advertiser_name,placement,creative_url,destination_url,alt_text,sort_order").in("status", ["active","house_ad"]).or(`start_date.is.null,start_date.lte.${today}`).or(`end_date.is.null,end_date.gte.${today}`).order("sort_order");
+  const ads = adsResult.data || [];
+  const blocks = [
+    { id: "top-stories", type: "top_stories", title: "Top Stories" },
+    ...(events.length ? [{ id: "events", type: "events", title: "Coming Up" }] : []),
+    ...(ads.some((ad:any)=>ad.placement === "mid_banner") ? [{ id: "mid-ad", type: "sponsored", placement: "mid_banner", title: "Advertisement" }] : []),
+  ];
+
   return {
-    content: { articles, events },
+    content: { articles, events, ads, blocks },
     diagnostics: {
       source,
       lookback_days: lookbackDays,

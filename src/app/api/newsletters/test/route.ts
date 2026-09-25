@@ -14,8 +14,8 @@ export async function POST(req: NextRequest) {
     auth.db.from("newsletter_editions").select("*").eq("id", edition_id).single(),
     auth.db.from("hgn_newsletter_settings").select("*").eq("singleton_key", "default").single(),
   ]);
-  const recipient = String(email || settings?.test_email || "").trim();
-  if (!edition || !recipient) return NextResponse.json({ error: "Choose an edition and test email." }, { status: 400 });
+  const recipients = String(email || settings?.test_email || "").split(/[\s,;]+/).map(x=>x.trim()).filter(x=>/^\S+@\S+\.\S+$/.test(x)).slice(0,10);
+  if (!edition || !recipients.length) return NextResponse.json({ error: "Choose an edition and at least one valid test email." }, { status: 400 });
 
   const storyCount = edition.content_json?.articles?.length || 0;
   const eventCount = edition.content_json?.events?.length || 0;
@@ -23,23 +23,19 @@ export async function POST(req: NextRequest) {
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://haidagwaiinews.com";
   const html = renderNewsletterHtml({ edition, subscriber: { interests: [], preference_token: "preview" }, siteUrl, logoUrl: `${siteUrl}/brand/hgn-news-seal.png` });
-  const response = await fetch("https://api.resend.com/emails", {
+  const message = (recipient:string) => ({ from: `${settings.from_name} <${settings.from_email}>`, to: [recipient], reply_to: settings.reply_to || undefined, subject: `TEST EMAIL: ${edition.subject_line || edition.title}`, html });
+  const payload = recipients.length > 1 ? recipients.map(message) : message(recipients[0]);
+  const response = await fetch(recipients.length > 1 ? "https://api.resend.com/emails/batch" : "https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      from: `${settings.from_name} <${settings.from_email}>`,
-      to: [recipient],
-      reply_to: settings.reply_to || undefined,
-      subject: `TEST: ${edition.subject_line || edition.title}`,
-      html,
-    }),
+    body: JSON.stringify(payload),
   });
   const result = await response.json().catch(() => null);
   if (!response.ok) {
-    await auth.db.from("hgn_newsletter_test_sends").insert({ edition_id: edition.id, email: recipient, status: "failed", error_message: result?.message || `Resend returned ${response.status}` });
+    await auth.db.from("hgn_newsletter_test_sends").insert(recipients.map(email=>({ edition_id: edition.id, email, status: "failed", error_message: result?.message || `Resend returned ${response.status}` })));
     return NextResponse.json({ error: result?.message || `Resend returned ${response.status}`, resend_status: response.status }, { status: 502 });
   }
 
-  await auth.db.from("hgn_newsletter_test_sends").insert({ edition_id: edition.id, email: recipient, status: "accepted", resend_email_id: result?.id || null, accepted_at: new Date().toISOString() });
-  return NextResponse.json({ id: result?.id, status: "accepted", message: "Resend accepted the test email. Delivery normally follows within a minute or two." });
+  await auth.db.from("hgn_newsletter_test_sends").insert(recipients.map(email=>({ edition_id: edition.id, email, status: "accepted", resend_email_id: result?.id || null, accepted_at: new Date().toISOString() })));
+  return NextResponse.json({ id: result?.id, status: "accepted", message: `TEST EMAIL accepted for ${recipients.length} recipient${recipients.length===1?"":"s"}. Delivery normally follows within a minute or two.` });
 }

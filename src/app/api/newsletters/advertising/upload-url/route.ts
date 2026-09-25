@@ -1,0 +1,5 @@
+import { NextRequest, NextResponse } from "next/server";
+import { requirePublisher } from "@/lib/newsletters/server";
+export const runtime="nodejs";
+const ok=new Set(["image/jpeg","image/png","image/webp","image/gif"]);
+export async function POST(req:NextRequest){const a=await requirePublisher(req);if(!a.ok)return NextResponse.json({error:a.error},{status:a.status});const b=await req.json().catch(()=>({}));const name=String(b.filename||"").toLowerCase().replace(/[^a-z0-9.]+/g,"-")||"creative";const type=String(b.contentType||"").toLowerCase();const size=Number(b.size||0);if(!ok.has(type)||!size||size>10*1024*1024)return NextResponse.json({error:"Use a JPG, PNG, WebP or GIF under 10 MB."},{status:400});const path=`creative/${new Date().getUTCFullYear()}/${Date.now()}-${name}`;const {data,error}=await a.db.storage.from("hgn-newsletter-ads").createSignedUploadUrl(path,{upsert:false});if(error||!data?.token)return NextResponse.json({error:error?.message||"Could not prepare upload."},{status:500});return NextResponse.json({bucket:"hgn-newsletter-ads",path,token:data.token,publicUrl:a.db.storage.from("hgn-newsletter-ads").getPublicUrl(path).data.publicUrl});}

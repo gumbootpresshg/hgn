@@ -18,9 +18,9 @@ export async function GET(req: NextRequest) {
   const user = await currentUser(req);
   if (!user?.email) return NextResponse.json({ error: "Login required." }, { status: 401 });
   const db = serviceClient();
-  const { data, error } = await db.from("subscribers").select("id,email,name,interests,frequency,status,last_sent_at,send_count,created_at").ilike("email", user.email).maybeSingle();
+  const [{ data, error }, { data: products }] = await Promise.all([db.from("subscribers").select("id,email,name,interests,newsletter_product_slugs,frequency,status,last_sent_at,send_count,created_at").ilike("email", user.email).maybeSingle(), db.from("hgn_newsletter_products").select("name,slug,description,frequency,featured").eq("status","active").eq("show_in_account_preferences",true).order("sort_order")]);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ subscriber: data, account_email: user.email });
+  return NextResponse.json({ subscriber: data, account_email: user.email, products: products || [] });
 }
 
 export async function POST(req: NextRequest) {
@@ -28,12 +28,13 @@ export async function POST(req: NextRequest) {
   if (!user?.email) return NextResponse.json({ error: "Login required." }, { status: 401 });
   const body = await req.json().catch(() => ({}));
   const db = serviceClient();
-  const patch = body.unsubscribe
+  const patch: any = body.unsubscribe
     ? { status: "unsubscribed", unsubscribed_at: new Date().toISOString(), updated_at: new Date().toISOString() }
     : {
         email: user.email,
         name: String(body.name || user.user_metadata?.full_name || "").trim() || null,
         interests: Array.isArray(body.interests) ? body.interests.slice(0, 20).map(String) : [],
+        newsletter_product_slugs: Array.isArray(body.products) ? body.products.slice(0, 20).map(String) : [],
         frequency: body.frequency === "alerts" ? "alerts" : "biweekly",
         status: "active",
         unsubscribed_at: null,
@@ -41,10 +42,14 @@ export async function POST(req: NextRequest) {
         updated_at: new Date().toISOString(),
       };
 
-  const existing = await db.from("subscribers").select("id").ilike("email", user.email).maybeSingle();
+  const [existing, available] = await Promise.all([db.from("subscribers").select("id,newsletter_product_slugs").ilike("email", user.email).maybeSingle(), db.from("hgn_newsletter_products").select("slug").eq("status","active").eq("show_in_account_preferences",true)]);
+  const allowedProducts = new Set((available.data || []).map((x:any)=>x.slug));
+  const requestedProducts = Array.isArray(body.products) ? body.products.map(String).filter((slug:string)=>allowedProducts.has(slug)).slice(0,20) : [];
+  const preservedPaused = (existing.data?.newsletter_product_slugs || []).filter((slug:string)=>!allowedProducts.has(slug));
+  if (!body.unsubscribe) patch.newsletter_product_slugs = [...new Set([...requestedProducts, ...preservedPaused])];
   const result = existing.data?.id
-    ? await db.from("subscribers").update(patch).eq("id", existing.data.id).select("id,email,name,interests,frequency,status,last_sent_at,send_count,created_at").single()
-    : await db.from("subscribers").insert(patch).select("id,email,name,interests,frequency,status,last_sent_at,send_count,created_at").single();
+    ? await db.from("subscribers").update(patch).eq("id", existing.data.id).select("id,email,name,interests,newsletter_product_slugs,frequency,status,last_sent_at,send_count,created_at").single()
+    : await db.from("subscribers").insert(patch).select("id,email,name,interests,newsletter_product_slugs,frequency,status,last_sent_at,send_count,created_at").single();
   if (result.error) return NextResponse.json({ error: result.error.message }, { status: 500 });
   return NextResponse.json({ subscriber: result.data });
 }

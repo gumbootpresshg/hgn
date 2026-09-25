@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
   if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
 
   const body = await req.json().catch(() => ({}));
-  const { data: settings } = await auth.db.from("hgn_newsletter_settings").select("*").eq("singleton_key", "default").single();
+  const [{ data: settings }, { data: featured }] = await Promise.all([auth.db.from("hgn_newsletter_settings").select("*").eq("singleton_key", "default").single(), auth.db.from("hgn_newsletter_products").select("slug").eq("featured",true).maybeSingle()]);
   if (!settings) return NextResponse.json({ error: "Newsletter settings are missing. Run v272." }, { status: 500 });
 
   try {
@@ -30,6 +30,7 @@ export async function POST(req: NextRequest) {
       subject_line: String(body.subject || title),
       status: settings.require_approval ? "review" : "draft",
       edition_type: "biweekly",
+      product_slug: String(body.product_slug || featured?.slug || "hgn-news"),
       audience_segment: "preference_groups",
       intro: String(body.intro || "Here is your latest Haida Gwaii News digest, compiled from the stories and community updates published since our last edition."),
       date_from: built.from.toISOString().slice(0, 10),
