@@ -13,6 +13,8 @@
 
 Run `supabase/v292-newsletter-subscriber-reliability.sql` in the **Public HGN Supabase project**, after v291.
 
+The migration does not assume that the legacy `newsletter_subscribers` table has a `town` column.
+
 Legacy `audience_members` and `newsletter_subscribers` tables are retained for historical safety but are no longer used by the newsletter publisher workflow.
 
 ## Validation

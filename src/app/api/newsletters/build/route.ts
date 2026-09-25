@@ -21,6 +21,9 @@ export async function POST(req: NextRequest) {
     });
 
     const now = built.to;
+    built.content.include_poll = body.include_poll !== false;
+    built.content.include_weather_tides = body.include_weather_tides !== false && Boolean(settings.include_weather || settings.include_ferry);
+    built.content.include_marketplace_promo = body.include_marketplace_promo !== false && Boolean(settings.include_marketplace);
     const title = String(body.title || `Haida Gwaii News · ${now.toLocaleDateString("en-CA", { month: "long", day: "numeric", year: "numeric", timeZone: "America/Vancouver" })}`);
     const { count } = await auth.db.from("subscribers").select("id", { head: true, count: "exact" }).eq("status", "active").eq("frequency", "biweekly");
 

@@ -15,7 +15,7 @@ function allowedBySettings(article: any, settings: any) {
   if (topic === "opinion" && !settings.include_opinion) return { allowed: false, reason: "Opinion disabled" };
   if (topic === "obituaries" && !settings.include_obituaries) return { allowed: false, reason: "Obituaries disabled" };
   if (topic === "marketplace" && !settings.include_marketplace) return { allowed: false, reason: "Marketplace disabled" };
-  if (topic === "guide" && !settings.include_guide) return { allowed: false, reason: "Guide updates disabled" };
+  if (topic === "guide") return { allowed: false, reason: "Guide is paused" };
   if (topic === "weather_ferry" && !(settings.include_weather || settings.include_ferry)) return { allowed: false, reason: "Weather and ferry disabled" };
   return { allowed: true, reason: "Included" };
 }
@@ -119,6 +119,9 @@ export async function buildNewsletterContent(options: BuildOptions) {
     });
   }
 
+  const { data: polls } = await db.from("polls").select("id,question,description,poll_options(id,label,sort_order)").in("status", ["published","active","live"]).eq("show_on_home",true).order("updated_at",{ascending:false}).limit(1);
+  const poll = polls?.[0] ? { ...polls[0], poll_options:(polls[0].poll_options||[]).sort((a:any,b:any)=>(a.sort_order||0)-(b.sort_order||0)) } : null;
+
   const today = now.toISOString().slice(0, 10);
   const adsResult = await db.from("hgn_newsletter_ad_campaigns").select("id,advertiser_name,placement,creative_url,destination_url,alt_text,sort_order").in("status", ["active","house_ad"]).or(`start_date.is.null,start_date.lte.${today}`).or(`end_date.is.null,end_date.gte.${today}`).order("sort_order");
   const ads = adsResult.data || [];
@@ -129,7 +132,7 @@ export async function buildNewsletterContent(options: BuildOptions) {
   ];
 
   return {
-    content: { articles, events, ads, blocks },
+    content: { articles, available_articles: candidates.filter((article) => allowedBySettings(article, settings).allowed).map((article)=>({...article,topic:articleTopic(article),excerpt:article.excerpt||article.dek||"Read the full story on Haida Gwaii News."})), events, ads, poll, include_poll:true, include_weather_tides:Boolean(settings.include_weather || settings.include_ferry), include_marketplace_promo:Boolean(settings.include_marketplace), blocks },
     diagnostics: {
       source,
       lookback_days: lookbackDays,

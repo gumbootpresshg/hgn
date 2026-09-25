@@ -19,7 +19,7 @@ using (exists(select 1 from public.hgn_profiles p where p.user_id=auth.uid() and
 
 -- Preserve older newsletter-only signups in the canonical delivery table without overwriting newer choices.
 insert into public.subscribers (email,name,town,source,status,frequency,consent_source,newsletter_product_slugs,created_at,updated_at)
-select lower(trim(email)), name, town, coalesce(source,'legacy_newsletter_subscribers'),
+select lower(trim(email)), name, null::text, coalesce(source,'legacy_newsletter_subscribers'),
   case when lower(coalesce(status,'active')) in ('unsubscribed','inactive') then 'unsubscribed' else 'active' end,
   'biweekly', 'legacy_newsletter_subscribers', array['hgn-news'], coalesce(created_at,now()), now()
 from public.newsletter_subscribers
