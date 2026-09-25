@@ -25,7 +25,7 @@ export async function fetchPublicEvents(supabase: any) {
   // public event is written to events. All reader-facing surfaces read events.
   const result = await supabase
     .from("events")
-    .select("id,title,description,event_date,start_date,end_date,start_time,end_time,is_all_day,location,community,town,organizer_name,organizer_email,organizer_phone,contact_name,contact_email,contact_phone,image_url,status,updated_at,created_at,starts_at,ends_at")
+    .select("id,title,description,category,event_date,start_date,end_date,start_time,end_time,is_all_day,location,community,town,organizer_name,organizer_email,organizer_phone,contact_name,contact_email,contact_phone,image_url,website,status,updated_at,created_at,starts_at,ends_at")
     .in("status", ["published", "approved", "public", "live", "active"])
     .order("start_date", { ascending: true, nullsFirst: false })
     .order("event_date", { ascending: true, nullsFirst: false })

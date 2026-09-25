@@ -107,6 +107,7 @@ export async function buildNewsletterContent(options: BuildOptions) {
     const result = await db
       .from("events")
       .select("id,title,description,start_date,start_time,end_time,is_all_day,location,community")
+      .in("status", ["published", "approved", "public", "live", "active"])
       .gte("start_date", now.toISOString().slice(0, 10))
       .order("start_date", { ascending: true })
       .limit(8);
