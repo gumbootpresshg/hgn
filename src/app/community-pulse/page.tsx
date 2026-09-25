@@ -1,35 +1,18 @@
-import { supabase } from "@/lib/supabase";
+import HomePoll from "@/components/HomePoll"
 
-export const dynamic = "force-dynamic";
+export const dynamic = "force-dynamic"
 
-export default async function CommunityPulsePage() {
-  const { data: poll } = await supabase
-    .from("community_pulse")
-    .select("*")
-    .eq("status", "active")
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
+export default function CommunityPulsePage() {
   return (
-    <main className="mx-auto max-w-4xl px-4 py-10">
-      <p className="text-sm font-black uppercase tracking-wide text-hgnBlue">Community Pulse</p>
-      <h1 className="mt-2 text-4xl font-black text-hgnNavy">Have your say</h1>
-      <p className="mt-3 text-slate-600">A simple reader poll for Haida Gwaii News. Results and comments can help guide coverage.</p>
-
-      <section className="mt-8 rounded-2xl border bg-white p-6 shadow-sm">
-        <h2 className="text-2xl font-black text-slate-950">{poll?.question || "What should HGN cover more of this week?"}</h2>
-        <div className="mt-6 grid gap-3">
-          {[poll?.option_one, poll?.option_two, poll?.option_three, poll?.option_four]
-            .filter(Boolean)
-            .map((option) => (
-              <button key={option} className="rounded-xl border px-4 py-3 text-left font-bold hover:bg-slate-50">
-                {option}
-              </button>
-            ))}
+    <main className="min-h-[62vh] bg-[radial-gradient(circle_at_top_right,_rgba(30,95,148,.10),_transparent_31rem)]">
+      <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6 sm:py-14">
+        <p className="newspaper-kicker text-hgnRed">Community Pulse</p>
+        <h1 className="mt-3 font-serif text-4xl font-bold leading-none text-hgnNavy sm:text-5xl">Have your say</h1>
+        <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600">Vote in the current HGN reader poll and see the results once your vote is in. Your response helps guide our coverage.</p>
+        <div className="mt-8">
+          <HomePoll variant="community" />
         </div>
-        <p className="mt-4 text-sm text-slate-500">Voting storage is ready; public vote handling can be wired next.</p>
-      </section>
+      </div>
     </main>
-  );
+  )
 }

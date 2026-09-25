@@ -11,7 +11,11 @@ type Poll = {
   poll_options?: PollOption[]
 }
 
-export default function HomePoll() {
+type HomePollProps = {
+  variant?: "home" | "community"
+}
+
+export default function HomePoll({ variant = "home" }: HomePollProps) {
   const [poll, setPoll] = useState<Poll | null>(null)
   const [votes, setVotes] = useState<Record<string, number>>({})
   const [message, setMessage] = useState("")
@@ -92,23 +96,30 @@ export default function HomePoll() {
     await loadResults(poll.id)
   }
 
-  if (!poll) return null
+  if (!poll) {
+    if (variant === "community") {
+      return <p className="rounded-2xl border border-stone-300 bg-white/75 p-6 text-stone-600 shadow-sm">There is no reader poll open right now. Please check back soon.</p>
+    }
+    return null
+  }
+
+  const community = variant === "community"
 
   return (
-    <section className="border-y border-stone-400 py-3 sm:py-5">
-      <p className="newspaper-kicker text-hgnRed">Reader Poll</p>
-      <h2 className="mt-2 max-w-[24ch] font-serif text-[1.75rem] font-bold leading-[1.02] sm:text-3xl">{poll.question}</h2>
-      {poll.description ? <p className="mt-2 text-sm leading-6 text-slate-600">{poll.description}</p> : null}
+    <section className={community ? "rounded-[1.75rem] border border-stone-300 bg-white/75 p-5 shadow-[0_14px_34px_rgba(16,24,32,.08)] backdrop-blur-sm sm:p-8" : "border-y border-stone-400 py-3 sm:py-5"}>
+      <p className={community ? "newspaper-kicker text-hgnRed" : "newspaper-kicker text-hgnRed"}>Reader Poll</p>
+      <h2 className={`mt-2 max-w-[28ch] font-serif font-bold leading-[1.04] text-hgnNavy ${community ? "text-3xl sm:text-4xl" : "text-[1.75rem] sm:text-3xl"}`}>{poll.question}</h2>
+      {poll.description ? <p className={`mt-3 leading-6 text-slate-600 ${community ? "max-w-2xl text-base" : "text-sm"}`}>{poll.description}</p> : null}
 
-      <div className="mt-3 grid gap-1.5 sm:gap-3">
+      <div className={`grid ${community ? "mt-6 gap-2.5" : "mt-3 gap-1.5 sm:gap-3"}`}>
         {(poll.poll_options || []).map((option) => {
           const count = votes[option.id] || 0
           const percent = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0
 
           return (
-            <div key={option.id} className="border-b border-stone-300 px-1 py-1 sm:px-0 sm:py-3">
+            <div key={option.id} className={community ? "rounded-xl border border-stone-300 bg-[#fffefa]/80 px-3 py-2.5 transition hover:border-hgnBlue" : "border-b border-stone-300 px-1 py-1 sm:px-0 sm:py-3"}>
               {!voted ? (
-                <button onClick={() => vote(option.id)} className="min-h-12 w-full px-2 text-left text-sm font-bold hover:text-hgnBlue">
+                <button onClick={() => vote(option.id)} className="min-h-12 w-full px-2 text-left text-sm font-bold text-hgnNavy hover:text-hgnBlue focus:outline-none focus:ring-2 focus:ring-hgnBlue/50">
                   {option.label}
                 </button>
               ) : (
@@ -128,8 +139,8 @@ export default function HomePoll() {
         })}
       </div>
 
-      {voted ? <p className="mt-3 text-xs font-semibold text-slate-500">{totalVotes} total vote{totalVotes === 1 ? "" : "s"}</p> : null}
-      {message ? <p className="mt-3 text-sm font-semibold text-slate-600">{message}</p> : null}
+      {voted ? <p className="mt-4 text-xs font-semibold text-slate-500">{totalVotes} total vote{totalVotes === 1 ? "" : "s"}</p> : null}
+      {message ? <p className="mt-3 text-sm font-semibold text-slate-600" role="status">{message}</p> : null}
     </section>
   )
 }

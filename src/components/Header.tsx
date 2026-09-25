@@ -10,6 +10,7 @@ import { supabase } from "@/lib/supabase"
 import { defaultNavigation, type SiteNavEntry, type SitePlatformConfig, type Visibility } from "@/lib/site-platform-config"
 
 const utilityLinks = [
+  { href: "/support", label: "Support HGN" },
   { href: "/newsletter", label: "Newsletter" },
   { href: "/digital-paper", label: "Archives" },
   { href: "/advertise", label: "Advertise" },
@@ -290,7 +291,7 @@ export function Header({ initialPlatformConfig }: { initialPlatformConfig?: Site
             <div className="font-semibold normal-case tracking-normal">{today}</div>
             <div className="hidden text-center font-bold tracking-[0.2em] lg:block">Independent local journalism</div>
             <nav aria-label="Utility" className="flex flex-wrap items-center gap-3 md:justify-end">
-              {utilityLinks.map((link) => <Link key={link.href} href={link.href} className="hover:text-hgnRed">{link.label}</Link>)}
+              {utilityLinks.map((link) => <Link key={link.href} href={link.href} className={link.href === "/support" ? "font-bold text-hgnRed hover:text-hgnNavy" : "hover:text-hgnRed"}>{link.label}</Link>)}
               <Link href="/account" aria-label="My account" className="inline-flex items-center gap-1 hover:text-hgnRed"><UserRound size={14} /> My HGN</Link>
             </nav>
           </div>
