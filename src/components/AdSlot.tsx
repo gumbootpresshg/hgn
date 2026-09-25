@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase"
 import HouseAdPromo from "@/components/HouseAdPromo"
+import AdImpressionTracker from "@/components/analytics/AdImpressionTracker"
 
 type AdSlotProps = {
   placement: string
@@ -40,23 +41,25 @@ export default async function AdSlot({
 
   return (
     <aside className={`my-6 rounded-2xl border bg-white p-3 shadow-sm ${className}`} style={imageStyle.wrapper}>
-      {ad.html_code ? (
-        <div dangerouslySetInnerHTML={{ __html: ad.html_code }} />
-      ) : ad.image_url ? (
-        ad.destination_url ? (
-          <a href={ad.destination_url} target="_blank" rel="noopener noreferrer" className="block overflow-hidden rounded-xl" style={imageStyle.inner}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={ad.image_url} alt={ad.alt_text || ad.title || "Advertisement"} className="mx-auto h-auto max-w-full object-contain" style={imageStyle.image} />
-          </a>
+      <AdImpressionTracker adId={ad.id} placement={placement}>
+        {ad.html_code ? (
+          <div dangerouslySetInnerHTML={{ __html: ad.html_code }} />
+        ) : ad.image_url ? (
+          ad.destination_url ? (
+            <a href={`/api/ad-click?id=${encodeURIComponent(ad.id)}&placement=${encodeURIComponent(placement)}&source=display&to=${encodeURIComponent(ad.destination_url)}`} target="_blank" rel="noopener noreferrer" className="block overflow-hidden rounded-xl" style={imageStyle.inner}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={ad.image_url} alt={ad.alt_text || ad.title || "Advertisement"} className="mx-auto h-auto max-w-full object-contain" style={imageStyle.image} />
+            </a>
+          ) : (
+            <div className="overflow-hidden rounded-xl" style={imageStyle.inner}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={ad.image_url} alt={ad.alt_text || ad.title || "Advertisement"} className="mx-auto h-auto max-w-full object-contain" style={imageStyle.image} />
+            </div>
+          )
         ) : (
-          <div className="overflow-hidden rounded-xl" style={imageStyle.inner}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={ad.image_url} alt={ad.alt_text || ad.title || "Advertisement"} className="mx-auto h-auto max-w-full object-contain" style={imageStyle.image} />
-          </div>
-        )
-      ) : (
-        <HouseAdPromo compact />
-      )}
+          <HouseAdPromo compact />
+        )}
+      </AdImpressionTracker>
       <p className="mt-2 text-center text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">
         Advertisement
       </p>

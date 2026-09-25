@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { recordHgnAnalyticsEvent } from "@/components/analytics/analytics-events";
 
 export default function NewsletterSignup() {
   const [message, setMessage] = useState("");
@@ -12,6 +13,7 @@ export default function NewsletterSignup() {
 
     const response = await fetch("/api/newsletters/subscribe", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({email,name,products:["hgn-news"]}) });
     const result = await response.json().catch(()=>({}));
+    if (response.ok) recordHgnAnalyticsEvent("newsletter_signup", { source: "embedded_newsletter_signup" });
     setMessage(response.ok ? (result.welcome?.sent ? "Thanks — check your inbox for a welcome email." : result.welcome?.reason || "Thanks — you're on the HGN newsletter list.") : result.error || "Could not save your signup.");
   }
 

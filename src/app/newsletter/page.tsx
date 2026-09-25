@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
+import { recordHgnAnalyticsEvent } from "@/components/analytics/analytics-events"
 
 type Product = { slug: string; name: string; description?: string; frequency?: string; featured?: boolean }
 
@@ -47,6 +48,7 @@ export default function NewsletterPage() {
     const result = await response.json()
     if (response.ok) {
       setSignedUp(true)
+      recordHgnAnalyticsEvent("newsletter_signup", { pagePath: "/newsletter", source: "newsletter_page" })
       setMessage(result.welcome?.sent ? (page.success_message || "You’re on the list. Check your inbox for a welcome email.") : (result.welcome?.reason || page.success_message || "You’re on the list."))
       event.currentTarget.reset()
     } else setMessage(result.error || "Could not save your signup.")

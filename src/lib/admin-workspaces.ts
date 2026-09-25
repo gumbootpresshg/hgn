@@ -30,6 +30,7 @@ export const adminTools: AdminTool[] = [
 
   { href: "/admin/newsletter", label: "Newsletter", description: "Build, preview, test and send the newspaper-style newsletter.", group: "Audience", roles: ["publisher", "editor"], keywords: ["email", "digest", "subscribers"], priority: true, mobileRelevant: true },
   { href: "/admin/subscribers", label: "Newsletter Subscribers", description: "Review newsletter subscriber records and preferences.", group: "Audience", roles: ["publisher", "editor"], keywords: ["email", "audience", "preferences"] },
+  { href: "/admin/analytics", label: "Audience & Ad Intelligence", description: "See real reader activity, article reads, newsletter conversions and advertising performance.", group: "Audience", roles: ["publisher", "editor", "sales"], keywords: ["analytics", "visitors", "traffic", "articles", "advertising", "impressions", "clicks"], priority: true, mobileRelevant: true },
   { href: "/admin/members", label: "Members", description: "Manage reader accounts and access levels.", group: "Audience", roles: ["publisher"], keywords: ["accounts", "users"] },
 
   { href: "/admin/ads", label: "Advertising", description: "Manage public advertising creative and placements.", group: "Local Commerce", roles: ["publisher", "sales"], keywords: ["advertising", "placements", "creative"] },

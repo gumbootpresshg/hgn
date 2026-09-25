@@ -11,6 +11,7 @@ import { absoluteUrl, stripHtml, SITE } from "@/lib/site";
 import { sanitizeArticleHtml } from "@/lib/sanitize-html";
 import Image from "next/image";
 import { formatPublishingDate, getPublishingSettings } from "@/lib/publishing-settings";
+import ArticleAnalyticsTracker from "@/components/analytics/ArticleAnalyticsTracker";
 
 export const dynamic = "force-dynamic";
 
@@ -122,6 +123,7 @@ export default async function ArticlePage({ params }: PageProps) {
   return (
     <main className="mx-auto max-w-5xl px-4 py-10">
       <NewsArticleJsonLd article={typed} authorUrl={writer?.slug && writer?.is_active !== false ? `/authors/${writer.slug}` : null} />
+      <ArticleAnalyticsTracker articleId={typed.id} slug={typed.slug} />
 
       <Link href="/articles" className="text-sm font-bold text-hgnBlue hover:underline">
         {`← ${articleBackLabel(typed)}`}

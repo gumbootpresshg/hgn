@@ -1,6 +1,6 @@
 {
   "name": "hgn-website-build",
-  "version": "0.66.4",
+  "version": "0.66.5",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -17,6 +17,7 @@
     "@supabase/supabase-js": "2.105.1",
     "@types/leaflet": "latest",
     "@types/sanitize-html": "2.16.0",
+    "@vercel/analytics": "^2.0.1",
     "csv-parse": "latest",
     "dotenv": "latest",
     "fast-xml-parser": "latest",
