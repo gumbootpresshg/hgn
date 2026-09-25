@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { supabase } from "@/lib/supabase";
 
 export default function NewsletterSignup() {
   const [message, setMessage] = useState("");
@@ -11,12 +10,9 @@ export default function NewsletterSignup() {
     const name = String(formData.get("name") || "").trim();
     if (!email) return setMessage("Please enter an email address.");
 
-    const { error } = await supabase.from("newsletter_subscribers").upsert(
-      [{ email, name, source: "website", status: "active" }],
-      { onConflict: "email" }
-    );
-
-    setMessage(error ? error.message : "Thanks — you're on the HGN newsletter list.");
+    const response = await fetch("/api/newsletters/subscribe", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({email,name,products:["hgn-news"]}) });
+    const result = await response.json().catch(()=>({}));
+    setMessage(response.ok ? (result.welcome?.sent ? "Thanks — check your inbox for a welcome email." : result.welcome?.reason || "Thanks — you're on the HGN newsletter list.") : result.error || "Could not save your signup.");
   }
 
   return (
