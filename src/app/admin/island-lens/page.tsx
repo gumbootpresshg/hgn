@@ -1,98 +1,25 @@
 "use client"
 
+import Link from "next/link"
 import { useEffect, useState } from "react"
+import { Archive, ArrowDown, ArrowUp, Eye, Plus, Save, Trash2, Upload } from "lucide-react"
 import { supabase } from "@/lib/supabase"
+import { IslandLensItem, LensPhoto, lensSlug } from "@/lib/island-lens"
+
+type EditorItem = IslandLensItem & { id: string; slug: string; title: string; photo_captions: LensPhoto[]; status: string; featured: boolean }
+const blank = (): EditorItem => ({ id: "new", slug: "", title: "", description: "", gallery_intro: "", gallery_body: "", community: "Haida Gwaii", credit: "", status: "draft", featured: false, event_date: "", issue_label: "", issue_url: "", cover_caption: "", photo_captions: [] })
+async function headers(): Promise<Record<string, string>> { const { data } = await supabase.auth.getSession(); return data.session?.access_token ? { Authorization: `Bearer ${data.session.access_token}` } : {} }
 
 export default function AdminIslandLensPage() {
-  const [items, setItems] = useState<any[]>([])
-  const [message, setMessage] = useState("")
-
-  async function load() {
-    const { data, error } = await supabase.from("island_lens_items").select("*").order("created_at", { ascending: false })
-    if (error) setMessage(error.message)
-    else setItems(data || [])
-  }
-
-  useEffect(() => { load() }, [])
-
-  async function submit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    const formElement = event.currentTarget
-    const form = new FormData(formElement)
-
-    const photoUrls = String(form.get("photo_urls") || "").split("\n").map((url) => url.trim()).filter(Boolean)
-    const videoUrls = String(form.get("video_urls") || "").split("\n").map((url) => url.trim()).filter(Boolean)
-
-    const { error } = await supabase.from("island_lens_items").insert({
-      title: String(form.get("title") || ""),
-      description: String(form.get("description") || ""),
-      gallery_intro: String(form.get("gallery_intro") || ""),
-      gallery_body: String(form.get("gallery_body") || ""),
-      media_type: String(form.get("media_type") || "gallery"),
-      media_url: String(form.get("media_url") || ""),
-      thumbnail_url: String(form.get("thumbnail_url") || photoUrls[0] || ""),
-      photo_urls: photoUrls,
-      video_urls: videoUrls,
-      community: String(form.get("community") || ""),
-      credit: String(form.get("credit") || ""),
-      status: String(form.get("status") || "draft"),
-      featured: form.get("featured") === "on",
-    })
-
-    if (error) setMessage(error.message)
-    else {
-      setMessage("Island Lens gallery added.")
-      formElement.reset()
-      load()
-    }
-  }
-
-  return (
-    <main className="mx-auto max-w-6xl space-y-8 px-6 py-10">
-      <section className="rounded-3xl border bg-white p-8 shadow-sm">
-        <p className="text-sm font-semibold tracking-[0.18em] text-hgnBlue">Admin</p>
-        <h1 className="mt-3 text-4xl font-black tracking-tight">Island Lens</h1>
-        <p className="mt-3 text-slate-600">Create full galleries with header text, story text, photos and videos.</p>
-      </section>
-
-      <form onSubmit={submit} className="space-y-4 rounded-3xl border bg-white p-6 shadow-sm">
-        <input name="title" required placeholder="Gallery title" className="w-full rounded-2xl border px-4 py-3" />
-        <textarea name="description" placeholder="Short description/card summary" className="w-full rounded-2xl border px-4 py-3" />
-        <textarea name="gallery_intro" rows={3} placeholder="Header/intro text, optional" className="w-full rounded-2xl border px-4 py-3" />
-        <textarea name="gallery_body" rows={6} placeholder="Full story/text with gallery, optional" className="w-full rounded-2xl border px-4 py-3" />
-
-        <select name="media_type" className="rounded-2xl border px-4 py-3">
-          <option value="gallery">Gallery</option>
-          <option value="photo">Single Photo</option>
-          <option value="video">Video</option>
-          <option value="mixed">Photos + Videos</option>
-        </select>
-
-        <input name="media_url" placeholder="Main media URL, optional" className="w-full rounded-2xl border px-4 py-3" />
-        <input name="thumbnail_url" placeholder="Thumbnail URL, optional. Defaults to first photo." className="w-full rounded-2xl border px-4 py-3" />
-        <textarea name="photo_urls" rows={6} placeholder="Photo URLs, one per line" className="w-full rounded-2xl border px-4 py-3" />
-        <textarea name="video_urls" rows={4} placeholder="Video URLs, one per line" className="w-full rounded-2xl border px-4 py-3" />
-        <input name="community" placeholder="Community" className="w-full rounded-2xl border px-4 py-3" />
-        <input name="credit" placeholder="Credit" className="w-full rounded-2xl border px-4 py-3" />
-
-        <select name="status" className="rounded-2xl border px-4 py-3">
-          <option value="draft">Draft</option>
-          <option value="published">Published</option>
-        </select>
-        <label className="flex items-center gap-2 text-sm font-bold"><input type="checkbox" name="featured" /> Featured</label>
-        <button className="rounded-full bg-slate-950 px-6 py-3 text-sm font-bold text-white">Add Gallery</button>
-        {message ? <p className="rounded-2xl bg-slate-50 p-4 text-sm">{message}</p> : null}
-      </form>
-
-      <section className="grid gap-4 md:grid-cols-2">
-        {items.map((item) => (
-          <article key={item.id} className="rounded-3xl border bg-white p-5 shadow-sm">
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-hgnBlue">{item.status}</p>
-            <h2 className="mt-2 text-xl font-black">{item.title}</h2>
-            <p className="mt-2 text-sm text-slate-600">{item.media_type} · {(item.photo_urls || []).length} photos</p>
-          </article>
-        ))}
-      </section>
-    </main>
-  )
+  const [items, setItems] = useState<EditorItem[]>([]); const [selected, setSelected] = useState<EditorItem>(blank()); const [message, setMessage] = useState(""); const [busy, setBusy] = useState(false); const [uploading, setUploading] = useState(false)
+  async function load() { const response = await fetch("/api/admin/island-lens", { headers: await headers(), cache: "no-store" }); const data = await response.json().catch(() => ({})); if (response.ok) setItems(data.items || []); else setMessage(data.error || "Could not load Island Lens.") }
+  useEffect(() => { void load() }, [])
+  function edit(item: EditorItem) { setSelected({ ...blank(), ...item, photo_captions: Array.isArray(item.photo_captions) && item.photo_captions.length ? item.photo_captions : (item.photo_urls || []).map((url) => ({ url })) }); setMessage("") }
+  function patch(field: keyof EditorItem, value: any) { setSelected((current) => ({ ...current, [field]: value })) }
+  function patchPhoto(index: number, field: keyof LensPhoto, value: string) { setSelected((current) => ({ ...current, photo_captions: current.photo_captions.map((photo, i) => i === index ? { ...photo, [field]: value } : photo) })) }
+  function movePhoto(index: number, direction: number) { setSelected((current) => { const next = [...current.photo_captions]; const target = index + direction; if (target < 0 || target >= next.length) return current; [next[index], next[target]] = [next[target], next[index]]; return { ...current, photo_captions: next } }) }
+  async function upload(file: File) { setUploading(true); setMessage(""); try { const response = await fetch("/api/admin/island-lens/upload-url", { method: "POST", headers: { ...(await headers()), "Content-Type": "application/json" }, body: JSON.stringify({ filename: file.name, contentType: file.type, size: file.size }) }); const prepared = await response.json().catch(() => ({})); if (!response.ok) throw new Error(prepared.error || "Could not prepare upload."); const result = await supabase.storage.from(prepared.bucket).uploadToSignedUrl(prepared.path, prepared.token, file, { contentType: file.type, upsert: false }); if (result.error) throw result.error; setSelected((current) => ({ ...current, photo_captions: [...current.photo_captions, { url: prepared.publicUrl, alt: current.title || "Island Lens photo" }] })); setMessage("Photo uploaded. Add its caption, then save the photo feature.") } catch (error:any) { setMessage(error?.message || "Could not upload photo.") } finally { setUploading(false) } }
+  async function save(status?: string) { setBusy(true); setMessage(""); const creating = selected.id === "new"; const body = { ...selected, slug: lensSlug(selected.slug || selected.title), status: status || selected.status }; const response = await fetch(creating ? "/api/admin/island-lens" : `/api/admin/island-lens/${selected.id}`, { method: creating ? "POST" : "PATCH", headers: { ...(await headers()), "Content-Type": "application/json" }, body: JSON.stringify(body) }); const data = await response.json().catch(() => ({})); if (response.ok && data.item) { setSelected(data.item); setMessage(creating ? "Photo feature created." : "Photo feature saved."); await load() } else setMessage(data.error || "Could not save photo feature."); setBusy(false) }
+  async function remove() { if (selected.id === "new") return setSelected(blank()); if (!window.confirm(`Delete “${selected.title}”? This cannot be undone.`)) return; setBusy(true); const response = await fetch(`/api/admin/island-lens/${selected.id}`, { method: "DELETE", headers: await headers() }); if (response.ok) { setSelected(blank()); setMessage("Photo feature deleted."); await load() } else { const data = await response.json().catch(() => ({})); setMessage(data.error || "Could not delete photo feature.") }; setBusy(false) }
+  return <main className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6"><header className="rounded-3xl border bg-white p-7 shadow-sm"><p className="text-sm font-black uppercase tracking-[.18em] text-hgnBlue">Community</p><div className="mt-2 flex flex-wrap items-end justify-between gap-4"><div><h1 className="font-serif text-5xl font-bold">Island Lens</h1><p className="mt-2 max-w-3xl text-slate-600">Build proper HGN photo features for print spreads, events and island life. Upload photos, write captions, order the gallery, then publish one shareable story.</p></div><div className="flex gap-2"><Link href="/island-lens" target="_blank" className="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-black"><Eye size={16}/>View Island Lens</Link><button onClick={() => { setSelected(blank()); setMessage("") }} className="hgn-btn-primary inline-flex items-center gap-2"><Plus size={16}/>New photo feature</button></div></div></header>{message ? <p className="rounded-2xl border bg-white p-4 font-bold">{message}</p> : null}<div className="grid gap-6 lg:grid-cols-[.85fr_1.45fr]"><section className="rounded-3xl border bg-white p-5 shadow-sm"><h2 className="font-serif text-2xl font-bold">Photo features</h2><div className="mt-4 space-y-2">{items.map((item) => <button key={item.id} onClick={() => edit(item)} className={`w-full rounded-2xl border p-4 text-left ${selected.id === item.id ? "border-hgnBlue ring-2 ring-blue-100" : "hover:border-hgnBlue"}`}><p className="text-xs font-black uppercase tracking-wide text-hgnBlue">{item.status}{item.featured ? " · Featured" : ""}</p><h3 className="mt-1 text-lg font-black">{item.title}</h3><p className="mt-1 text-xs text-slate-500">{item.photo_captions?.length || item.photo_urls?.length || 0} photos · /island-lens/{item.slug}</p></button>)}{!items.length ? <p className="rounded-2xl border border-dashed p-5 text-sm text-slate-500">No photo features yet. Start with the next print spread.</p> : null}</div></section><section className="rounded-3xl border bg-white p-6 shadow-sm"><div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-black uppercase tracking-[.18em] text-hgnBlue">{selected.id === "new" ? "New photo feature" : "Edit photo feature"}</p><h2 className="mt-1 text-3xl font-black">{selected.title || "Untitled photo feature"}</h2></div>{selected.id !== "new" ? <button onClick={() => void remove()} disabled={busy} className="rounded-full border border-red-200 p-2 text-red-700"><Trash2 size={18}/></button> : null}</div><div className="mt-5 grid gap-4"><label className="grid gap-1 text-sm font-bold">Headline *<input value={selected.title} onChange={(e) => { patch("title", e.target.value); if (!selected.slug) patch("slug", lensSlug(e.target.value)) }} /></label><label className="grid gap-1 text-sm font-bold">Public URL<input value={selected.slug} onChange={(e) => patch("slug", lensSlug(e.target.value))} placeholder="community-fall-fair-2026"/><span className="text-xs font-normal text-slate-500">ha idagwaiinews.com/island-lens/{lensSlug(selected.slug || selected.title || "photo-feature")}</span></label><label className="grid gap-1 text-sm font-bold">Card summary<textarea rows={2} value={selected.description || ""} onChange={(e) => patch("description", e.target.value)} placeholder="A short invitation to open this photo feature." /></label><label className="grid gap-1 text-sm font-bold">Intro beneath headline<textarea rows={3} value={selected.gallery_intro || ""} onChange={(e) => patch("gallery_intro", e.target.value)} /></label><label className="grid gap-1 text-sm font-bold">Optional story text<textarea rows={6} value={selected.gallery_body || ""} onChange={(e) => patch("gallery_body", e.target.value)} placeholder="Add a little context for the spread. Paragraphs are preserved." /></label><div className="grid gap-4 md:grid-cols-2"><label className="grid gap-1 text-sm font-bold">Community<input value={selected.community || ""} onChange={(e) => patch("community", e.target.value)} /></label><label className="grid gap-1 text-sm font-bold">Event / feature date<input type="date" value={selected.event_date || ""} onChange={(e) => patch("event_date", e.target.value)} /></label><label className="grid gap-1 text-sm font-bold">Feature credit<input value={selected.credit || ""} onChange={(e) => patch("credit", e.target.value)} placeholder="Photos by…" /></label><label className="flex items-center gap-2 rounded-xl border p-3 text-sm font-bold"><input type="checkbox" checked={selected.featured} onChange={(e) => patch("featured", e.target.checked)} />Feature this on Island Lens</label></div><div className="rounded-2xl border bg-slate-50 p-4"><div className="flex items-center gap-2 text-sm font-black"><Upload size={16}/>Upload gallery photos</div><p className="mt-1 text-xs text-slate-500">Select photos one at a time. They upload directly to HGN storage; captions and order are saved with this feature.</p><input type="file" accept="image/jpeg,image/png,image/webp,image/gif" disabled={uploading} onChange={(e) => { const file = e.target.files?.[0]; if (file) void upload(file); e.currentTarget.value = "" }} className="mt-3 block w-full rounded-xl border bg-white px-3 py-2.5 text-sm" />{uploading ? <p className="mt-2 text-xs font-bold">Uploading…</p> : null}</div>{selected.photo_captions.length ? <div className="space-y-4">{selected.photo_captions.map((photo, index) => <article key={`${photo.url}-${index}`} className="grid gap-3 border-t pt-4 sm:grid-cols-[150px_1fr]"><img src={photo.url} alt={photo.alt || "Gallery preview"} className="aspect-[4/3] w-full object-cover"/><div className="grid gap-2"><div className="flex justify-between gap-2"><p className="text-sm font-black">Photo {index + 1}{index === 0 ? " · Cover" : ""}</p><div className="flex gap-1"><button type="button" onClick={() => movePhoto(index, -1)} disabled={index === 0} className="rounded border p-1 disabled:opacity-30"><ArrowUp size={15}/></button><button type="button" onClick={() => movePhoto(index, 1)} disabled={index === selected.photo_captions.length - 1} className="rounded border p-1 disabled:opacity-30"><ArrowDown size={15}/></button><button type="button" onClick={() => patch("photo_captions", selected.photo_captions.filter((_, i) => i !== index))} className="rounded border border-red-200 p-1 text-red-700"><Trash2 size={15}/></button></div></div><input value={photo.caption || ""} onChange={(e) => patchPhoto(index, "caption", e.target.value)} placeholder="Caption"/><input value={photo.credit || ""} onChange={(e) => patchPhoto(index, "credit", e.target.value)} placeholder="Photo credit"/><input value={photo.alt || ""} onChange={(e) => patchPhoto(index, "alt", e.target.value)} placeholder="Accessible description"/></div></article>)}</div> : null}<div className="grid gap-4 md:grid-cols-2"><label className="grid gap-1 text-sm font-bold">Print issue label<input value={selected.issue_label || ""} onChange={(e) => patch("issue_label", e.target.value)} placeholder="Also in Issue 59" /></label><label className="grid gap-1 text-sm font-bold">Digital Paper link<input type="url" value={selected.issue_url || ""} onChange={(e) => patch("issue_url", e.target.value)} placeholder="https://…" /></label></div><div className="flex flex-wrap gap-2 border-t pt-4"><button disabled={busy} onClick={() => void save("draft")} className="inline-flex items-center gap-2 rounded-full border px-4 py-2 font-black"><Save size={16}/>Save draft</button><button disabled={busy || !selected.photo_captions.length} onClick={() => void save("published")} className="hgn-btn-primary">{busy ? "Saving…" : "Publish photo feature"}</button>{selected.id !== "new" && selected.status !== "archived" ? <button disabled={busy} onClick={() => void save("archived")} className="inline-flex items-center gap-2 rounded-full border px-4 py-2 font-black"><Archive size={16}/>Archive</button> : null}</div></div></section></div></main>
 }

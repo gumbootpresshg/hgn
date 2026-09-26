@@ -1,0 +1,13 @@
+import { notFound } from "next/navigation"
+import Link from "next/link"
+import { supabase } from "@/lib/supabase"
+import { dateLabel, IslandLensItem, lensPhotos, publicLensStatuses } from "@/lib/island-lens"
+
+export const revalidate = 60
+
+export default async function IslandLensFeature({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params; const { data } = await supabase.from("island_lens_items").select("*").eq("slug", slug).in("status", publicLensStatuses).maybeSingle()
+  if (!data) notFound()
+  const item = data as IslandLensItem; const photos = lensPhotos(item)
+  return <main className="newspaper-shell py-7"><Link href="/island-lens" className="text-sm font-bold text-hgnBlue">← Island Lens</Link><header className="mt-6 max-w-4xl border-b border-stone-900 pb-6"><p className="newspaper-kicker text-hgnRed">Photo feature{item.community ? ` · ${item.community}` : ""}</p><h1 className="mt-2 font-serif text-5xl font-bold leading-[.98] tracking-tight sm:text-6xl">{item.title}</h1>{item.gallery_intro || item.description ? <p className="mt-5 text-lg leading-8 text-stone-600">{item.gallery_intro || item.description}</p> : null}<p className="mt-4 text-xs font-bold uppercase tracking-[.12em] text-stone-500">{[dateLabel(item.event_date || item.published_at), item.credit].filter(Boolean).join(" · ")}</p></header>{photos[0] ? <figure className="mt-7"><img src={photos[0].url} alt={photos[0].alt || item.title} className="max-h-[75vh] w-full object-cover" />{photos[0].caption || photos[0].credit || item.cover_caption ? <figcaption className="mt-2 text-sm leading-6 text-stone-500">{photos[0].caption || item.cover_caption || ""}{photos[0].credit ? ` · Photo: ${photos[0].credit}` : ""}</figcaption> : null}</figure> : null}{item.gallery_body ? <div className="mx-auto mt-8 max-w-3xl whitespace-pre-line text-[17px] leading-8 text-stone-700">{item.gallery_body}</div> : null}{photos.length > 1 ? <section className="mt-10 grid gap-5 md:grid-cols-2">{photos.slice(1).map((photo, index) => <figure key={`${photo.url}-${index}`}><img src={photo.url} alt={photo.alt || `${item.title}, photo ${index + 2}`} className="aspect-[4/3] w-full object-cover" />{photo.caption || photo.credit ? <figcaption className="mt-2 text-sm leading-6 text-stone-500">{photo.caption || ""}{photo.credit ? ` · Photo: ${photo.credit}` : ""}</figcaption> : null}</figure>)}</section> : null}{item.issue_url ? <section className="mt-10 border-y border-stone-400 py-5"><p className="newspaper-kicker">In print</p><Link href={item.issue_url} className="mt-2 inline-block font-serif text-2xl font-bold text-hgnBlue hover:text-hgnRed">{item.issue_label || "Read this issue in the Digital Paper"} →</Link></section> : null}</main>
+}

@@ -49,6 +49,8 @@ export const defaultNavigation: SiteNavEntry[] = [
   { id: "weather", label: "Weather", href: "/weather", enabled: true, visibility: "public" },
   { id: "community", label: "Community", enabled: true, visibility: "public", children: [
     { id: "events", label: "Events", href: "/events", enabled: true, visibility: "public" },
+    { id: "island-lens", label: "Island Lens", href: "/island-lens", enabled: true, visibility: "public" },
+    { id: "election", label: "Election Guide", href: "/election", enabled: true, visibility: "public" },
     { id: "obituaries", label: "Obituaries", href: "/obituaries", enabled: true, visibility: "public" },
     { id: "ferry", label: "Ferry Info", href: "/ferry-info", enabled: true, visibility: "public" },
     { id: "notices", label: "Notices", href: "/notices", enabled: true, visibility: "public" },
