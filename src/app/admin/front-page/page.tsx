@@ -25,6 +25,12 @@ type Settings = {
   display_starts_at: string | null;
   display_expires_at: string | null;
   is_active: boolean;
+  video_is_active: boolean;
+  video_url: string | null;
+  video_title: string | null;
+  video_description: string | null;
+  video_starts_at: string | null;
+  video_expires_at: string | null;
 };
 
 const emptySettings: Settings = {
@@ -39,6 +45,12 @@ const emptySettings: Settings = {
   display_starts_at: null,
   display_expires_at: null,
   is_active: true,
+  video_is_active: false,
+  video_url: null,
+  video_title: "",
+  video_description: "",
+  video_starts_at: null,
+  video_expires_at: null,
 };
 
 function localValue(value: string | null) {
@@ -94,6 +106,8 @@ export default function FrontPageManagerPage() {
       ...settings,
       display_starts_at: settings.display_starts_at ? new Date(settings.display_starts_at).toISOString() : null,
       display_expires_at: settings.display_expires_at ? new Date(settings.display_expires_at).toISOString() : null,
+      video_starts_at: settings.video_starts_at ? new Date(settings.video_starts_at).toISOString() : null,
+      video_expires_at: settings.video_expires_at ? new Date(settings.video_expires_at).toISOString() : null,
       updated_at: new Date().toISOString(),
       updated_by: sessionData.session?.user.id || null,
     };
@@ -125,7 +139,7 @@ export default function FrontPageManagerPage() {
         <div className="mt-2 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <h1 className="font-serif text-5xl font-bold text-stone-950">Front Page Manager</h1>
-            <p className="mt-3 max-w-3xl text-stone-600">Control the lead story and the main photograph separately. A front-page photo does not require its own article.</p>
+            <p className="mt-3 max-w-3xl text-stone-600">Control the lead story, photograph and live video feature separately. A front-page photo does not require its own article.</p>
           </div>
           <Link href="/" target="_blank" className="hgn-btn-dark">Preview homepage</Link>
         </div>
@@ -165,6 +179,21 @@ export default function FrontPageManagerPage() {
           </div>
           <p className="mt-3 text-xs leading-5 text-stone-500">Leave both dates blank to keep the photo live until you replace or remove it.</p>
         </article>
+      </section>
+
+      <section className="hgn-card p-6">
+        <p className="newspaper-kicker text-hgnRed">Broadcast feature</p>
+        <h2 className="mt-2 font-serif text-3xl font-bold">YouTube live or video</h2>
+        <p className="mt-2 max-w-3xl text-sm leading-6 text-stone-600">Use this for a live forum, debate or special HGN video. When enabled, it replaces the front-page photograph on desktop and mobile. Turn it off after the broadcast and your regular photo returns.</p>
+        <label className="mt-5 flex items-center gap-3 font-bold"><input className="w-auto" type="checkbox" checked={settings.video_is_active} onChange={(event) => update("video_is_active", event.target.checked)} />Show this video on the front page</label>
+        <div className="mt-5 grid gap-4 md:grid-cols-2">
+          <label className="font-bold md:col-span-2">YouTube stream or video URL<input className="mt-2" value={settings.video_url || ""} onChange={(event) => update("video_url", event.target.value || null)} placeholder="https://www.youtube.com/watch?v=..." /><span className="mt-1 block text-xs font-normal text-stone-500">Paste the public YouTube watch, live, short or share URL. The site makes a safe embedded player automatically.</span></label>
+          <label className="font-bold">Headline<input className="mt-2" value={settings.video_title || ""} onChange={(event) => update("video_title", event.target.value || null)} placeholder="Election Forum — Live" /></label>
+          <label className="font-bold">Short description<input className="mt-2" value={settings.video_description || ""} onChange={(event) => update("video_description", event.target.value || null)} placeholder="Watch the Haida Gwaii candidates forum live." /></label>
+          <label className="font-bold">Start showing<input className="mt-2" type="datetime-local" value={localValue(settings.video_starts_at)} onChange={(event) => update("video_starts_at", event.target.value || null)} /></label>
+          <label className="font-bold">Stop showing<input className="mt-2" type="datetime-local" value={localValue(settings.video_expires_at)} onChange={(event) => update("video_expires_at", event.target.value || null)} /></label>
+        </div>
+        <p className="mt-3 text-xs leading-5 text-stone-500">Leave the dates blank to turn it on and off manually. A scheduled window is useful when you know the forum time.</p>
       </section>
 
       <section className="grid gap-7 lg:grid-cols-[.8fr_1.2fr]">

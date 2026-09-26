@@ -21,6 +21,12 @@ type FrontPageSettings = {
   display_starts_at?: string | null
   display_expires_at?: string | null
   is_active?: boolean | null
+  video_is_active?: boolean | null
+  video_url?: string | null
+  video_title?: string | null
+  video_description?: string | null
+  video_starts_at?: string | null
+  video_expires_at?: string | null
 }
 
 type Article = {
@@ -58,6 +64,24 @@ function articleFreshness(article: Article, settings: PublishingSettings) {
   return formatFreshness(article.published_at, settings)
 }
 
+function youtubeEmbedUrl(value?: string | null) {
+  if (!value) return null
+  try {
+    const url = new URL(value)
+    const host = url.hostname.replace(/^www\./, "").toLowerCase()
+    let id = ""
+    if (host === "youtu.be") id = url.pathname.split("/").filter(Boolean)[0] || ""
+    if (host === "youtube.com" || host === "m.youtube.com") {
+      if (url.pathname === "/watch") id = url.searchParams.get("v") || ""
+      else {
+        const parts = url.pathname.split("/").filter(Boolean)
+        if (["embed", "live", "shorts"].includes(parts[0] || "")) id = parts[1] || ""
+      }
+    }
+    return /^[a-zA-Z0-9_-]{6,32}$/.test(id) ? `https://www.youtube-nocookie.com/embed/${id}?rel=0&modestbranding=1` : null
+  } catch { return null }
+}
+
 function StoryMeta({ article, settings }: { article: Article; settings: PublishingSettings }) {
   const date = articleDate(article, settings)
   return <p className="mt-3 text-[11px] uppercase tracking-[0.08em] text-stone-500">By {article.author_name || "Haida Gwaii News"}{date ? ` · ${date}` : ""}</p>
@@ -86,6 +110,14 @@ export default async function Home() {
     (!settings?.display_starts_at || new Date(settings.display_starts_at).getTime() <= now) &&
     (!settings?.display_expires_at || new Date(settings.display_expires_at).getTime() >= now)
   )
+  const videoInWindow = Boolean(
+    settings?.video_is_active === true &&
+    (!settings?.video_starts_at || new Date(settings.video_starts_at).getTime() <= now) &&
+    (!settings?.video_expires_at || new Date(settings.video_expires_at).getTime() >= now)
+  )
+  const frontPageVideo = videoInWindow ? youtubeEmbedUrl(settings?.video_url) : null
+  const frontPageVideoTitle = settings?.video_title || "Watch HGN Live"
+  const frontPageVideoDescription = settings?.video_description || ""
   let managedRelatedArticle = settings?.related_article_id ? (latestStories || []).find((article: Article) => article.id === settings.related_article_id) as Article | undefined : undefined
   if (settings?.related_article_id && !managedRelatedArticle) {
     const { data } = await supabase.from("articles").select("*").eq("id", settings.related_article_id).eq("status", "published").maybeSingle()
@@ -169,7 +201,16 @@ export default async function Home() {
               <StoryMeta article={main} settings={publishingSettings} />
               <span className="mt-4 inline-block text-xs font-bold uppercase tracking-[0.12em]">Read full story →</span>
             </Link>
-            {frontPageImage ? (
+            {frontPageVideo ? (
+              <section className="mt-5 border-y border-stone-400 py-4">
+                <p className="newspaper-kicker text-hgnRed">Live now</p>
+                <h2 className="mt-1 font-serif text-2xl font-bold leading-tight">{frontPageVideoTitle}</h2>
+                <div className="mt-3 aspect-video overflow-hidden bg-stone-900 shadow-sm">
+                  <iframe src={frontPageVideo} title={frontPageVideoTitle} className="h-full w-full border-0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen />
+                </div>
+                {frontPageVideoDescription ? <p className="mt-3 text-sm leading-6 text-stone-600">{frontPageVideoDescription}</p> : null}
+              </section>
+            ) : frontPageImage ? (
               <div className="mt-5">
                 {frontPageHref ? <Link href={frontPageHref}><img src={frontPageImage} alt={frontPageAlt || main.title} className="aspect-[16/9] w-full object-cover" /></Link> : <img src={frontPageImage} alt={frontPageAlt || main.title} className="aspect-[16/9] w-full object-cover" />}
                 {(frontPageCaption || frontPageCredit) ? <p className="mt-2 text-[11px] leading-4 text-stone-500">{frontPageCaption || ""}{frontPageCredit ? ` · Photo: ${frontPageCredit}` : ""}</p> : null}
@@ -253,9 +294,9 @@ export default async function Home() {
 
       <section className="hidden items-start gap-6 py-4 md:gap-8 md:py-5 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(280px,.34fr)]">
         <div className="min-w-0">
-          <section className={`grid items-start border-b border-stone-400 pb-5 ${frontPageImage ? "lg:grid-cols-[.78fr_1.22fr]" : "grid-cols-1"}`}>
+          <section className={`grid items-start border-b border-stone-400 pb-5 ${frontPageVideo || frontPageImage ? "lg:grid-cols-[.78fr_1.22fr]" : "grid-cols-1"}`}>
             {main ? (
-              <article className={frontPageImage ? "pr-0 lg:border-r lg:border-stone-300 lg:pr-6" : "mx-auto w-full max-w-4xl"}>
+              <article className={frontPageVideo || frontPageImage ? "pr-0 lg:border-r lg:border-stone-300 lg:pr-6" : "mx-auto w-full max-w-4xl"}>
                 <p className="newspaper-kicker">Top Story</p>
                 <Link href={`/articles/${main.slug}`} className="group">
                   <h1 className="mt-2 max-w-[15ch] font-serif text-[1.95rem] font-bold leading-[1.02] tracking-[-0.035em] text-stone-950 group-hover:text-hgnRed sm:text-[2.75rem] lg:text-[3rem] xl:text-[3.2rem]">{main.title}</h1>
@@ -266,7 +307,29 @@ export default async function Home() {
               </article>
             ) : <div />}
 
-            {frontPageImage ? (
+            {frontPageVideo ? (
+              <div className="mt-5 self-start lg:mt-0 lg:pl-6">
+                <div className="border-y border-stone-400 py-3">
+                  <p className="newspaper-kicker text-hgnRed">Live now</p>
+                  <h2 className="mt-1 font-serif text-2xl font-bold leading-tight">{frontPageVideoTitle}</h2>
+                  <div className="mt-3 aspect-video overflow-hidden bg-stone-900 shadow-sm">
+                    <iframe src={frontPageVideo} title={frontPageVideoTitle} className="h-full w-full border-0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen />
+                  </div>
+                  {frontPageVideoDescription ? <p className="mt-3 text-sm leading-6 text-stone-600">{frontPageVideoDescription}</p> : null}
+                </div>
+                {photoRailStories.length ? (
+                  <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                    {photoRailStories.map((article) => (
+                      <Link key={article.id} href={`/articles/${article.slug}`} className="group border-t border-stone-300 pt-3">
+                        <p className="newspaper-kicker">{article.category || article.section || "News"}</p>
+                        <h2 className="mt-1 font-serif text-xl font-bold leading-[1.08] group-hover:text-hgnRed">{article.title}</h2>
+                        <StoryMeta article={article} settings={publishingSettings} />
+                      </Link>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            ) : frontPageImage ? (
               <div className="mt-5 self-start lg:mt-0 lg:pl-6">
                 {frontPageHref ? (
                   <Link href={frontPageHref} className="group block">
