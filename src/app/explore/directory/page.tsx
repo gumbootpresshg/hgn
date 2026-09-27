@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { directoryEntries, exploreCategories } from "@/lib/explore-data"
+import { getPublishedGuidePlaces } from "@/lib/guide-db"
 
 export default async function ExploreDirectoryPage({
   searchParams,
@@ -10,10 +11,15 @@ export default async function ExploreDirectoryPage({
   const category = params?.category || ""
   const community = params?.community || ""
   const q = String(params?.q || "").toLowerCase().trim()
+  const guidePlaces = await getPublishedGuidePlaces()
+  const guideEntries = guidePlaces.map((place) => ({
+    name: place.name, category: place.category, community: place.community, description: place.description, phone: place.phone, website: place.website, tags: ["Guide place", ...(place.amenities || [])], verifiedAt: place.verifiedAt,
+  }))
+  const allEntries = [...guideEntries, ...directoryEntries.filter((entry) => !guideEntries.some((guide) => guide.name === entry.name))]
 
-  const communities = Array.from(new Set(directoryEntries.map((entry) => entry.community))).sort()
+  const communities = Array.from(new Set(allEntries.map((entry) => entry.community))).sort()
 
-  const entries = directoryEntries.filter((entry) => {
+  const entries = allEntries.filter((entry) => {
     if (category && entry.category !== category) return false
     if (community && entry.community !== community) return false
     if (q) {
@@ -29,14 +35,14 @@ export default async function ExploreDirectoryPage({
         <p className="text-sm font-semibold tracking-[0.18em] text-hgnBlue">Explore Haida Gwaii</p>
         <h1 className="mt-2 text-5xl font-black tracking-tight">Directory</h1>
         <p className="mt-4 max-w-3xl text-slate-600">
-          Starter directory of official resources, essential services, transportation, culture and visitor information.
+          A growing public directory of mapped Guide places, official resources, transportation, culture and essential services. Businesses are added only after HGN has the information needed to publish them responsibly.
         </p>
 
         <form action="/explore/directory" className="mt-6 grid gap-3 md:grid-cols-[1fr_0.8fr_0.8fr_auto]">
           <input name="q" defaultValue={params?.q || ""} placeholder="Search directory" className="rounded-2xl border px-4 py-3" />
           <select name="category" defaultValue={category} className="rounded-2xl border px-4 py-3">
             <option value="">All categories</option>
-            {exploreCategories.map((item) => <option key={item.title} value={item.title}>{item.title}</option>)}
+            {[...exploreCategories.map((item) => item.title), ...Array.from(new Set(guideEntries.map((item) => item.category)))].filter((item, index, list) => list.indexOf(item) === index).map((item) => <option key={item} value={item}>{item}</option>)}
           </select>
           <select name="community" defaultValue={community} className="rounded-2xl border px-4 py-3">
             <option value="">All communities</option>
@@ -56,6 +62,7 @@ export default async function ExploreDirectoryPage({
             <h2 className="mt-4 text-2xl font-black">{entry.name}</h2>
             <p className="mt-3 text-sm leading-6 text-slate-600">{entry.description}</p>
             {entry.phone ? <p className="mt-3 text-sm font-bold">{entry.phone}</p> : null}
+            {"verifiedAt" in entry && entry.verifiedAt ? <p className="mt-3 text-xs font-semibold text-slate-500">Last verified {new Intl.DateTimeFormat("en-CA", { dateStyle: "medium" }).format(new Date(entry.verifiedAt))}</p> : null}
             <div className="mt-4 flex flex-wrap gap-2">
               {(entry.tags || []).map((tag) => (
                 <span key={tag} className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-500">{tag}</span>

@@ -55,7 +55,7 @@ export default async function CommunityPage({ params }: { params: Promise<{ slug
 
         {entries.length === 0 ? (
           <div className="rounded-3xl border bg-white p-6 shadow-sm text-slate-600">
-            Directory listings for this community are being expanded.
+            HGN has not published matching Guide listings for this community yet. Check the Island Map for nearby practical places and current official links.
           </div>
         ) : (
           <div className="grid gap-5 md:grid-cols-2">
