@@ -13,6 +13,10 @@ export type GuidePlace = {
   amenities?: string[]
   caution?: string
   featured?: boolean
+  sourceName?: string
+  sourceUrl?: string
+  verifiedAt?: string
+  imageUrl?: string
 }
 
 export const guideCategories = [
@@ -55,7 +59,7 @@ export const guideQuickLinks = [
   { title: "Island Map", href: "/explore/map", description: "Find beaches, fuel, rest stops, services and transportation." },
   { title: "Ferries & Travel", href: "/explore/travel", description: "Ferry routes, airports, road information and travel links." },
   { title: "Island Cams", href: "/explore/cams", description: "Quick access to road and ferry camera sources." },
-  { title: "Food & Fuel", href: "/explore/directory?category=Food%20%26%20Drink", description: "Practical stops across the islands." },
+  { title: "Food & Fuel", href: "/explore/map?category=Fuel", description: "Practical stops across the islands." },
   { title: "Beaches & Outdoors", href: "/explore/map?category=Beach", description: "Beaches, viewpoints, trails and campgrounds." },
   { title: "Essential Services", href: "/explore/map?category=Essential%20Service", description: "Hospitals, emergency resources and everyday services." },
 ]

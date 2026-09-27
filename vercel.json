@@ -1,5 +1,6 @@
 {
   "crons": [
-    { "path": "/api/ai-desk/event-source-discovery/cron", "schedule": "17 16 * * *" }
+    { "path": "/api/ai-desk/event-source-discovery/cron", "schedule": "17 16 * * *" },
+    { "path": "/api/guide/cron", "schedule": "23 17 * * *" }
   ]
 }

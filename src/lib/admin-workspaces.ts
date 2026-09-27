@@ -38,7 +38,7 @@ export const adminTools: AdminTool[] = [
   { href: "/admin/marketplace", label: "Marketplace", description: "Review public listings, classifieds and marketplace activity.", group: "Local Commerce", roles: ["publisher", "editor", "sales"], keywords: ["classifieds", "listings", "jobs"] },
 
   { href: "/admin/guide-keeper", label: "Guide Keeper", description: "Check approved sources and review changes to the island guide.", group: "Island Guide", roles: ["publisher", "editor"], keywords: ["tourism", "sources", "automation"], priority: true, mobileRelevant: true },
-  { href: "/admin/visitor-guide", label: "Guide Manager", description: "Review and maintain public visitor-guide content.", group: "Island Guide", roles: ["publisher", "editor"], keywords: ["tourism", "places", "map"], priority: true, mobileRelevant: true },
+  { href: "/admin/guide-manager", label: "Guide Manager", description: "Create, publish and maintain public Guide places.", group: "Island Guide", roles: ["publisher", "editor"], keywords: ["tourism", "places", "map"], priority: true, mobileRelevant: true },
   { href: "/explore/map", label: "View Public Map", description: "Open the live visitor map exactly as readers see it.", group: "Island Guide", roles: ["publisher", "editor", "sales"], keywords: ["map", "markers", "near me"], mobileRelevant: true },
 
   { href: "/admin/media", label: "Media", description: "Manage uploaded photos and reusable media.", group: "Platform", roles: ["publisher", "editor"], keywords: ["images", "photos", "uploads"] },
