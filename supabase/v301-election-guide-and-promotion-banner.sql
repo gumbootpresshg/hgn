@@ -39,7 +39,7 @@ create table if not exists public.hgn_election_debates (
   id uuid primary key default gen_random_uuid(),
   day_label text not null,
   event_date timestamptz,
-  school_title text not null default 'School Board Debate',
+  school_title text not null default 'School Trustee Debate',
   school_url text,
   school_status text not null default 'upcoming' check (school_status in ('upcoming','live','replay','hidden')),
   municipal_title text not null default 'Municipal Debate',
@@ -56,7 +56,7 @@ create index if not exists hgn_election_debates_public_order_idx on public.hgn_e
 -- The organizer has confirmed three days of trustee and municipal forums.
 -- Dates and YouTube links remain deliberately editable rather than guessed.
 insert into public.hgn_election_debates (day_label, school_title, municipal_title, venue_note, sort_order)
-select seed.day_label, 'School Board Debate', 'Municipal Debate', 'Trustee forum 5:30 p.m. · Municipal forum 7 p.m.', seed.sort_order
+select seed.day_label, 'School Trustee Debate', 'Municipal Debate', 'Trustee forum 5:30 p.m. · Municipal forum 7 p.m.', seed.sort_order
 from (values ('Day one', 1), ('Day two', 2), ('Day three', 3)) as seed(day_label, sort_order)
 where not exists (select 1 from public.hgn_election_debates existing where existing.day_label = seed.day_label);
 
