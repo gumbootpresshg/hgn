@@ -27,6 +27,16 @@ type FrontPageSettings = {
   video_description?: string | null
   video_starts_at?: string | null
   video_expires_at?: string | null
+  promotion_is_active?: boolean | null
+  promotion_eyebrow?: string | null
+  promotion_title?: string | null
+  promotion_description?: string | null
+  promotion_button_text?: string | null
+  promotion_url?: string | null
+  promotion_image_url?: string | null
+  promotion_style?: string | null
+  promotion_starts_at?: string | null
+  promotion_expires_at?: string | null
 }
 
 type Article = {
@@ -82,6 +92,32 @@ function youtubeEmbedUrl(value?: string | null) {
   } catch { return null }
 }
 
+function promotionClasses(style?: string | null) {
+  if (style === "red") return "border-hgnRed bg-hgnRed text-white"
+  if (style === "charcoal") return "border-stone-900 bg-stone-900 text-white"
+  if (style === "coastal") return "border-[#245d70] bg-[#245d70] text-white"
+  if (style === "cream") return "border-stone-900 bg-[#f4eee3] text-stone-950"
+  return "border-[#071f35] bg-[#071f35] text-white"
+}
+
+function PromotionBanner({ settings }: { settings: FrontPageSettings | null }) {
+  const title = settings?.promotion_title?.trim()
+  const href = settings?.promotion_url?.trim()
+  if (!title || !href) return null
+  const style = settings?.promotion_style
+  const dark = style !== "cream"
+  const content = <div className={`relative overflow-hidden border px-5 py-6 sm:px-7 sm:py-7 ${promotionClasses(style)}`}>
+    <div className="relative z-[1] max-w-3xl">
+      {settings?.promotion_eyebrow ? <p className={`text-[11px] font-bold uppercase tracking-[.17em] ${dark ? "text-red-300" : "text-hgnRed"}`}>{settings.promotion_eyebrow}</p> : null}
+      <h2 className="mt-2 font-serif text-3xl font-bold leading-[1.02] sm:text-4xl">{title}</h2>
+      {settings?.promotion_description ? <p className={`mt-3 max-w-2xl text-sm leading-6 sm:text-base ${dark ? "text-stone-200" : "text-stone-700"}`}>{settings.promotion_description}</p> : null}
+      <span className={`mt-5 inline-block border px-4 py-2 text-sm font-bold ${dark ? "border-[#f4eee3] bg-[#f4eee3] text-stone-950" : "border-stone-950 bg-stone-950 text-white"}`}>{settings?.promotion_button_text?.trim() || "Learn more"} →</span>
+    </div>
+    {settings?.promotion_image_url ? <img src={settings.promotion_image_url} alt="" className="absolute inset-y-0 right-0 hidden h-full w-[42%] object-cover opacity-45 md:block" /> : <div className={`pointer-events-none absolute -right-12 -top-20 h-64 w-64 rounded-full border-[28px] ${dark ? "border-white/10" : "border-stone-950/10"}`} />}
+  </div>
+  return <section className="py-4"><Link href={href} className="block transition hover:opacity-95">{content}</Link></section>
+}
+
 function StoryMeta({ article, settings }: { article: Article; settings: PublishingSettings }) {
   const date = articleDate(article, settings)
   return <p className="mt-3 text-[11px] uppercase tracking-[0.08em] text-stone-500">By {article.author_name || "Haida Gwaii News"}{date ? ` · ${date}` : ""}</p>
@@ -118,6 +154,12 @@ export default async function Home() {
   const frontPageVideo = videoInWindow ? youtubeEmbedUrl(settings?.video_url) : null
   const frontPageVideoTitle = settings?.video_title || "Watch HGN Live"
   const frontPageVideoDescription = settings?.video_description || ""
+  const promotionInWindow = Boolean(
+    settings?.promotion_is_active === true &&
+    settings?.promotion_title && settings?.promotion_url &&
+    (!settings?.promotion_starts_at || new Date(settings.promotion_starts_at).getTime() <= now) &&
+    (!settings?.promotion_expires_at || new Date(settings.promotion_expires_at).getTime() >= now)
+  )
   let managedRelatedArticle = settings?.related_article_id ? (latestStories || []).find((article: Article) => article.id === settings.related_article_id) as Article | undefined : undefined
   if (settings?.related_article_id && !managedRelatedArticle) {
     const { data } = await supabase.from("articles").select("*").eq("id", settings.related_article_id).eq("status", "published").maybeSingle()
@@ -190,6 +232,8 @@ export default async function Home() {
           <Link href="/articles" className="ml-auto shrink-0 font-bold">All stories →</Link>
         </div>
       </section>
+
+      {promotionInWindow ? <PromotionBanner settings={settings} /> : null}
 
       <section className="py-4 lg:hidden">
         {main ? (

@@ -31,6 +31,16 @@ type Settings = {
   video_description: string | null;
   video_starts_at: string | null;
   video_expires_at: string | null;
+  promotion_is_active: boolean;
+  promotion_eyebrow: string | null;
+  promotion_title: string | null;
+  promotion_description: string | null;
+  promotion_button_text: string | null;
+  promotion_url: string | null;
+  promotion_image_url: string | null;
+  promotion_style: "navy" | "red" | "cream" | "coastal" | "charcoal";
+  promotion_starts_at: string | null;
+  promotion_expires_at: string | null;
 };
 
 const emptySettings: Settings = {
@@ -51,6 +61,16 @@ const emptySettings: Settings = {
   video_description: "",
   video_starts_at: null,
   video_expires_at: null,
+  promotion_is_active: false,
+  promotion_eyebrow: "",
+  promotion_title: "",
+  promotion_description: "",
+  promotion_button_text: "Learn more",
+  promotion_url: "",
+  promotion_image_url: null,
+  promotion_style: "navy",
+  promotion_starts_at: null,
+  promotion_expires_at: null,
 };
 
 function localValue(value: string | null) {
@@ -108,6 +128,8 @@ export default function FrontPageManagerPage() {
       display_expires_at: settings.display_expires_at ? new Date(settings.display_expires_at).toISOString() : null,
       video_starts_at: settings.video_starts_at ? new Date(settings.video_starts_at).toISOString() : null,
       video_expires_at: settings.video_expires_at ? new Date(settings.video_expires_at).toISOString() : null,
+      promotion_starts_at: settings.promotion_starts_at ? new Date(settings.promotion_starts_at).toISOString() : null,
+      promotion_expires_at: settings.promotion_expires_at ? new Date(settings.promotion_expires_at).toISOString() : null,
       updated_at: new Date().toISOString(),
       updated_by: sessionData.session?.user.id || null,
     };
@@ -194,6 +216,24 @@ export default function FrontPageManagerPage() {
           <label className="font-bold">Stop showing<input className="mt-2" type="datetime-local" value={localValue(settings.video_expires_at)} onChange={(event) => update("video_expires_at", event.target.value || null)} /></label>
         </div>
         <p className="mt-3 text-xs leading-5 text-stone-500">Leave the dates blank to turn it on and off manually. A scheduled window is useful when you know the forum time.</p>
+      </section>
+
+      <section className="hgn-card p-6">
+        <p className="newspaper-kicker text-hgnRed">Site promotion</p>
+        <h2 className="mt-2 font-serif text-3xl font-bold">Special event or HGN campaign banner</h2>
+        <p className="mt-2 max-w-3xl text-sm leading-6 text-stone-600">A single HGN-controlled banner below the navigation and above the news. Use it for election coverage, a special event, Island Lens, the Visitor Guide or Support HGN. It is separate from paid advertising. A photo is optional: without one, the selected colour treatment still looks intentional.</p>
+        <label className="mt-5 flex items-center gap-3 font-bold"><input className="w-auto" type="checkbox" checked={settings.promotion_is_active} onChange={(event) => update("promotion_is_active", event.target.checked)} />Show the site promotion banner</label>
+        <div className="mt-5 grid gap-4 md:grid-cols-2">
+          <label className="font-bold">Eyebrow<input className="mt-2" value={settings.promotion_eyebrow || ""} onChange={(event) => update("promotion_eyebrow", event.target.value || null)} placeholder="LIVE ELECTION COVERAGE" /></label>
+          <label className="font-bold">Colour treatment<select className="mt-2" value={settings.promotion_style} onChange={(event) => update("promotion_style", event.target.value as Settings["promotion_style"])}><option value="navy">Deep navy</option><option value="red">HGN red</option><option value="charcoal">Charcoal</option><option value="coastal">Coastal blue</option><option value="cream">Cream / ink</option></select></label>
+          <label className="font-bold md:col-span-2">Headline<input className="mt-2" value={settings.promotion_title || ""} onChange={(event) => update("promotion_title", event.target.value || null)} placeholder="2026 Haida Gwaii Local Election Forum" /></label>
+          <label className="font-bold md:col-span-2">Short description<textarea className="mt-2" rows={3} value={settings.promotion_description || ""} onChange={(event) => update("promotion_description", event.target.value || null)} placeholder="A short invitation explaining why readers should open the page." /></label>
+          <label className="font-bold">Button text<input className="mt-2" value={settings.promotion_button_text || ""} onChange={(event) => update("promotion_button_text", event.target.value || null)} placeholder="Watch live" /></label>
+          <label className="font-bold">Destination URL or page<input className="mt-2" value={settings.promotion_url || ""} onChange={(event) => update("promotion_url", event.target.value || null)} placeholder="/election" /></label>
+          <label className="font-bold md:col-span-2">Optional image URL<input className="mt-2" value={settings.promotion_image_url || ""} onChange={(event) => update("promotion_image_url", event.target.value || null)} placeholder="Leave blank for a strong no-photo banner" /></label>
+          <label className="font-bold">Start showing<input className="mt-2" type="datetime-local" value={localValue(settings.promotion_starts_at)} onChange={(event) => update("promotion_starts_at", event.target.value || null)} /></label>
+          <label className="font-bold">Stop showing<input className="mt-2" type="datetime-local" value={localValue(settings.promotion_expires_at)} onChange={(event) => update("promotion_expires_at", event.target.value || null)} /></label>
+        </div>
       </section>
 
       <section className="grid gap-7 lg:grid-cols-[.8fr_1.2fr]">

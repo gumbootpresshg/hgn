@@ -13,6 +13,7 @@ export type AdminTool = {
 
 export const adminTools: AdminTool[] = [
   { href: "/admin/front-page", label: "Front Page", description: "Choose the lead story, homepage photo and optional YouTube live feature.", group: "Newsroom", roles: ["publisher", "editor"], keywords: ["homepage", "lead", "featured", "youtube", "live", "broadcast"], priority: true, mobileRelevant: true },
+  { href: "/admin/election-guide", label: "Election Guide", description: "Edit election information, forum videos, candidate cards and selected HGN coverage.", group: "Newsroom", roles: ["publisher", "editor"], keywords: ["election", "candidates", "debates", "forum", "voting", "videos"], priority: true, mobileRelevant: true },
   { href: "/admin/articles", label: "Articles", description: "Write, edit, schedule and publish stories.", group: "Newsroom", roles: ["publisher", "editor"], keywords: ["stories", "news", "publish"], priority: true, mobileRelevant: true },
   { href: "/admin/authors", label: "Authors", description: "Manage writer profiles, photos, bios and article bylines.", group: "Newsroom", roles: ["publisher", "editor"], keywords: ["authors", "writers", "reporters", "bylines"], mobileRelevant: true },
   { href: "/admin/columns", label: "Columns", description: "Manage column series and connect them to writers.", group: "Newsroom", roles: ["publisher", "editor"], keywords: ["columnists", "columns", "writers", "opinion"], mobileRelevant: true },
