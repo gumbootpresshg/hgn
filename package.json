@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "generate:social-share": "node scripts/generate-social-share.mjs",
     "lint": "next lint",
     "import:wp:dry": "node scripts/import-wordpress-xml.mjs --dry",
     "import:wp": "node scripts/import-wordpress-xml.mjs",
