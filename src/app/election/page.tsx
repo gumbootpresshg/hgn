@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { createClient } from "@supabase/supabase-js"
 import { supabase } from "@/lib/supabase"
 import { getArticleImage } from "@/lib/article-images"
 
@@ -25,6 +26,13 @@ const fallbackRaces: Race[] = [
 function youtubeEmbedUrl(value?: string | null) { if (!value) return null; try { const url = new URL(value); const host = url.hostname.replace(/^www\./, "").toLowerCase(); let id = host === "youtu.be" ? url.pathname.split("/").filter(Boolean)[0] || "" : ""; if (host === "youtube.com" || host === "m.youtube.com") { if (url.pathname === "/watch") id = url.searchParams.get("v") || ""; else id = url.pathname.split("/").filter(Boolean)[1] || "" } return /^[a-zA-Z0-9_-]{6,32}$/.test(id) ? `https://www.youtube-nocookie.com/embed/${id}?rel=0&modestbranding=1` : null } catch { return null } }
 function dateLabel(value?: string | null) { return value ? new Intl.DateTimeFormat("en-CA", { weekday: "short", month: "short", day: "numeric" }).format(new Date(value)) : "Date to be announced" }
 
+function electionServerClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!url || !serviceKey) return supabase
+  return createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } })
+}
+
 function DebateCard({ title, youtubeUrl, zoomUrl, status }: { title: string; youtubeUrl?: string | null; zoomUrl?: string | null; status: Debate["school_status"] }) {
   if (status === "hidden") return null
   const embed = youtubeEmbedUrl(youtubeUrl)
@@ -35,16 +43,20 @@ function DebateCard({ title, youtubeUrl, zoomUrl, status }: { title: string; you
 function RaceCard({ race }: { race: Race }) { const status = race.ballot_status === "vote" ? "On the ballot" : race.ballot_status === "acclaimed" ? "Acclaimed" : "Information"; return <article className="border border-stone-300 bg-white p-5"><div className="flex items-start justify-between gap-3"><div><p className="newspaper-kicker">{race.place}</p><h3 className="mt-1 font-serif text-2xl font-bold">{race.office}</h3>{race.seats ? <p className="mt-1 text-sm text-stone-600">{race.seats}</p> : null}</div><span className={`rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wide ${race.ballot_status === "vote" ? "bg-hgnRed text-white" : "bg-stone-200 text-stone-700"}`}>{status}</span></div><ul className="mt-4 grid gap-1.5 text-sm leading-6">{race.candidates.map((candidate) => <li key={candidate} className="border-t border-stone-100 pt-1.5">{candidate}</li>)}</ul>{race.note ? <p className="mt-3 text-sm font-bold text-stone-600">{race.note}</p> : null}{race.official_url ? <a href={race.official_url} target="_blank" rel="noreferrer" className="mt-4 inline-block text-sm font-bold text-hgnBlue hover:text-hgnRed">Official voting information →</a> : null}</article> }
 
 export default async function ElectionPage() {
+  // The article choices are publisher-managed. Read them server-side so a public
+  // visitor never depends on a separate feature-table RLS policy; the article
+  // query below still explicitly limits output to published articles.
+  const electionDb = electionServerClient()
   const [{ data: settingsRow }, { data: debateRows }, { data: featureRows }, { data: raceRows }] = await Promise.all([
     supabase.from("hgn_election_settings").select("*").eq("id", "current").maybeSingle(),
     supabase.from("hgn_election_debates").select("*").eq("published", true).order("sort_order").order("event_date"),
-    supabase.from("hgn_election_article_features").select("article_id,sort_order").order("sort_order").limit(8),
+    electionDb.from("hgn_election_article_features").select("article_id,sort_order").order("sort_order").limit(8),
     supabase.from("hgn_election_races").select("*").eq("published", true).order("group_name").order("sort_order"),
   ])
   const settings = settingsRow || { eyebrow: "2026 local election", title: "Haida Gwaii Election Guide", introduction: "Candidates, debates, local news and the information you need before voting.", voting_day_label: "Voting day", voting_day_value: "Saturday, Oct. 17, 2026", question_url: "https://forms.gle/3HfnM7kNYF4nZ2168", question_label: "Submit a question", official_voting_label: "Official voting information", forum_heading: "How the forums work", forum_summary: "Doors open at 5 p.m. The School Trustee forum runs from 5:30 to 6:30 p.m., followed by a half-hour break for mingling and individual conversations. The Municipal forum begins at 7 p.m. and ends at 9 p.m.", forum_format: "Each forum begins with a one-minute introduction from every candidate, followed by a three-minute campaign statement. Public questions submitted in advance are curated to provide a broad range of inquiry. Every candidate answers each question for one to two minutes, with the speaking order rotated. If time permits, questions from the floor may be included. Light refreshments and snacks are available, but a full dinner is not provided." }
   const features = featureRows || []
   const ids = features.map((feature: { article_id: string }) => feature.article_id)
-  const { data: articleRows } = ids.length ? await supabase.from("articles").select("id,title,slug,excerpt,image_url,featured_image_url,published_at,category").in("id", ids).eq("status", "published") : { data: [] }
+  const { data: articleRows } = ids.length ? await electionDb.from("articles").select("id,title,slug,excerpt,image_url,featured_image_url,published_at,category").in("id", ids).eq("status", "published") : { data: [] }
   const byId = new Map(((articleRows || []) as Article[]).map((article) => [article.id, article]))
   const articles = ids.map((id: string) => byId.get(id)).filter(Boolean) as Article[]
   const debates = (debateRows || []) as Debate[]
