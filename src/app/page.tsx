@@ -106,14 +106,16 @@ function PromotionBanner({ settings }: { settings: FrontPageSettings | null }) {
   if (!title || !href) return null
   const style = settings?.promotion_style
   const dark = style !== "cream"
-  const content = <div className={`relative overflow-hidden border px-5 py-6 sm:px-7 sm:py-7 ${promotionClasses(style)}`}>
-    <div className="relative z-[1] max-w-3xl">
+  const content = <div className={`relative overflow-hidden border px-5 py-4 sm:px-7 sm:py-4 ${promotionClasses(style)}`}>
+    <div className="relative z-[1] max-w-4xl sm:flex sm:items-center sm:gap-6">
+      <div className="min-w-0 flex-1">
       {settings?.promotion_eyebrow ? <p className={`text-[11px] font-bold uppercase tracking-[.17em] ${dark ? "text-red-300" : "text-hgnRed"}`}>{settings.promotion_eyebrow}</p> : null}
-      <h2 className="mt-2 font-serif text-3xl font-bold leading-[1.02] sm:text-4xl">{title}</h2>
-      {settings?.promotion_description ? <p className={`mt-3 max-w-2xl text-sm leading-6 sm:text-base ${dark ? "text-stone-200" : "text-stone-700"}`}>{settings.promotion_description}</p> : null}
-      <span className={`mt-5 inline-block border px-4 py-2 text-sm font-bold ${dark ? "border-[#f4eee3] bg-[#f4eee3] text-stone-950" : "border-stone-950 bg-stone-950 text-white"}`}>{settings?.promotion_button_text?.trim() || "Learn more"} →</span>
+      <h2 className="mt-1 font-serif text-2xl font-bold leading-[1.05] sm:text-3xl">{title}</h2>
+      {settings?.promotion_description ? <p className={`mt-2 max-w-2xl text-sm leading-5 ${dark ? "text-stone-200" : "text-stone-700"}`}>{settings.promotion_description}</p> : null}
+      </div>
+      <span className={`mt-4 inline-block shrink-0 border px-4 py-2 text-sm font-bold sm:mt-0 ${dark ? "border-[#f4eee3] bg-[#f4eee3] text-stone-950" : "border-stone-950 bg-stone-950 text-white"}`}>{settings?.promotion_button_text?.trim() || "Learn more"} →</span>
     </div>
-    {settings?.promotion_image_url ? <img src={settings.promotion_image_url} alt="" className="absolute inset-y-0 right-0 hidden h-full w-[42%] object-cover opacity-45 md:block" /> : <div className={`pointer-events-none absolute -right-12 -top-20 h-64 w-64 rounded-full border-[28px] ${dark ? "border-white/10" : "border-stone-950/10"}`} />}
+    {settings?.promotion_image_url ? <img src={settings.promotion_image_url} alt="" className="absolute inset-y-0 right-0 hidden h-full w-[32%] object-cover opacity-30 lg:block" /> : <div className={`pointer-events-none absolute -right-8 -top-14 h-44 w-44 rounded-full border-[20px] ${dark ? "border-white/10" : "border-stone-950/10"}`} />}
   </div>
   return <section className="py-4"><Link href={href} className="block transition hover:opacity-95">{content}</Link></section>
 }
