@@ -50,6 +50,7 @@ export const defaultNavigation: SiteNavEntry[] = [
   { id: "community", label: "Community", enabled: true, visibility: "public", children: [
     { id: "events", label: "Events", href: "/events", enabled: true, visibility: "public" },
     { id: "island-lens", label: "Island Lens", href: "/island-lens", enabled: true, visibility: "public" },
+    { id: "games", label: "Games", href: "/games", enabled: true, visibility: "public" },
     { id: "election", label: "Election Guide", href: "/election", enabled: true, visibility: "public" },
     { id: "obituaries", label: "Obituaries", href: "/obituaries", enabled: true, visibility: "public" },
     { id: "ferry", label: "Ferry Info", href: "/ferry-info", enabled: true, visibility: "public" },
@@ -69,7 +70,7 @@ export const defaultNavigation: SiteNavEntry[] = [
 export const defaultSections: SiteSectionConfig[] = [
   ["news","News","/news"], ["opinion","Opinion","/opinion"], ["sports","Sports","/sports"], ["events","Events","/events"],
   ["marketplace","Marketplace","/marketplace"], ["guide","Guide","/explore"], ["obituaries","Obituaries","/obituaries"],
-  ["island-lens","Island Lens","/island-lens"], ["archives","Archives","/digital-paper"], ["weather","Weather","/weather"],
+  ["island-lens","Island Lens","/island-lens"], ["games","Games","/games"], ["archives","Archives","/digital-paper"], ["weather","Weather","/weather"],
 ].map(([id,label,route]) => ({ id, label, route, enabled: true, visibility: "public" as Visibility, includeInApp: true, includeOnHomepage: true }))
 
 
@@ -84,6 +85,7 @@ export const defaultFooter: SiteFooterConfig = {
     { id: "community", title: "Community", enabled: true, links: [
       { id: "events", label: "Events", href: "/events", enabled: true },
       { id: "notices", label: "Notices", href: "/notices", enabled: true },
+      { id: "games", label: "Games", href: "/games", enabled: true },
       { id: "marketplace", label: "Marketplace", href: "/marketplace", enabled: true },
       { id: "archives", label: "Archives", href: "/digital-paper", enabled: true },
     ]},
@@ -108,12 +110,26 @@ export const defaultFeatures: SiteFeatureConfig = {
 
 export const defaultSitePlatformConfig: SitePlatformConfig = { navigation: defaultNavigation, sections: defaultSections, features: defaultFeatures, footer: defaultFooter }
 
+function addNewGamesLinks(navigation: SiteNavEntry[], sections: SiteSectionConfig[], footer: SiteFooterConfig) {
+  const nav = navigation.map((entry) => entry.id !== "community" ? entry : {
+    ...entry,
+    children: entry.children?.some((child) => child.id === "games") ? entry.children : [...(entry.children || []), { id: "games", label: "Games", href: "/games", enabled: true, visibility: "public" as Visibility }],
+  })
+  const nextSections = sections.some((section) => section.id === "games") ? sections : [...sections, { id: "games", label: "Games", route: "/games", enabled: true, visibility: "public" as Visibility, includeInApp: true, includeOnHomepage: true }]
+  const groups = footer.groups.map((group) => group.id !== "community" || group.links.some((link) => link.id === "games") ? group : { ...group, links: [...group.links, { id: "games", label: "Games", href: "/games", enabled: true }] })
+  return { nav, nextSections, footer: { ...footer, groups } }
+}
+
 export function normalizeSitePlatformConfig(value: Partial<SitePlatformConfig> | null | undefined): SitePlatformConfig {
+  const navigation = Array.isArray(value?.navigation) ? value!.navigation : defaultNavigation
+  const sections = Array.isArray(value?.sections) ? value!.sections : defaultSections
+  const footer = value?.footer && Array.isArray(value.footer.groups) ? value.footer : defaultFooter
+  const withGames = addNewGamesLinks(navigation, sections, footer)
   return {
-    navigation: Array.isArray(value?.navigation) ? value!.navigation : defaultNavigation,
-    sections: Array.isArray(value?.sections) ? value!.sections : defaultSections,
+    navigation: withGames.nav,
+    sections: withGames.nextSections,
     features: { ...defaultFeatures, ...(value?.features || {}) },
-    footer: value?.footer && Array.isArray(value.footer.groups) ? value.footer : defaultFooter,
+    footer: withGames.footer,
     updatedAt: value?.updatedAt,
   }
 }

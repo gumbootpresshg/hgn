@@ -27,6 +27,7 @@ export const adminTools: AdminTool[] = [
   { href: "/admin/obituaries", label: "Obituaries", description: "Review and publish obituary notices.", group: "Community", roles: ["publisher", "editor"], keywords: ["notices", "memorial"], mobileRelevant: true },
   { href: "/admin/notices", label: "Notices", description: "Create, publish, archive and manage community and public notices.", group: "Community", roles: ["publisher", "editor"], keywords: ["notices", "announcements", "public notice", "community"], priority: true, mobileRelevant: true },
   { href: "/admin/island-lens", label: "Island Lens", description: "Build, caption and publish HGN photo features and print-style spreads.", group: "Community", roles: ["publisher", "editor"], keywords: ["photos", "gallery", "photo spread", "island lens"], mobileRelevant: true },
+  { href: "/admin/games", label: "Games", description: "Create and publish crosswords, word searches and fresh Sudoku editions.", group: "Community", roles: ["publisher", "editor"], keywords: ["games", "crossword", "word search", "sudoku", "puzzle"], mobileRelevant: true },
   { href: "/admin/polls", label: "Polls", description: "Create and manage reader polls.", group: "Community", roles: ["publisher", "editor"], keywords: ["vote", "question"] },
 
   { href: "/admin/newsletter", label: "Newsletter", description: "Build, preview, test and send the newspaper-style newsletter.", group: "Audience", roles: ["publisher", "editor"], keywords: ["email", "digest", "subscribers"], priority: true, mobileRelevant: true },
