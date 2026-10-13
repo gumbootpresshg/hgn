@@ -49,13 +49,15 @@ export function categoryIcon(slug?: string) {
 
 export function normalizedCategory(item: any) {
   const raw = String(item?.category || item?.listing_type || "home").toLowerCase()
-  if (["marketplace", "for-sale", "for sale", "buy-sell"].includes(raw)) return "home"
-  if (["vehicle", "vehicles", "boat", "boats", "vehicles-boats"].includes(raw)) return "vehicles-boats"
-  if (["home-sale", "home sale", "real estate", "real-estate", "realty"].includes(raw)) return "real-estate"
-  if (["rental", "rentals"].includes(raw)) return "rentals"
-  if (["free", "free stuff", "free-stuff"].includes(raw)) return "free-stuff"
-  if (["notice", "notices", "community", "notices"].includes(raw)) return "notices"
-  return raw || "home"
+  const slug = raw.replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")
+  if (["marketplace", "for-sale", "buy-sell"].includes(slug)) return "home"
+  if (["vehicle", "vehicles", "boat", "boats", "vehicles-boats"].includes(slug)) return "vehicles-boats"
+  if (["home-sale", "real-estate", "realty"].includes(slug)) return "real-estate"
+  if (["rental", "rentals"].includes(slug)) return "rentals"
+  if (["wanted-rental", "wanted-rentals"].includes(slug)) return "wanted-rentals"
+  if (["free", "free-stuff"].includes(slug)) return "free-stuff"
+  if (["notice", "notices", "community"].includes(slug)) return "notices"
+  return slug || "home"
 }
 
 export function isPostedToday(value?: string) {

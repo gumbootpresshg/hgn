@@ -5,7 +5,6 @@ import {
   categoryIcon,
   categoryLabel,
   isPostedToday,
-  marketplaceGroups,
   normalizedCategory,
   primaryPhoto,
 } from "@/lib/marketplace"
@@ -30,13 +29,10 @@ export default async function MarketplacePage({
   const condition = String(params?.condition || "").trim()
   const todayOnly = params?.today === "1"
 
-  const { data, error } = await supabase
-    .from("classifieds")
-    .select("*")
-    .in("status", ["approved", "published", "public", "live", "active"])
-    .order("is_featured", { ascending: false })
-    .order("created_at", { ascending: false })
-    .limit(300)
+  const [{ data, error }, { data: settings }] = await Promise.all([
+    supabase.from("classifieds").select("*").in("status", ["approved", "published", "public", "live", "active"]).order("is_featured", { ascending: false }).order("created_at", { ascending: false }).limit(300),
+    supabase.from("classified_settings").select("setting_type,label,slug,sort_order").eq("is_active", true).order("sort_order", { ascending: true }),
+  ])
 
   const allListings = data || []
 
@@ -52,7 +48,10 @@ export default async function MarketplacePage({
     return true
   })
 
-  const towns = Array.from(new Set(allListings.map((item: any) => item.town || item.location).filter(Boolean))).sort()
+  const configuredTowns = (settings || []).filter((item: any) => item.setting_type === "town").map((item: any) => item.label)
+  const towns = configuredTowns.length ? configuredTowns : Array.from(new Set(allListings.map((item: any) => item.town || item.location).filter(Boolean))).sort()
+  const configuredCategories = (settings || []).filter((item: any) => item.setting_type === "marketplace_category" && item.slug !== "all").map((item: any) => ({ label: item.label, slug: item.slug, icon: categoryIcon(item.slug) }))
+  const publicCategories = configuredCategories.length ? configuredCategories : []
   const promoted = allListings.filter((item: any) => item.is_featured).slice(0, 3)
 
   function countFor(slug: string) {
@@ -108,14 +107,10 @@ export default async function MarketplacePage({
             <h2 className="px-2 text-lg font-black">Categories</h2>
 
             <div className="mt-4 space-y-5">
-              {marketplaceGroups.map((group) => (
-                <details key={group.title} open className="group">
-                  <summary className="cursor-pointer list-none px-2 text-xs font-black uppercase tracking-[0.18em] text-slate-500">
-                    {group.title}
-                  </summary>
-
-                  <nav className="mt-2 space-y-1">
-                    {group.items.map((category) => {
+              <details open className="group">
+                <summary className="cursor-pointer list-none px-2 text-xs font-black uppercase tracking-[0.18em] text-slate-500">Browse listings</summary>
+                <nav className="mt-2 space-y-1">
+                  {[{ label: "All Listings", slug: "all", icon: "◎" }, ...publicCategories].map((category) => {
                       const active = selected === category.slug
                       const next = new URLSearchParams(queryBase)
                       next.set("category", category.slug)
@@ -135,10 +130,9 @@ export default async function MarketplacePage({
                           <span className={active ? "text-white/70" : "text-slate-400"}>{countFor(category.slug)}</span>
                         </Link>
                       )
-                    })}
-                  </nav>
-                </details>
-              ))}
+                  })}
+                </nav>
+              </details>
             </div>
           </section>
         </aside>

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 
 type Setting = Record<string, any>
-const types = [["town", "Towns"], ["classified_category", "Classified categories"], ["real_estate_type", "Real estate types"]]
+const types = [["town", "Towns / locations"], ["marketplace_category", "Marketplace categories"], ["classified_category", "Legacy classified categories"], ["real_estate_type", "Real estate types"]]
 
 export default function ClassifiedSettingsPage() {
   const [items, setItems] = useState<Setting[]>([])
@@ -44,7 +44,7 @@ export default function ClassifiedSettingsPage() {
     <main className="mx-auto max-w-5xl space-y-8 px-6 py-10">
       <section className="rounded-3xl border bg-white p-8 shadow-sm">
         <h1 className="text-4xl font-bold tracking-tight">Classified Settings</h1>
-        <p className="mt-3 text-slate-600">Edit towns, marketplace categories, and real estate types.</p>
+        <p className="mt-3 text-slate-600">This is the live source for the public Marketplace filters and listing form. Hide or delete a town/category here to remove it from new listings and the public filter.</p>
         {message ? <p className="mt-4 rounded-2xl bg-amber-50 p-4 text-sm text-amber-900">{message}</p> : null}
       </section>
       <section className="rounded-2xl border bg-white p-5 shadow-sm">

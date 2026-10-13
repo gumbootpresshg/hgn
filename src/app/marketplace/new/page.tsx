@@ -72,12 +72,11 @@ export default function NewMarketplaceListing() {
 
   useEffect(() => {
     async function loadSettings() {
-      const [{ data: catRows }, { data: townRows }] = await Promise.all([
-        supabase.from("marketplace_categories").select("name").eq("is_active", true).order("sort_order", { ascending: true }),
-        supabase.from("marketplace_towns").select("name").eq("is_active", true).order("sort_order", { ascending: true }),
-      ]);
-      if (catRows?.length) setCats(catRows.map((r: any) => r.name));
-      if (townRows?.length) setTowns(townRows.map((r: any) => r.name));
+      const { data: rows } = await supabase.from("classified_settings").select("setting_type,label,slug").eq("is_active", true).order("sort_order", { ascending: true });
+      const catRows = (rows || []).filter((row: any) => row.setting_type === "marketplace_category" && row.slug !== "all");
+      const townRows = (rows || []).filter((row: any) => row.setting_type === "town");
+      if (catRows.length) setCats(catRows.map((row: any) => row.label));
+      if (townRows.length) setTowns(townRows.map((row: any) => row.label));
     }
     loadSettings();
   }, []);
