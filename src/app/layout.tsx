@@ -10,6 +10,7 @@ import { SiteThemeProvider } from "@/components/theme/SiteThemeProvider";
 import { getPublicSiteConfig } from "@/lib/server/public-site-config";
 import { Analytics } from "@vercel/analytics/next";
 import FormDraftRecovery from "@/components/FormDraftRecovery";
+import { Suspense } from "react";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE.url),
@@ -35,5 +36,5 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const siteConfig = await getPublicSiteConfig();
   const organization = { "@context": "https://schema.org", "@type": "NewsMediaOrganization", "@id": `${SITE.url.replace(/\/$/, "")}#organization`, name: SITE.name, url: SITE.url, logo: { "@type": "ImageObject", url: absoluteUrl("/hgn-logo.png") }, publishingPrinciples: absoluteUrl("/community-standards"), ethicsPolicy: absoluteUrl("/community-standards"), correctionsPolicy: absoluteUrl("/request-correction") };
   const website = { "@context": "https://schema.org", "@type": "WebSite", "@id": `${SITE.url.replace(/\/$/, "")}#website`, name: SITE.name, url: SITE.url, publisher: { "@id": `${SITE.url.replace(/\/$/, "")}#organization` }, potentialAction: { "@type": "SearchAction", target: `${SITE.url.replace(/\/$/, "")}/search?q={search_term_string}`, "query-input": "required name=search_term_string" } };
-  return <html lang="en-CA"><body><SiteThemeProvider initialTheme={siteConfig.theme}><FormDraftRecovery /><a href="#main-content" className="skip-link">Skip to main content</a><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organization) }} /><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(website) }} /><BreakingAlertBar /><Header initialPlatformConfig={siteConfig.platform} /><TsunamiAlertBanner /><EarthquakeAlertBanner /><div id="main-content">{children}</div><Footer initialPlatformConfig={siteConfig.platform} /><Analytics /></SiteThemeProvider></body></html>;
+  return <html lang="en-CA"><body><SiteThemeProvider initialTheme={siteConfig.theme}><Suspense fallback={null}><FormDraftRecovery /></Suspense><a href="#main-content" className="skip-link">Skip to main content</a><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organization) }} /><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(website) }} /><BreakingAlertBar /><Header initialPlatformConfig={siteConfig.platform} /><TsunamiAlertBanner /><EarthquakeAlertBanner /><div id="main-content">{children}</div><Footer initialPlatformConfig={siteConfig.platform} /><Analytics /></SiteThemeProvider></body></html>;
 }
