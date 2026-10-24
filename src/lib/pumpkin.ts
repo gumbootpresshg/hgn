@@ -1,0 +1,4 @@
+export type PumpkinContest = { id:string; slug:string; title:string; intro:string; rules:string; entry_open_at?:string|null; entry_close_at?:string|null; voting_open_at?:string|null; voting_close_at?:string|null; max_votes_per_voter:number; show_leaderboard:boolean; leaderboard_size:number; status:string }
+export type PumpkinEntry = { id:string; contest_id:string; display_name:string; community?:string|null; title?:string|null; description?:string|null; photo_url:string; status:string; featured:boolean; created_at:string; votes?:number }
+export const vancouverDate = (date?:string|null) => date ? new Intl.DateTimeFormat('en-CA',{month:'long',day:'numeric',year:'numeric',timeZone:'America/Vancouver'}).format(new Date(date)) : ''
+export const isOpen = (from?:string|null,to?:string|null) => !!from && !!to && Date.now() >= new Date(from).getTime() && Date.now() < new Date(to).getTime()

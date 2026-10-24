@@ -39,34 +39,49 @@ export default function AdminAuthorsPage() {
     });
   }, [items, query, showInactive]);
 
+  async function availableSlug(value: string, excludeId?: string) {
+    const base = writerSlug(value) || "author";
+    const { data, error } = await supabase.from("hgn_authors").select("id,slug").like("slug", `${base}%`);
+    if (error) throw error;
+    const taken = new Set((data || []).filter((row: any) => row.id !== excludeId).map((row: any) => String(row.slug).toLowerCase()));
+    if (!taken.has(base)) return base;
+    for (let number = 2; number < 1000; number += 1) {
+      const candidate = `${base}-${number}`;
+      if (!taken.has(candidate)) return candidate;
+    }
+    return `${base}-${Date.now()}`;
+  }
+
   async function addAuthor() {
     const displayName = newName.trim();
     if (!displayName) return;
-    const { data, error } = await supabase.from("hgn_authors").insert({
-      display_name: displayName,
-      slug: writerSlug(displayName),
-      writer_type: "contributor",
-      is_active: true,
-      sort_order: items.length * 10 + 10,
-    }).select("id").single();
-    if (error) setMessage(error.message);
-    else {
+    const sameAuthor = items.find((item) => String(item.display_name || "").trim().toLowerCase() === displayName.toLowerCase());
+    if (sameAuthor) {
+      setExpanded(sameAuthor.id);
+      setMessage(`“${sameAuthor.display_name}” already exists. Opened the existing author instead.`);
+      return;
+    }
+    try {
+      const slug = await availableSlug(displayName);
+      const { data, error } = await supabase.from("hgn_authors").insert({ display_name: displayName, slug, writer_type: "contributor", is_active: true, sort_order: items.length * 10 + 10 }).select("id").single();
+      if (error) throw error;
       setNewName("");
       setExpanded(data?.id || null);
-      setMessage("Author added.");
+      setMessage(slug === writerSlug(displayName) ? "Author added." : `Author added. Their public URL was set to ${slug} because that name was already in use.`);
       await load();
-    }
+    } catch (error: any) { setMessage(error?.message || "Could not add author."); }
   }
 
   async function updateAuthor(item: HgnAuthor, patch: Partial<HgnAuthor>) {
-    const normalized = { ...patch, updated_at: new Date().toISOString() } as Record<string, unknown>;
-    if (typeof patch.display_name === "string" && !patch.slug) normalized.slug = writerSlug(patch.display_name);
-    const { error } = await supabase.from("hgn_authors").update(normalized).eq("id", item.id);
-    if (error) setMessage(error.message);
-    else {
-      setMessage("Author saved.");
+    try {
+      const normalized = { ...patch, updated_at: new Date().toISOString() } as Record<string, unknown>;
+      if (typeof patch.display_name === "string" && !patch.slug) normalized.slug = await availableSlug(patch.display_name, item.id);
+      if (typeof patch.slug === "string") normalized.slug = await availableSlug(patch.slug, item.id);
+      const { error } = await supabase.from("hgn_authors").update(normalized).eq("id", item.id);
+      if (error) throw error;
+      setMessage(normalized.slug && normalized.slug !== patch.slug && normalized.slug !== writerSlug(String(patch.display_name || "")) ? `Author saved. Public URL adjusted to ${normalized.slug}.` : "Author saved.");
       await load();
-    }
+    } catch (error: any) { setMessage(error?.message || "Could not save author."); }
   }
 
   async function uploadPhoto(item: HgnAuthor, file: File | null) {
