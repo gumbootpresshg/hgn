@@ -52,6 +52,7 @@ export const defaultNavigation: SiteNavEntry[] = [
     { id: "island-lens", label: "Island Lens", href: "/island-lens", enabled: true, visibility: "public" },
     { id: "games", label: "Games", href: "/games", enabled: true, visibility: "public" },
     { id: "election", label: "Election Guide", href: "/election", enabled: true, visibility: "public" },
+    { id: "bc-election-2026", label: "B.C. Election Results", href: "/bc-election-2026", enabled: true, visibility: "public" },
     { id: "obituaries", label: "Obituaries", href: "/obituaries", enabled: true, visibility: "public" },
     { id: "ferry", label: "Ferry Info", href: "/ferry-info", enabled: true, visibility: "public" },
     { id: "notices", label: "Notices", href: "/notices", enabled: true, visibility: "public" },
@@ -111,9 +112,12 @@ export const defaultFeatures: SiteFeatureConfig = {
 export const defaultSitePlatformConfig: SitePlatformConfig = { navigation: defaultNavigation, sections: defaultSections, features: defaultFeatures, footer: defaultFooter }
 
 function addNewGamesLinks(navigation: SiteNavEntry[], sections: SiteSectionConfig[], footer: SiteFooterConfig) {
-  const nav = navigation.map((entry) => entry.id !== "community" ? entry : {
-    ...entry,
-    children: entry.children?.some((child) => child.id === "games") ? entry.children : [...(entry.children || []), { id: "games", label: "Games", href: "/games", enabled: true, visibility: "public" as Visibility }],
+  const nav = navigation.map((entry) => {
+    if (entry.id !== "community") return entry
+    const children = [...(entry.children || [])]
+    if (!children.some((child) => child.id === "games")) children.push({ id: "games", label: "Games", href: "/games", enabled: true, visibility: "public" as Visibility })
+    if (!children.some((child) => child.id === "bc-election-2026")) children.push({ id: "bc-election-2026", label: "B.C. Election Results", href: "/bc-election-2026", enabled: true, visibility: "public" as Visibility })
+    return { ...entry, children }
   })
   const nextSections = sections.some((section) => section.id === "games") ? sections : [...sections, { id: "games", label: "Games", route: "/games", enabled: true, visibility: "public" as Visibility, includeInApp: true, includeOnHomepage: true }]
   const groups = footer.groups.map((group) => group.id !== "community" || group.links.some((link) => link.id === "games") ? group : { ...group, links: [...group.links, { id: "games", label: "Games", href: "/games", enabled: true }] })
