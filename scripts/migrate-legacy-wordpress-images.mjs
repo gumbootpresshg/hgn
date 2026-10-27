@@ -1,6 +1,11 @@
-import "dotenv/config"
+import dotenv from "dotenv"
 import { writeFile } from "node:fs/promises"
 import { createClient } from "@supabase/supabase-js"
+
+// Next.js keeps local production credentials in .env.local. Load it first,
+// while still allowing regular environment variables in CI or Vercel.
+dotenv.config({ path: ".env.local" })
+dotenv.config()
 
 const dryRun = process.argv.includes("--dry-run")
 const limitFlag = process.argv.indexOf("--limit")
