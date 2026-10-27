@@ -30,7 +30,7 @@ export default function NewsArticleJsonLd({ article, authorUrl }: { article: Art
   const image = article.og_image_url || article.cover_image_url || article.image_url || null;
   const url = article.slug ? absoluteUrl(`/articles/${article.slug}`) : SITE.url;
   const authorName = article.author_name || article.author || SITE.name;
-  const isStaff = /^(staff report|haida gwaii news|hgn)$/i.test(authorName.trim());
+  const isStaff = /^(staff report|submitted|haida gwaii news|hgn)$/i.test(authorName.trim());
   const section = article.subcategory || article.category || "News";
 
   const jsonLd = {

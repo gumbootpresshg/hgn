@@ -2,6 +2,10 @@ import type { MetadataRoute } from "next";
 import { supabase } from "@/lib/supabase";
 import { absoluteUrl } from "@/lib/site";
 
+// The main sitemap should reflect a newly published story without waiting for
+// the next deployment. It is inexpensive and crawled far less often than pages.
+export const dynamic = "force-dynamic";
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
   const staticPaths = [
@@ -24,7 +28,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     lastModified: new Date(article.updated_at || article.published_at || Date.now()),
   }));
   const authorRoutes: MetadataRoute.Sitemap = (authors || []).filter((author: any) => safeSlug(author.slug)).map((author: any) => ({ url: absoluteUrl(`/authors/${author.slug}`), lastModified: now }));
-  const pageRoutes: MetadataRoute.Sitemap = (pages || []).filter((page: any) => safeSlug(page.slug)).map((page: any) => ({ url: absoluteUrl(`/pages/${page.slug}`), lastModified: new Date(page.updated_at || Date.now()) }));
+  const duplicateManagedPageSlugs = new Set(["about", "advertise", "community-standards", "contact", "corrections", "membership", "privacy", "subscribe", "support", "terms"])
+  const pageRoutes: MetadataRoute.Sitemap = (pages || []).filter((page: any) => safeSlug(page.slug) && !duplicateManagedPageSlugs.has(page.slug)).map((page: any) => ({ url: absoluteUrl(`/pages/${page.slug}`), lastModified: new Date(page.updated_at || Date.now()) }));
 
   const seen = new Set<string>();
   return [...staticRoutes, ...articleRoutes, ...authorRoutes, ...pageRoutes].filter((item) => {

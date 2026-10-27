@@ -14,20 +14,25 @@ const db = createClient(url, key, { auth: { persistSession: false, autoRefreshTo
 const legacyImage = /<img\b(?=[^>]*(?:\/wp-content\/uploads\/|https?:\/\/i[0-9]\.wp\.com\/))[^>]*>/gi
 const legacyMarkdownImage = /!\[[^\]]*\]\((?:https?:\/\/)?(?:[^/]+\/wp-content\/uploads\/|i[0-9]\.wp\.com\/)[^)]*\)/gi
 const containsLegacy = (value) => /(?:\/wp-content\/uploads\/|https?:\/\/i[0-9]\.wp\.com\/)/i.test(String(value || ""))
-const clean = (value) => String(value || "").replace(legacyImage, "").replace(legacyMarkdownImage, "").replace(/<a\b[^>]*>\s*<\/a>/gi, "")
+const hasEmptyFigure = (value) => /<figure\b[^>]*>\s*<\/figure>/i.test(String(value || ""))
+const clean = (value) => String(value || "")
+  .replace(legacyImage, "")
+  .replace(legacyMarkdownImage, "")
+  .replace(/<a\b[^>]*>\s*<\/a>/gi, "")
+  .replace(/<figure\b[^>]*>\s*<\/figure>/gi, "")
 
 let offset = 0
 const articles = []
 while (true) {
   const { data, error } = await db.from("articles").select("id,slug,title,body,content").range(offset, offset + 499)
   if (error) throw error
-  articles.push(...(data || []).filter((article) => containsLegacy(article.body) || containsLegacy(article.content)))
+  articles.push(...(data || []).filter((article) => containsLegacy(article.body) || containsLegacy(article.content) || hasEmptyFigure(article.body) || hasEmptyFigure(article.content)))
   if (!data?.length) break
   offset += data.length
 }
 
 const report = { dryRun, found: articles.length, cleaned: [], failed: [] }
-console.log(`${dryRun ? "Dry run:" : "Clearing:"} ${articles.length} article${articles.length === 1 ? "" : "s"} with retired WordPress images in the body.`)
+console.log(`${dryRun ? "Dry run:" : "Clearing:"} ${articles.length} article${articles.length === 1 ? "" : "s"} with retired WordPress images or empty image containers in the body.`)
 if (!dryRun) await writeFile("legacy-wordpress-body-image-backup.json", JSON.stringify({ createdAt: new Date().toISOString(), articles }, null, 2))
 
 for (const article of articles) {

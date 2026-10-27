@@ -2,6 +2,7 @@ import HomeUpcomingEvents from "@/components/HomeUpcomingEvents"
 import HomePoll from "@/components/HomePoll"
 import AdSlot from "@/components/AdSlot"
 import Link from "next/link"
+import Image from "next/image"
 import { supabase } from "@/lib/supabase"
 import { smartExcerpt } from "@/lib/text"
 import { isColumn, isLocalNews, isOpinion, isSports, sortArticlesNewest } from "@/lib/article-routing"
@@ -259,8 +260,8 @@ export default async function Home() {
                 {frontPageVideoDescription ? <p className="mt-3 text-sm leading-6 text-stone-600">{frontPageVideoDescription}</p> : null}
               </section>
             ) : frontPageImage ? (
-              <div className="mt-5">
-                {frontPageHref ? <Link href={frontPageHref}><img src={frontPageImage} alt={frontPageAlt || main.title} fetchPriority="high" loading="eager" className="aspect-[16/9] w-full object-cover" /></Link> : <img src={frontPageImage} alt={frontPageAlt || main.title} fetchPriority="high" loading="eager" className="aspect-[16/9] w-full object-cover" />}
+              <div className="relative mt-5 aspect-[16/9] overflow-hidden">
+                {frontPageHref ? <Link href={frontPageHref} className="block h-full"><Image src={frontPageImage} alt={frontPageAlt || main.title} fill priority sizes="100vw" className="object-cover" /></Link> : <Image src={frontPageImage} alt={frontPageAlt || main.title} fill priority sizes="100vw" className="object-cover" />}
                 {(frontPageCaption || frontPageCredit) ? <p className="mt-2 text-[11px] leading-4 text-stone-500">{frontPageCaption || ""}{frontPageCredit ? ` · Photo: ${frontPageCredit}` : ""}</p> : null}
               </div>
             ) : null}
@@ -381,17 +382,15 @@ export default async function Home() {
               <div className="mt-5 self-start lg:mt-0 lg:pl-6">
                 {frontPageHref ? (
                   <Link href={frontPageHref} className="group block">
-                    <div className="aspect-[16/9] overflow-hidden bg-stone-200">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={frontPageImage} alt={frontPageAlt || managedRelatedArticle?.title || "Haida Gwaii front-page photograph"} fetchPriority="high" loading="eager" className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.015]" />
+                    <div className="relative aspect-[16/9] overflow-hidden bg-stone-200">
+                      <Image src={frontPageImage} alt={frontPageAlt || managedRelatedArticle?.title || "Haida Gwaii front-page photograph"} fill priority sizes="(max-width: 1023px) 100vw, 56vw" className="object-cover transition duration-500 group-hover:scale-[1.015]" />
                     </div>
                     <p className="mt-2 border-b border-stone-200 pb-2 text-[11px] leading-4 text-stone-500">{frontPageCaption || managedRelatedArticle?.title || "Front-page photograph"}{frontPageCredit ? ` · Photo: ${frontPageCredit}` : ""}</p>
                   </Link>
                 ) : (
                   <figure>
-                    <div className="aspect-[16/9] overflow-hidden bg-stone-200">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={frontPageImage} alt={frontPageAlt || "Haida Gwaii front-page photograph"} fetchPriority="high" loading="eager" className="h-full w-full object-cover" />
+                    <div className="relative aspect-[16/9] overflow-hidden bg-stone-200">
+                      <Image src={frontPageImage} alt={frontPageAlt || "Haida Gwaii front-page photograph"} fill priority sizes="(max-width: 1023px) 100vw, 56vw" className="object-cover" />
                     </div>
                     <figcaption className="mt-2 border-b border-stone-200 pb-2 text-[11px] leading-4 text-stone-500">{frontPageCaption || "Front-page photograph"}{frontPageCredit ? ` · Photo: ${frontPageCredit}` : ""}</figcaption>
                   </figure>
