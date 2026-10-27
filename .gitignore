@@ -3,3 +3,5 @@ node_modules/
 .env
 .env.local
 *.tsbuildinfo
+legacy-archive-image-migration-report.json
+legacy-archive-image-recovery-state.json
