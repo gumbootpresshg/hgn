@@ -2,8 +2,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { HgnAuthor } from "@/lib/writers";
+import { pageMetadata } from "@/lib/page-metadata";
 
 export const dynamic = "force-dynamic";
+export const metadata = pageMetadata("Writers", "Meet the reporters, columnists and contributors behind Haida Gwaii News.", "/authors");
 
 export default async function AuthorsPage() {
   const { data } = await supabase

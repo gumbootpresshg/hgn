@@ -1,8 +1,21 @@
 import { notFound } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import { SitePageRenderer } from "@/components/cms/SitePageRenderer"
+import { absoluteUrl } from "@/lib/site"
 
 export const revalidate = 30
+
+const primaryRoutes: Record<string, string> = {
+  about: "/about", advertise: "/advertise", "community-standards": "/community-standards", contact: "/contact", corrections: "/corrections", membership: "/membership", privacy: "/privacy", subscribe: "/subscribe", support: "/support", terms: "/terms",
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
+  const { data } = await supabase.from("hgn_site_pages").select("title,description").eq("slug", slug).eq("status", "published").eq("visibility", "public").maybeSingle()
+  if (!data) return { title: "Page not found", robots: { index: false, follow: false } }
+  const canonical = primaryRoutes[slug] || `/pages/${slug}`
+  return { title: data.title, description: data.description || `${data.title} from Haida Gwaii News.`, alternates: { canonical: absoluteUrl(canonical) } }
+}
 
 export default async function ManagedPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params

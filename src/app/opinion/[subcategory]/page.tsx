@@ -52,8 +52,8 @@ export async function generateMetadata({ params }: PageProps) {
   const { subcategory } = await params;
   const label = slugToLabel(subcategory);
   return {
-    title: `${label} | Opinion | Haida Gwaii News`,
-    description: `${label} articles from Haida Gwaii News.`,
+    title: `${label} | Opinion`,
+    description: `${label} articles, commentary and local viewpoints from Haida Gwaii News.`,
     alternates: { canonical: `/opinion/${subcategory}` },
   };
 }

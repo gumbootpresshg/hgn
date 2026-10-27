@@ -31,8 +31,6 @@ const nextConfig = {
   images: {
     formats: ["image/avif", "image/webp"],
     remotePatterns: [
-      { protocol: "https", hostname: "haidagwaiinews.com", pathname: "/wp-content/uploads/**" },
-      { protocol: "https", hostname: "www.haidagwaiinews.com", pathname: "/wp-content/uploads/**" },
       { protocol: "https", hostname: "*.supabase.co", pathname: "/storage/v1/object/public/**" },
     ],
   },

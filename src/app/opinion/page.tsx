@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { pageMetadata } from "@/lib/page-metadata";
 
 const sections = [
   { title: "Editorials", href: "/opinion/editorials", description: "Editorials and newsroom opinion." },
@@ -8,10 +9,7 @@ const sections = [
   { title: "Letters to the Editor", href: "/letters", description: "Published community letters." },
 ];
 
-export const metadata = {
-  title: "Opinion | Haida Gwaii News",
-  description: "Editorials, columns, guest opinions and letters from Haida Gwaii News.",
-};
+export const metadata = pageMetadata("Opinion", "Editorials, columns, guest opinions and letters from Haida Gwaii News.", "/opinion");
 
 export default function OpinionPage() {
   return (

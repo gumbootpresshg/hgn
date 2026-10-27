@@ -30,6 +30,7 @@ export default function NewsArticleJsonLd({ article, authorUrl }: { article: Art
   const image = article.og_image_url || article.cover_image_url || article.image_url || null;
   const url = article.slug ? absoluteUrl(`/articles/${article.slug}`) : SITE.url;
   const authorName = article.author_name || article.author || SITE.name;
+  const isStaff = /^(staff report|haida gwaii news|hgn)$/i.test(authorName.trim());
   const section = article.subcategory || article.category || "News";
 
   const jsonLd = {
@@ -40,7 +41,7 @@ export default function NewsArticleJsonLd({ article, authorUrl }: { article: Art
     ...(image ? { image: [absoluteUrl(image)] } : {}),
     datePublished: article.published_at || undefined,
     dateModified: article.updated_at || article.published_at || undefined,
-    author: [{ "@type": "Person", name: authorName, ...(authorUrl ? { url: absoluteUrl(authorUrl) } : {}) }],
+    author: [{ "@type": isStaff ? "Organization" : "Person", name: authorName, ...(!isStaff && authorUrl ? { url: absoluteUrl(authorUrl) } : {}) }],
     publisher: {
       "@type": "NewsMediaOrganization",
       name: SITE.name,

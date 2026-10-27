@@ -5,7 +5,7 @@ import { articleBackLabel, displayAuthor } from "@/lib/article-routing";
 import AdSlot from "@/components/AdSlot";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import NewsArticleJsonLd from "@/components/NewsArticleJsonLd";
 import { absoluteUrl, stripHtml, SITE } from "@/lib/site";
 import { sanitizeArticleHtml } from "@/lib/sanitize-html";
@@ -59,6 +59,7 @@ function articleDescription(article: Article) {
 
 export async function generateMetadata({ params }: PageProps) {
   const { slug } = await params;
+  if (decodeURIComponent(slug).trim().toLowerCase() === "mountie minute") redirect("/articles/mountie-minute");
   const { data: article } = await supabase
     .from("articles")
     .select("title,seo_title,excerpt,body,meta_description,social_title,social_description,canonical_url,slug,image_url,cover_image_url,og_image_url,published_at,updated_at,author_name,author,category,subcategory,seo_keywords,google_news_headline")

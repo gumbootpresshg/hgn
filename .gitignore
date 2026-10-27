@@ -7,3 +7,5 @@ legacy-archive-image-migration-report.json
 legacy-archive-image-recovery-state.json
 legacy-wordpress-image-clear-report.json
 legacy-wordpress-image-backup.json
+legacy-wordpress-body-image-clear-report.json
+legacy-wordpress-body-image-backup.json

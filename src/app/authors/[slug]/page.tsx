@@ -15,7 +15,7 @@ export async function generateMetadata({ params }: PageProps) {
   const { slug } = await params;
   const { data: author } = await supabase.from("hgn_authors").select("display_name,short_bio,photo_url,is_active").eq("slug", slug).eq("is_active", true).maybeSingle();
   if (!author) return { title: `Writer | ${SITE.name}` };
-  const title = `${author.display_name} | ${SITE.name}`;
+  const title = author.display_name;
   const description = author.short_bio || `Articles and reporting by ${author.display_name} for ${SITE.name}.`;
   const url = absoluteUrl(`/authors/${slug}`);
   return { title, description, alternates: { canonical: url }, openGraph: { title, description, url, type: "profile", images: author.photo_url ? [{ url: absoluteUrl(author.photo_url) }] : undefined } };

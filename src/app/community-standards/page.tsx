@@ -1,4 +1,7 @@
 import { ManagedInfoPage } from "@/components/cms/ManagedInfoPage"
+import { pageMetadata } from "@/lib/page-metadata"
+
+export const metadata = pageMetadata("Community Standards", "How Haida Gwaii News reviews submissions, community information and reader contributions.", "/community-standards")
 
 const fallback = { title: "Community standards", eyebrow: "Community", description: "How Haida Gwaii News reviews reader tips, listings, letters, photos and community submissions before publishing.", blocks: [
   { id: "standards-submit", type: "button" as const, label: "Send a submission", url: "/community-board" },

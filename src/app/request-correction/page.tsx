@@ -1,8 +1,10 @@
 import Link from "next/link"
 import { supabase } from "@/lib/supabase"
 import { notifyHgnOperations } from "@/lib/hgn-operations-notify"
+import { pageMetadata } from "@/lib/page-metadata"
 
 export const dynamic = "force-dynamic"
+export const metadata = pageMetadata("Request a Correction", "Tell Haida Gwaii News about a correction or clarification that needs review.", "/request-correction")
 
 async function submitCorrection(formData: FormData) {
   "use server"

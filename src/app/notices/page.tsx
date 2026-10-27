@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { pageMetadata } from "@/lib/page-metadata";
 
 export const dynamic = "force-dynamic";
+export const metadata = pageMetadata("Public Notices", "Community announcements, service updates and public notices for Haida Gwaii.", "/notices");
 
 export default async function NoticesPage() {
   const { data: notices } = await supabase

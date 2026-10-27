@@ -1,4 +1,7 @@
 import { ManagedInfoPage } from "@/components/cms/ManagedInfoPage"
+import { pageMetadata } from "@/lib/page-metadata"
+
+export const metadata = pageMetadata("Support Haida Gwaii News", "Help keep independent local news free online and in print for Haida Gwaii.", "/support")
 
 const fallback = { title: "Keep Haida Gwaii News free for everyone.", eyebrow: "Reader-supported local journalism", description: "Every print issue and every story online is free to read. Reader support helps keep it that way.", blocks: [
   { id: "support-patreon", type: "button" as const, label: "Support monthly on Patreon", url: "https://www.patreon.com/HaidaGwaiiNews" },
