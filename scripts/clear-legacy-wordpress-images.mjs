@@ -36,7 +36,7 @@ for (const article of legacy) {
   try {
     const entry = { id: article.id, slug: article.slug, title: article.title, image_url: article.image_url, og_image_url: article.og_image_url }
     if (!dryRun) {
-      const patch = { image_url: null, updated_at: new Date().toISOString() }
+      const patch = { image_url: null }
       if (isLegacy(article.og_image_url)) patch.og_image_url = null
       const { error } = await db.from("articles").update(patch).eq("id", article.id)
       if (error) throw error

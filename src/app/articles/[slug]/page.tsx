@@ -10,7 +10,7 @@ import NewsArticleJsonLd from "@/components/NewsArticleJsonLd";
 import { absoluteUrl, stripHtml, SITE } from "@/lib/site";
 import { sanitizeArticleHtml } from "@/lib/sanitize-html";
 import Image from "next/image";
-import { formatPublishingDate, getPublishingSettings } from "@/lib/publishing-settings";
+import { formatPublishingDate, formatPublishingTime, getPublishingSettings } from "@/lib/publishing-settings";
 import ArticleAnalyticsTracker from "@/components/analytics/ArticleAnalyticsTracker";
 
 export const dynamic = "force-dynamic";
@@ -119,7 +119,9 @@ export default async function ArticlePage({ params }: PageProps) {
     ? await supabase.from("hgn_authors").select("display_name,slug,is_active").eq("id", typed.writer_id).maybeSingle()
     : { data: null };
   const publishedDate = formatPublishingDate(typed.published_at, publishingSettings);
+  const publishedTime = formatPublishingTime(typed.published_at, publishingSettings);
   const modifiedDate = formatPublishingDate(typed.updated_at, publishingSettings);
+  const modifiedTime = formatPublishingTime(typed.updated_at, publishingSettings);
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-10">
@@ -141,8 +143,8 @@ export default async function ArticlePage({ params }: PageProps) {
 
         <div className="mt-4 border-b border-slate-200 pb-5 text-sm text-slate-600">
           <span>By {writer?.slug && writer?.is_active !== false ? <Link href={`/authors/${writer.slug}`} className="font-semibold hover:underline">{author}</Link> : author}</span>
-          {publishedDate ? <span>{" "}· Published {publishedDate}</span> : null}
-          {modifiedDate && modifiedDate !== publishedDate ? <span>{" "}· Updated {modifiedDate}</span> : null}
+          {publishedDate ? <span>{" "}· Published {publishedDate}{publishedTime ? ` at ${publishedTime}` : ""}</span> : null}
+          {modifiedDate && modifiedDate !== publishedDate ? <span>{" "}· Updated {modifiedDate}{modifiedTime ? ` at ${modifiedTime}` : ""}</span> : null}
         </div>
 
         {image && (

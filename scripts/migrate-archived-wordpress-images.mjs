@@ -114,7 +114,7 @@ for (const article of queue) {
     const uploaded = await db.storage.from("article-images").upload(path, bytes, { contentType: type, upsert: false, cacheControl: "31536000" })
     if (uploaded.error) throw uploaded.error
     const publicUrl = db.storage.from("article-images").getPublicUrl(path).data.publicUrl
-    const patch = { image_url: publicUrl, updated_at: new Date().toISOString() }
+    const patch = { image_url: publicUrl }
     if (isLegacy(article.og_image_url)) patch.og_image_url = publicUrl
     const updated = await db.from("articles").update(patch).eq("id", article.id)
     if (updated.error) throw updated.error

@@ -41,7 +41,7 @@ for (const article of articles) {
     const content = clean(article.content)
     const entry = { id: article.id, slug: article.slug, title: article.title, bodyImagesRemoved: article.body !== body, contentImagesRemoved: article.content !== content }
     if (!dryRun) {
-      const patch = { updated_at: new Date().toISOString() }
+      const patch = {}
       if (article.body !== body) patch.body = body
       if (article.content !== content) patch.content = content
       const { error } = await db.from("articles").update(patch).eq("id", article.id)
