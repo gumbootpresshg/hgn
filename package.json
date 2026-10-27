@@ -1,6 +1,6 @@
 {
   "name": "hgn-website-build",
-  "version": "0.67.30",
+  "version": "0.67.31",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -16,6 +16,8 @@
     "images:legacy": "node scripts/migrate-legacy-wordpress-images.mjs",
     "images:archive:dry": "node scripts/migrate-archived-wordpress-images.mjs --dry-run --limit 10 --delay-ms 6000",
     "images:archive": "node scripts/migrate-archived-wordpress-images.mjs --limit 10 --delay-ms 6000",
+    "images:legacy:clear:dry": "node scripts/clear-legacy-wordpress-images.mjs --dry-run",
+    "images:legacy:clear": "node scripts/clear-legacy-wordpress-images.mjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

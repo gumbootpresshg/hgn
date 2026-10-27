@@ -5,3 +5,5 @@ node_modules/
 *.tsbuildinfo
 legacy-archive-image-migration-report.json
 legacy-archive-image-recovery-state.json
+legacy-wordpress-image-clear-report.json
+legacy-wordpress-image-backup.json
