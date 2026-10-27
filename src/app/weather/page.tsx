@@ -1,4 +1,6 @@
 import Link from "next/link"
+import { pageMetadata } from "@/lib/page-metadata"
+export const metadata = pageMetadata("Weather", "Weather, forecasts and conditions for Haida Gwaii.", "/weather")
 import WeatherEmbed from "@/components/WeatherEmbed"
 import { tideStations, weatherLocations } from "@/lib/haida-weather-data"
 

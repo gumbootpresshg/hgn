@@ -1,4 +1,6 @@
 import ContactForm from "@/components/ContactForm"
+import { pageMetadata } from "@/lib/page-metadata"
+export const metadata = pageMetadata("Contact", "Contact the Haida Gwaii News newsroom, share a tip or ask a question.", "/contact")
 import { ManagedInfoPage } from "@/components/cms/ManagedInfoPage"
 import { getContactSettings } from "@/lib/contact-settings"
 

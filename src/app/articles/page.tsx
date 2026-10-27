@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { pageMetadata } from "@/lib/page-metadata";
+export const metadata = pageMetadata("Latest Articles", "The latest reporting, columns and community stories from Haida Gwaii News.", "/articles");
 import { supabase } from "@/lib/supabase";
 import AdSlot from "@/components/AdSlot";
 import { getArticleImage } from "@/lib/article-images";

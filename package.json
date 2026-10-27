@@ -1,6 +1,6 @@
 {
   "name": "hgn-website-build",
-  "version": "0.67.26",
+  "version": "0.67.27",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -12,6 +12,8 @@
     "import:wp": "node scripts/import-wordpress-xml.mjs",
     "import:wp:csv:dry": "node scripts/import-wordpress-csv.mjs --dry",
     "import:wp:csv": "node scripts/import-wordpress-csv.mjs",
+    "images:legacy:dry": "node scripts/migrate-legacy-wordpress-images.mjs --dry-run --limit 25",
+    "images:legacy": "node scripts/migrate-legacy-wordpress-images.mjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

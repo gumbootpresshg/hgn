@@ -1,4 +1,6 @@
 import Link from "next/link"
+import { pageMetadata } from "@/lib/page-metadata"
+export const metadata = pageMetadata("Events", "Community events, gatherings and things to do around Haida Gwaii.", "/events")
 import { supabase } from "@/lib/supabase"
 import { fetchPublicEvents } from "@/lib/public-events"
 import { buildCalendarDays, eventDayKeysInRange, eventOverlapsRange, formatEventDateRange, formatMonthTitle } from "@/lib/events"

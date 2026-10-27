@@ -1,4 +1,6 @@
 import { supabase } from "@/lib/supabase"
+import { pageMetadata } from "@/lib/page-metadata"
+export const metadata = pageMetadata("Terms", "Terms of use for Haida Gwaii News.", "/terms")
 import { SitePageRenderer } from "@/components/cms/SitePageRenderer"
 export const revalidate = 30
 const fallback:any[]=[{id:'t1',type:'paragraph',content:'Haida Gwaii News provides journalism, community information, events, directories, marketplace tools and reader services for informational purposes.'},{id:'t2',type:'paragraph',content:'People submitting material confirm that they have the right to submit it and understand that HGN may review, edit, approve, reject, archive or remove submitted material according to editorial and community standards.'},{id:'t3',type:'paragraph',content:'Users may not submit unlawful, abusive, defamatory, infringing or deliberately misleading material, or private personal information about another person without permission.'},{id:'t4',type:'paragraph',content:'HGN may change or retire site features as the publication develops. Editorial decisions remain with Haida Gwaii News.'}]

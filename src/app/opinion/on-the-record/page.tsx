@@ -1,4 +1,6 @@
 import Link from "next/link"
+import { pageMetadata } from "@/lib/page-metadata"
+export const metadata = pageMetadata("On the Record", "Interviews, statements and public voices from Haida Gwaii.", "/opinion/on-the-record")
 import { supabase } from "@/lib/supabase"
 import { formatPublishingDate, getPublishingSettings } from "@/lib/publishing-settings"
 

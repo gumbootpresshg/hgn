@@ -1,4 +1,6 @@
 import { supabase } from "@/lib/supabase"
+import { pageMetadata } from "@/lib/page-metadata"
+export const metadata = pageMetadata("Privacy", "How Haida Gwaii News collects and uses information.", "/privacy")
 import { SitePageRenderer } from "@/components/cms/SitePageRenderer"
 export const revalidate = 30
 const fallback:any[]=[{id:'p1',type:'paragraph',content:'Haida Gwaii News collects information readers choose to provide through accounts, newsletter subscriptions, contact forms, community submissions, marketplace activity and other public features.'},{id:'p2',type:'paragraph',content:'We use this information to operate the publication, respond to requests, manage reader accounts, review submissions, send newsletters and improve our services. We do not publish private personal information unless it is intentionally supplied for publication and approved through an editorial workflow.'},{id:'p3',type:'paragraph',content:'We use service providers such as Supabase, Vercel and Resend to operate parts of the website. Requests about personal information can be sent through our Contact page.'}]

@@ -1,4 +1,6 @@
 import Link from "next/link"
+import { pageMetadata } from "@/lib/page-metadata"
+export const metadata = pageMetadata("Obituaries", "Remembering people from Haida Gwaii and sharing obituary notices.", "/obituaries")
 import { supabase } from "@/lib/supabase"
 
 export const revalidate = 60

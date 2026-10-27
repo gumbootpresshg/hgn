@@ -1,4 +1,6 @@
 import SectionArticleList from "@/components/SectionArticleList"
+import { pageMetadata } from "@/lib/page-metadata"
+export const metadata = pageMetadata("Sports", "Sports news, teams and community athletics from Haida Gwaii.", "/sports")
 
 export const revalidate = 60
 

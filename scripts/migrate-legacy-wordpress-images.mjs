@@ -1,0 +1,60 @@
+import "dotenv/config"
+import { writeFile } from "node:fs/promises"
+import { createClient } from "@supabase/supabase-js"
+
+const dryRun = process.argv.includes("--dry-run")
+const limitFlag = process.argv.indexOf("--limit")
+const limit = limitFlag >= 0 ? Math.max(1, Number(process.argv[limitFlag + 1]) || 25) : Infinity
+const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+if (!url || !key) throw new Error("NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required in .env.local.")
+const db = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } })
+const isLegacy = (value) => /(?:\/wp-content\/uploads\/|https?:\/\/i[0-9]\.wp\.com\/)/i.test(String(value || ""))
+const originalUrl = (value) => String(value).replace(/^https?:\/\/i[0-9]\.wp\.com\//i, "https://")
+const extension = (contentType, source) => {
+  if (/png/i.test(contentType)) return "png"
+  if (/webp/i.test(contentType)) return "webp"
+  if (/gif/i.test(contentType)) return "gif"
+  const match = String(source).match(/\.([a-z0-9]{3,4})(?:[?#]|$)/i)
+  return match?.[1]?.toLowerCase() || "jpg"
+}
+
+let offset = 0; const rows = []
+while (rows.length < limit) {
+  const { data, error } = await db.from("articles").select("id,slug,image_url,og_image_url").not("image_url", "is", null).range(offset, offset + 499)
+  if (error) throw error
+  rows.push(...(data || []).filter((article) => isLegacy(article.image_url)))
+  if (!data?.length) break
+  offset += data.length
+}
+const queue = rows.slice(0, limit)
+const report = { dryRun, found: rows.length, attempted: queue.length, migrated: [], failed: [] }
+console.log(`${dryRun ? "Dry run:" : "Migrating:"} ${queue.length} legacy article images.`)
+for (const article of queue) {
+  const source = originalUrl(article.image_url)
+  try {
+    const response = await fetch(source, { redirect: "follow", headers: { "User-Agent": "HaidaGwaiiNews legacy-image recovery/1.0" }, signal: AbortSignal.timeout(20000) })
+    const type = response.headers.get("content-type") || ""
+    if (!response.ok) throw new Error(`HTTP ${response.status}`)
+    if (!type.startsWith("image/")) throw new Error(`Unexpected content type: ${type || "none"}`)
+    const bytes = Buffer.from(await response.arrayBuffer())
+    if (!bytes.length || bytes.length > 20 * 1024 * 1024) throw new Error("Image is empty or over 20 MB")
+    if (dryRun) { report.migrated.push({ id: article.id, slug: article.slug, source, bytes: bytes.length, dryRun: true }); continue }
+    const path = `legacy-wordpress/${article.id}/${Date.now()}.${extension(type, source)}`
+    const uploaded = await db.storage.from("article-images").upload(path, bytes, { contentType: type, upsert: false, cacheControl: "31536000" })
+    if (uploaded.error) throw uploaded.error
+    const publicUrl = db.storage.from("article-images").getPublicUrl(path).data.publicUrl
+    const patch = { image_url: publicUrl, updated_at: new Date().toISOString() }
+    if (isLegacy(article.og_image_url)) patch.og_image_url = publicUrl
+    const updated = await db.from("articles").update(patch).eq("id", article.id)
+    if (updated.error) throw updated.error
+    report.migrated.push({ id: article.id, slug: article.slug, source, publicUrl })
+    console.log(`✓ ${article.slug || article.id}`)
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error)
+    report.failed.push({ id: article.id, slug: article.slug, source, reason })
+    console.warn(`✗ ${article.slug || article.id}: ${reason}`)
+  }
+}
+await writeFile("legacy-wordpress-image-migration-report.json", JSON.stringify(report, null, 2))
+console.log(`Finished. Migrated: ${report.migrated.length}. Failed: ${report.failed.length}. Report: legacy-wordpress-image-migration-report.json`)

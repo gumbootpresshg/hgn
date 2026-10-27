@@ -1,4 +1,6 @@
 import { ManagedInfoPage } from "@/components/cms/ManagedInfoPage"
+import { pageMetadata } from "@/lib/page-metadata"
+export const metadata = pageMetadata("Advertise", "Reach Haida Gwaii readers in print, online and through Haida Gwaii News.", "/advertise")
 
 const fallback = { title: "Advertise With Haida Gwaii News", eyebrow: "2026 Rate Card", description: "Island-wide reach across Haida Gwaii, trusted independent local news, and ad dollars that stay local. Haida Gwaii News is distributed as a free print publication every other Thursday.", blocks: [
   { id: "advertise-email", type: "button" as const, label: "Email sales@haidagwaiinews.com", url: "mailto:sales@haidagwaiinews.com" },

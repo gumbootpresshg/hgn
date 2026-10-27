@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { pageMetadata } from "@/lib/page-metadata";
+export const metadata = pageMetadata("Columns", "Columns and regular voices from Haida Gwaii News.", "/columns");
 import { supabase } from "@/lib/supabase";
 import { officialColumnNames, slugify } from "@/lib/article-routing";
 

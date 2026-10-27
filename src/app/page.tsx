@@ -8,8 +8,9 @@ import { isColumn, isLocalNews, isOpinion, isSports, sortArticlesNewest } from "
 import { getArticleImage } from "@/lib/article-images"
 import { formatFreshness, formatPublishingDate, getPublishingSettings, type PublishingSettings } from "@/lib/publishing-settings"
 
-export const dynamic = "force-dynamic"
-export const revalidate = 0
+// A short cache window gives readers a much faster home page while keeping
+// breaking-news changes visible quickly after an editor publishes.
+export const revalidate = 60
 
 type FrontPageSettings = {
   lead_article_id?: string | null
@@ -258,7 +259,7 @@ export default async function Home() {
               </section>
             ) : frontPageImage ? (
               <div className="mt-5">
-                {frontPageHref ? <Link href={frontPageHref}><img src={frontPageImage} alt={frontPageAlt || main.title} className="aspect-[16/9] w-full object-cover" /></Link> : <img src={frontPageImage} alt={frontPageAlt || main.title} className="aspect-[16/9] w-full object-cover" />}
+                {frontPageHref ? <Link href={frontPageHref}><img src={frontPageImage} alt={frontPageAlt || main.title} fetchPriority="high" loading="eager" className="aspect-[16/9] w-full object-cover" /></Link> : <img src={frontPageImage} alt={frontPageAlt || main.title} fetchPriority="high" loading="eager" className="aspect-[16/9] w-full object-cover" />}
                 {(frontPageCaption || frontPageCredit) ? <p className="mt-2 text-[11px] leading-4 text-stone-500">{frontPageCaption || ""}{frontPageCredit ? ` · Photo: ${frontPageCredit}` : ""}</p> : null}
               </div>
             ) : null}
@@ -381,7 +382,7 @@ export default async function Home() {
                   <Link href={frontPageHref} className="group block">
                     <div className="aspect-[16/9] overflow-hidden bg-stone-200">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={frontPageImage} alt={frontPageAlt || managedRelatedArticle?.title || "Haida Gwaii front-page photograph"} className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.015]" />
+                      <img src={frontPageImage} alt={frontPageAlt || managedRelatedArticle?.title || "Haida Gwaii front-page photograph"} fetchPriority="high" loading="eager" className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.015]" />
                     </div>
                     <p className="mt-2 border-b border-stone-200 pb-2 text-[11px] leading-4 text-stone-500">{frontPageCaption || managedRelatedArticle?.title || "Front-page photograph"}{frontPageCredit ? ` · Photo: ${frontPageCredit}` : ""}</p>
                   </Link>
@@ -389,7 +390,7 @@ export default async function Home() {
                   <figure>
                     <div className="aspect-[16/9] overflow-hidden bg-stone-200">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={frontPageImage} alt={frontPageAlt || "Haida Gwaii front-page photograph"} className="h-full w-full object-cover" />
+                      <img src={frontPageImage} alt={frontPageAlt || "Haida Gwaii front-page photograph"} fetchPriority="high" loading="eager" className="h-full w-full object-cover" />
                     </div>
                     <figcaption className="mt-2 border-b border-stone-200 pb-2 text-[11px] leading-4 text-stone-500">{frontPageCaption || "Front-page photograph"}{frontPageCredit ? ` · Photo: ${frontPageCredit}` : ""}</figcaption>
                   </figure>

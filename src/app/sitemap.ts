@@ -18,12 +18,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     supabase.from("hgn_site_pages").select("slug,updated_at,status,visibility").eq("status", "published").eq("visibility", "public").not("slug", "is", null).limit(1000),
   ]);
 
-  const articleRoutes: MetadataRoute.Sitemap = (articles || []).filter((article: any) => article.slug).map((article: any) => ({
+  const safeSlug = (value: unknown) => /^[a-z0-9][a-z0-9-]*$/i.test(String(value || "").trim())
+  const articleRoutes: MetadataRoute.Sitemap = (articles || []).filter((article: any) => safeSlug(article.slug)).map((article: any) => ({
     url: absoluteUrl(`/articles/${article.slug}`),
     lastModified: new Date(article.updated_at || article.published_at || Date.now()),
   }));
-  const authorRoutes: MetadataRoute.Sitemap = (authors || []).filter((author: any) => author.slug).map((author: any) => ({ url: absoluteUrl(`/authors/${author.slug}`), lastModified: now }));
-  const pageRoutes: MetadataRoute.Sitemap = (pages || []).filter((page: any) => page.slug).map((page: any) => ({ url: absoluteUrl(`/pages/${page.slug}`), lastModified: new Date(page.updated_at || Date.now()) }));
+  const authorRoutes: MetadataRoute.Sitemap = (authors || []).filter((author: any) => safeSlug(author.slug)).map((author: any) => ({ url: absoluteUrl(`/authors/${author.slug}`), lastModified: now }));
+  const pageRoutes: MetadataRoute.Sitemap = (pages || []).filter((page: any) => safeSlug(page.slug)).map((page: any) => ({ url: absoluteUrl(`/pages/${page.slug}`), lastModified: new Date(page.updated_at || Date.now()) }));
 
   const seen = new Set<string>();
   return [...staticRoutes, ...articleRoutes, ...authorRoutes, ...pageRoutes].filter((item) => {

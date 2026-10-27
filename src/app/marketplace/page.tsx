@@ -1,4 +1,6 @@
 import { formatPrice } from "@/lib/marketplace-options"
+import { pageMetadata } from "@/lib/page-metadata"
+export const metadata = pageMetadata("Marketplace", "Browse local classifieds, jobs, services and items for sale on Haida Gwaii.", "/marketplace")
 import Link from "next/link"
 import { supabase } from "@/lib/supabase"
 import {

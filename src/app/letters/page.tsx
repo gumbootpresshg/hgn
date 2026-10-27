@@ -1,4 +1,6 @@
 import Link from "next/link"
+import { pageMetadata } from "@/lib/page-metadata"
+export const metadata = pageMetadata("Letters to the Editor", "Letters and reader viewpoints from Haida Gwaii.", "/letters")
 import { supabase } from "@/lib/supabase"
 import { cleanImportedHtml } from "@/lib/clean-html"
 

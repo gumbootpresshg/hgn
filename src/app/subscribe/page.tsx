@@ -1,4 +1,6 @@
 import { ManagedInfoPage } from "@/components/cms/ManagedInfoPage"
+import { pageMetadata } from "@/lib/page-metadata"
+export const metadata = pageMetadata("Subscribe", "Subscribe to Haida Gwaii News and keep up with island reporting.", "/subscribe")
 
 const fallback = { title: "Subscribe to Haida Gwaii News", eyebrow: "Print subscriptions", description: "Subscribe to the print edition by eTransfer or cheque. For help, contact sales@haidagwaiinews.com.", blocks: [
   { id: "subscribe-rates", type: "table" as const, tableHeaders: ["Subscription", "Price", "Details"], tableRows: [["Haida Gwaii Residents", "$130", "Annual print subscription for readers on Haida Gwaii."], ["Off-Island Residents", "$150", "Annual print subscription for readers outside Haida Gwaii."]] },

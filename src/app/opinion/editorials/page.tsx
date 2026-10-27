@@ -1,4 +1,6 @@
 import Link from "next/link"
+import { pageMetadata } from "@/lib/page-metadata"
+export const metadata = pageMetadata("Editorials", "Editorials and the Haida Gwaii News editorial voice.", "/opinion/editorials")
 import { supabase } from "@/lib/supabase"
 import { articleExcerpt, articleAuthor, isEditorial } from "@/lib/article-routing"
 import { formatPublishingDate, getPublishingSettings } from "@/lib/publishing-settings"

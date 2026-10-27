@@ -1,4 +1,6 @@
 import { supabase } from "@/lib/supabase"
+import { pageMetadata } from "@/lib/page-metadata"
+export const metadata = pageMetadata("About Haida Gwaii News", "Independent local reporting, community information and island stories from Haida Gwaii.", "/about")
 import { SitePageRenderer } from "@/components/cms/SitePageRenderer"
 
 export const revalidate = 30
