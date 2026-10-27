@@ -1,0 +1,158 @@
+{
+  "dryRun": true,
+  "found": 455,
+  "attempted": 25,
+  "migrated": [],
+  "failed": [
+    {
+      "id": "371e959f-5512-49bd-9743-83e23de7695b",
+      "slug": "school-district-short-on-bus-drivers",
+      "source": "https://haidagwaiinews.com/wp-content/uploads/2024/09/SchoolBus.jpg",
+      "reason": "HTTP 403"
+    },
+    {
+      "id": "b1574d5b-d7d9-42ed-824b-2877859df2b4",
+      "slug": "islanders-for-oct-24-2024",
+      "source": "https://haidagwaiinews.com/wp-content/uploads/2024/10/Islanders24-15-Aurora-copy.jpg",
+      "reason": "HTTP 403"
+    },
+    {
+      "id": "d500016b-7392-4a88-a812-5421cc4e784b",
+      "slug": "jim-hart-sculpture-displayed-on-plains-of-abraham",
+      "source": "https://haidagwaiinews.com/wp-content/uploads/2024/10/The-3-Watchmen.jpg",
+      "reason": "HTTP 403"
+    },
+    {
+      "id": "34af1991-fd9a-4cef-962d-15707bfd10c4",
+      "slug": "humans-fly-farther-than-ever-in-moon-mission-milestone",
+      "source": "https://haidagwaiinews.com/wp-content/uploads/2026/04/Screenshot-2026-04-07-at-6.31.26-PM.png",
+      "reason": "HTTP 403"
+    },
+    {
+      "id": "394a8a9d-9e95-4033-bebc-338c9f6514ea",
+      "slug": "the-shoelace-secret",
+      "source": "https://haidagwaiinews.com/wp-content/uploads/2024/08/Letter-to-the-Editor.jpg",
+      "reason": "HTTP 403"
+    },
+    {
+      "id": "0c69cb41-81f0-4d3f-b994-c5a97adb232b",
+      "slug": "the-gifts-we-bear",
+      "source": "https://haidagwaiinews.com/wp-content/uploads/2025/09/Screenshot-2025-09-28-at-4.10.17-PM.png",
+      "reason": "HTTP 403"
+    },
+    {
+      "id": "bd33cd37-86a9-4df7-82f2-cb8842680f85",
+      "slug": "a-pension-plan-for-haida-gwaii",
+      "source": "https://haidagwaiinews.com/wp-content/uploads/2024/06/Gold-coins.jpeg",
+      "reason": "HTTP 403"
+    },
+    {
+      "id": "5119dee3-1bac-402c-a9c3-63fac9657e41",
+      "slug": "islanders-2",
+      "source": "https://haidagwaiinews.com/wp-content/uploads/2024/06/Print_Islanders_20240620_Watermelon.jpg",
+      "reason": "HTTP 403"
+    },
+    {
+      "id": "d19e6762-e744-4ef8-b24e-837d977382a1",
+      "slug": "islanders-for-aug-1-2024",
+      "source": "https://haidagwaiinews.com/wp-content/uploads/2024/07/Islanders24-09-Negative.jpg",
+      "reason": "HTTP 403"
+    },
+    {
+      "id": "05908def-90e8-4372-99fe-5a0fd7978c04",
+      "slug": "like-it-or-not-we-cant-live-without-insects",
+      "source": "https://haidagwaiinews.com/wp-content/uploads/2024/11/david-suzuki-expert-scaled-1-e1730925011136.jpg",
+      "reason": "HTTP 403"
+    },
+    {
+      "id": "dd7c5a07-ff44-4a66-8650-71aebc523d73",
+      "slug": "cooling-air-haida-gwaii-news",
+      "source": "https://haidagwaiinews.com/wp-content/uploads/2025/09/Screenshot-2025-09-28-at-4.10.31-PM.png",
+      "reason": "HTTP 403"
+    },
+    {
+      "id": "caf98ade-03fc-4e41-a422-2c8fbc7619a8",
+      "slug": "on-board-games-and-the-dastardly-need-to-win",
+      "source": "https://haidagwaiinews.com/wp-content/uploads/2024/07/BackseatLife-ing_20240718-copy.jpg",
+      "reason": "HTTP 403"
+    },
+    {
+      "id": "1e39ef43-5335-439a-b009-769a140adf40",
+      "slug": "who-cares-about-climate-change-anyways",
+      "source": "https://haidagwaiinews.com/wp-content/uploads/2025/02/Screenshot-2025-02-22-at-4.22.35 PM.png",
+      "reason": "HTTP 403"
+    },
+    {
+      "id": "0ec3d76f-d6c7-4996-b39b-429cc1237620",
+      "slug": "islands-for-oct-10-2024",
+      "source": "https://haidagwaiinews.com/wp-content/uploads/2024/10/Islanders24-14-spawningA.jpg",
+      "reason": "HTTP 403"
+    },
+    {
+      "id": "d476865d-53f2-4532-8558-419e392510fa",
+      "slug": "strong-showing-for-haida-gwaii-at-junior-all-native-tournament",
+      "source": "https://haidagwaiinews.com/wp-content/uploads/2026/03/Screenshot-2026-03-24-at-3.49.40-PM.png",
+      "reason": "HTTP 403"
+    },
+    {
+      "id": "22f8fddb-b0fb-42a2-869b-e9c220f55124",
+      "slug": "postal-workers-back-to-work",
+      "source": "https://haidagwaiinews.com/wp-content/uploads/2024/12/istockphoto-1467086527-612x612-1.jpg",
+      "reason": "HTTP 403"
+    },
+    {
+      "id": "3bdba02e-61c0-44da-8a90-1806ed3bd4fa",
+      "slug": "green-party-vision-federal-election-2025",
+      "source": "https://haidagwaiinews.com/wp-content/uploads/2025/04/Untitled-design-15.png",
+      "reason": "HTTP 403"
+    },
+    {
+      "id": "d1eab6f1-4a17-4da0-8242-5dd69514ecf8",
+      "slug": "raven-travelling",
+      "source": "https://haidagwaiinews.com/wp-content/uploads/2024/06/Haida-comic-page-1.png",
+      "reason": "HTTP 403"
+    },
+    {
+      "id": "96122c24-03de-4a76-a213-fcee28ec107f",
+      "slug": "waking-up-is-hard-to-do",
+      "source": "https://haidagwaiinews.com/wp-content/uploads/2025/01/Screenshot-2025-01-30-at-9.02.44 PM.png",
+      "reason": "HTTP 403"
+    },
+    {
+      "id": "1e1ce1b0-d0b3-46dd-a41c-64ca52a874d2",
+      "slug": "islanders-4",
+      "source": "https://haidagwaiinews.com/wp-content/uploads/2024/07/Web_Islanders24-08-Unbearable.jpg",
+      "reason": "HTTP 403"
+    },
+    {
+      "id": "9098567c-5705-4aaf-8923-60c880841311",
+      "slug": "fishing-society-apologizes-to-salmon-for-using-the-word-lure",
+      "source": "https://haidagwaiinews.com/wp-content/uploads/2024/07/Web_BackSeatLife-ing_SalmonLure.jpg",
+      "reason": "HTTP 403"
+    },
+    {
+      "id": "08b3136c-b241-486f-ae9d-3ff73053656c",
+      "slug": "backyard-rinks",
+      "source": "https://haidagwaiinews.com/wp-content/uploads/2025/02/Screenshot-2025-02-22-at-4.17.39 PM.png",
+      "reason": "HTTP 403"
+    },
+    {
+      "id": "4dbd0a93-06bd-4000-bc92-81f1a1721487",
+      "slug": "sign-of-good-fortune-at-hiellen-village-longhouses",
+      "source": "https://haidagwaiinews.com/wp-content/uploads/2024/07/Web_HiellenUnveilling_062124_1991.jpg",
+      "reason": "HTTP 403"
+    },
+    {
+      "id": "bd7e7819-9221-4918-beba-8c0219a23d7a",
+      "slug": "haida-gwaii-to-host-world-cup-events-with-provincial-funding",
+      "source": "https://haidagwaiinews.com/wp-content/uploads/2026/04/pgtd5f14_trionda_625x300_03_October_25.webp",
+      "reason": "HTTP 403"
+    },
+    {
+      "id": "5ee8e401-54d7-41ad-9532-668d61098d44",
+      "slug": "canada-is-not-an-economic-basket-case",
+      "source": "https://haidagwaiinews.com/wp-content/uploads/2025/03/Screenshot-2025-03-08-at-8.16.06 PM.png",
+      "reason": "HTTP 403"
+    }
+  ]
+}
