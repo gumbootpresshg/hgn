@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { getPublishingSettings, formatPublishingDate } from "@/lib/publishing-settings";
 import { HgnAuthor } from "@/lib/writers";
 import { absoluteUrl, SITE } from "@/lib/site";
+import { headers } from "next/headers";
 
 export const dynamic = "force-dynamic";
 
@@ -34,6 +35,7 @@ type ArticleRow = {
 
 export default async function AuthorProfilePage({ params }: PageProps) {
   const { slug } = await params;
+  const nonce = (await headers()).get("x-nonce") || undefined;
   const { data: author } = await supabase
     .from("hgn_authors")
     .select("*")
@@ -78,7 +80,7 @@ export default async function AuthorProfilePage({ params }: PageProps) {
 
   return (
     <main className="mx-auto max-w-5xl px-5 py-10 md:px-8">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(personJsonLd) }} />
+      <script nonce={nonce} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(personJsonLd) }} />
       <Link href="/authors" className="text-sm font-bold uppercase tracking-wide text-stone-600 hover:underline">← All writers</Link>
 
       <section className="mt-6 grid gap-7 border-b-4 border-double border-black pb-8 md:grid-cols-[180px_1fr] md:items-start">

@@ -12,6 +12,7 @@ import { Analytics } from "@vercel/analytics/next";
 import FormDraftRecovery from "@/components/FormDraftRecovery";
 import { Suspense } from "react";
 import Script from "next/script";
+import { headers } from "next/headers";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE.url),
@@ -34,8 +35,9 @@ export const viewport: Viewport = { width: "device-width", initialScale: 1, them
 export const revalidate = 10;
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const nonce = (await headers()).get("x-nonce") || undefined;
   const siteConfig = await getPublicSiteConfig();
   const organization = { "@context": "https://schema.org", "@type": "NewsMediaOrganization", "@id": `${SITE.url.replace(/\/$/, "")}#organization`, name: SITE.name, url: SITE.url, logo: { "@type": "ImageObject", url: absoluteUrl("/hgn-logo.png") }, publishingPrinciples: absoluteUrl("/editorial-standards"), ethicsPolicy: absoluteUrl("/editorial-standards"), correctionsPolicy: absoluteUrl("/corrections") };
   const website = { "@context": "https://schema.org", "@type": "WebSite", "@id": `${SITE.url.replace(/\/$/, "")}#website`, name: SITE.name, url: SITE.url, publisher: { "@id": `${SITE.url.replace(/\/$/, "")}#organization` }, potentialAction: { "@type": "SearchAction", target: `${SITE.url.replace(/\/$/, "")}/search?q={search_term_string}`, "query-input": "required name=search_term_string" } };
-  return <html lang="en-CA"><body><SiteThemeProvider initialTheme={siteConfig.theme}><Suspense fallback={null}><FormDraftRecovery /></Suspense><a href="#main-content" className="skip-link">Skip to main content</a><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organization) }} /><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(website) }} /><BreakingAlertBar /><Header initialPlatformConfig={siteConfig.platform} /><TsunamiAlertBanner /><EarthquakeAlertBanner /><div id="main-content">{children}</div><Footer initialPlatformConfig={siteConfig.platform} /><Analytics /><Script src="/analytics/a.js?site=haidagwaiinews" strategy="afterInteractive" /></SiteThemeProvider></body></html>;
+  return <html lang="en-CA"><body><SiteThemeProvider initialTheme={siteConfig.theme}><Suspense fallback={null}><FormDraftRecovery /></Suspense><a href="#main-content" className="skip-link">Skip to main content</a><script nonce={nonce} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organization) }} /><script nonce={nonce} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(website) }} /><BreakingAlertBar /><Header initialPlatformConfig={siteConfig.platform} /><TsunamiAlertBanner /><EarthquakeAlertBanner /><div id="main-content">{children}</div><Footer initialPlatformConfig={siteConfig.platform} /><Analytics /><Script nonce={nonce} src="/analytics/a.js?site=haidagwaiinews" strategy="afterInteractive" /></SiteThemeProvider></body></html>;
 }

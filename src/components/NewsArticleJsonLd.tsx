@@ -1,4 +1,5 @@
 import { absoluteUrl, SITE, stripHtml } from "@/lib/site";
+import { headers } from "next/headers";
 
 type Article = {
   title?: string;
@@ -24,7 +25,8 @@ type Article = {
 
 type CreditedAuthor = { name: string; url?: string | null; organization?: boolean };
 
-export default function NewsArticleJsonLd({ article, authorUrl, authors }: { article: Article; authorUrl?: string | null; authors?: CreditedAuthor[] }) {
+export default async function NewsArticleJsonLd({ article, authorUrl, authors }: { article: Article; authorUrl?: string | null; authors?: CreditedAuthor[] }) {
+  const nonce = (await headers()).get("x-nonce") || undefined;
   const headline = article.google_news_headline || article.seo_title || article.title || SITE.name;
   const description =
     article.meta_description ||
@@ -68,6 +70,7 @@ export default function NewsArticleJsonLd({ article, authorUrl, authors }: { art
 
   return (
     <script
+      nonce={nonce}
       type="application/ld+json"
       dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
     />
