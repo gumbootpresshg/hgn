@@ -7,14 +7,15 @@ import { absoluteUrl } from "@/lib/site";
 export const dynamic = "force-dynamic";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const now = new Date();
   const staticPaths = [
     "", "/articles", "/news", "/letters", "/opinion", "/opinion/editorials", "/opinion/on-the-record",
     "/opinion/columns", "/opinion/guest-opinion", "/sports", "/authors", "/events", "/marketplace",
     "/obituaries", "/weather", "/digital-paper", "/about", "/community-standards", "/request-correction", "/editorial-standards", "/corrections", "/corrections-log",
   ];
 
-  const staticRoutes: MetadataRoute.Sitemap = staticPaths.map((path) => ({ url: absoluteUrl(path || "/"), lastModified: now }));
+  // Do not imply that every service page changed whenever this dynamic sitemap
+  // is requested. Article dates are supplied below from editorial timestamps.
+  const staticRoutes: MetadataRoute.Sitemap = staticPaths.map((path) => ({ url: absoluteUrl(path || "/") }));
 
   const [{ data: articles }, { data: authors }, { data: pages }] = await Promise.all([
     supabase.from("articles").select("slug,updated_at,editorial_updated_at,published_at,status").eq("status", "published").not("slug", "is", null).order("published_at", { ascending: false }).limit(5000),
@@ -27,7 +28,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     url: absoluteUrl(`/articles/${article.slug}`),
     lastModified: new Date(article.editorial_updated_at || article.published_at || Date.now()),
   }));
-  const authorRoutes: MetadataRoute.Sitemap = (authors || []).filter((author: any) => safeSlug(author.slug)).map((author: any) => ({ url: absoluteUrl(`/authors/${author.slug}`), lastModified: now }));
+  const authorRoutes: MetadataRoute.Sitemap = (authors || []).filter((author: any) => safeSlug(author.slug)).map((author: any) => ({ url: absoluteUrl(`/authors/${author.slug}`) }));
   const duplicateManagedPageSlugs = new Set(["about", "advertise", "community-standards", "contact", "corrections", "membership", "privacy", "subscribe", "support", "terms"])
   const pageRoutes: MetadataRoute.Sitemap = (pages || []).filter((page: any) => safeSlug(page.slug) && !duplicateManagedPageSlugs.has(page.slug)).map((page: any) => ({ url: absoluteUrl(`/pages/${page.slug}`), lastModified: new Date(page.updated_at || Date.now()) }));
 

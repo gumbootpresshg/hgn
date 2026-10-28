@@ -15,6 +15,7 @@ type FeedArticle = {
   image_url?: string | null;
   published_at?: string | null;
   updated_at?: string | null;
+  editorial_updated_at?: string | null;
 };
 
 function matchesKind(article: FeedArticle, kind: FeedKind) {
@@ -28,7 +29,7 @@ function matchesKind(article: FeedArticle, kind: FeedKind) {
 export async function getFeedArticles(kind: FeedKind, limit = 50) {
   const { data } = await supabase
     .from("articles")
-    .select("title,slug,excerpt,body,author_name,author,category,subcategory,image_url,published_at,updated_at,status")
+    .select("title,slug,excerpt,body,author_name,author,category,subcategory,image_url,published_at,updated_at,editorial_updated_at,status")
     .eq("status", "published")
     .not("slug", "is", null)
     .order("published_at", { ascending: false })
@@ -72,7 +73,7 @@ export function renderAtom(articles: FeedArticle[]) {
   const entries = articles.map((article) => {
     const url = absoluteUrl(`/articles/${article.slug}`);
     const published = article.published_at || article.updated_at || new Date().toISOString();
-    const updated = article.updated_at || published;
+    const updated = article.editorial_updated_at || published;
     const author = article.author_name || article.author || SITE.name;
     return `<entry><title>${xmlEscape(article.title || "")}</title><link href="${xmlEscape(url)}"/><id>${xmlEscape(url)}</id><published>${xmlEscape(new Date(published).toISOString())}</published><updated>${xmlEscape(new Date(updated).toISOString())}</updated><author><name>${xmlEscape(author)}</name></author><summary>${xmlEscape(article.excerpt || "")}</summary></entry>`;
   }).join("");

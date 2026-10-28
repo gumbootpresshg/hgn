@@ -8,7 +8,7 @@ export async function GET() {
 
   const { data: articles } = await supabase
     .from("articles")
-    .select("title,google_news_headline,slug,published_at,updated_at,status,google_news_include")
+    .select("title,google_news_headline,slug,published_at,updated_at,editorial_updated_at,status,google_news_include")
     .eq("status", "published")
     .eq("google_news_include", true)
     .not("slug", "is", null)
@@ -32,7 +32,7 @@ export async function GET() {
         `<news:publication_date>${publishedAt}</news:publication_date>`,
         `<news:title>${xmlEscape(article.google_news_headline || article.title)}</news:title>`,
         "</news:news>",
-        article.updated_at ? `<lastmod>${new Date(article.updated_at).toISOString()}</lastmod>` : "",
+        article.editorial_updated_at ? `<lastmod>${new Date(article.editorial_updated_at).toISOString()}</lastmod>` : "",
         "</url>",
       ].join("");
     })
