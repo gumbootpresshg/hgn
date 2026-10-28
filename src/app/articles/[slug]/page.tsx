@@ -45,6 +45,7 @@ type Article = {
   image_credit?: string | null;
   published_at?: string | null;
   updated_at?: string | null;
+  editorial_updated_at?: string | null;
 };
 
 function articleDescription(article: Article) {
@@ -62,7 +63,7 @@ export async function generateMetadata({ params }: PageProps) {
   if (decodeURIComponent(slug).trim().toLowerCase() === "mountie minute") redirect("/articles/mountie-minute");
   const { data: article } = await supabase
     .from("articles")
-    .select("title,seo_title,excerpt,body,meta_description,social_title,social_description,canonical_url,slug,image_url,cover_image_url,og_image_url,published_at,updated_at,author_name,author,category,subcategory,seo_keywords,google_news_headline")
+    .select("title,seo_title,excerpt,body,meta_description,social_title,social_description,canonical_url,slug,image_url,cover_image_url,og_image_url,published_at,updated_at,editorial_updated_at,author_name,author,category,subcategory,seo_keywords,google_news_headline")
     .eq("slug", slug)
     .maybeSingle();
 
@@ -86,7 +87,7 @@ export async function generateMetadata({ params }: PageProps) {
       url,
       type: "article",
       publishedTime: typed.published_at || undefined,
-      modifiedTime: typed.updated_at || typed.published_at || undefined,
+      modifiedTime: typed.editorial_updated_at || typed.published_at || undefined,
       authors: typed.author_name || typed.author ? [typed.author_name || typed.author || SITE.name] : [SITE.name],
       section: typed.subcategory || typed.category || "News",
       images: [{ url: absoluteUrl(image) }],
@@ -121,8 +122,8 @@ export default async function ArticlePage({ params }: PageProps) {
     : { data: null };
   const publishedDate = formatPublishingDate(typed.published_at, publishingSettings);
   const publishedTime = formatPublishingTime(typed.published_at, publishingSettings);
-  const modifiedDate = formatPublishingDate(typed.updated_at, publishingSettings);
-  const modifiedTime = formatPublishingTime(typed.updated_at, publishingSettings);
+  const modifiedDate = formatPublishingDate(typed.editorial_updated_at, publishingSettings);
+  const modifiedTime = formatPublishingTime(typed.editorial_updated_at, publishingSettings);
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-10">

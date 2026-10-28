@@ -12,6 +12,10 @@ function SmartLink({ href, label, className="" }: { href:string; label:string; c
 export function Footer({ initialPlatformConfig }: { initialPlatformConfig?: SitePlatformConfig }) {
   const { labels } = useSiteTheme()
   const footer = initialPlatformConfig?.footer || defaultFooter
+  const utilityLinks = [...footer.utilityLinks]
+  for (const link of [{ id: "editorial-standards", label: "Editorial Standards", href: "/editorial-standards", enabled: true }, { id: "corrections-log", label: "Corrections Log", href: "/corrections-log", enabled: true }]) {
+    if (!utilityLinks.some((item) => item.href === link.href)) utilityLinks.push(link)
+  }
   return (
     <footer className="mt-8 border-t-4 md:mt-16 border-double border-stone-900 bg-[#f4f0e8] text-stone-900">
       <div className="mx-auto max-w-[1480px] px-4 py-10 md:px-7">
@@ -26,7 +30,7 @@ export function Footer({ initialPlatformConfig }: { initialPlatformConfig?: Site
           </div>
           <div><h2 className="newspaper-kicker text-stone-900">Support local journalism</h2><p className="mt-3 text-sm leading-6 text-stone-700">Help keep local reporting and community information accessible.</p><div className="mt-5 flex flex-wrap gap-2"><Link href="/support-us" className="newspaper-button">{labels.support}</Link><Link href="/subscribe" className="newspaper-button-outline">{labels.subscribe}</Link></div></div>
         </div>
-        <div className="flex flex-col gap-3 pt-5 text-xs text-stone-700 md:flex-row md:items-center md:justify-between"><p>© {new Date().getFullYear()} {labels.siteName}. All rights reserved.</p><div className="flex flex-wrap gap-4">{footer.utilityLinks.filter(l=>l.enabled).map(link=><SmartLink key={link.id} href={link.href} label={link.label}/>)}</div></div>
+        <div className="flex flex-col gap-3 pt-5 text-xs text-stone-700 md:flex-row md:items-center md:justify-between"><p>© {new Date().getFullYear()} {labels.siteName}. All rights reserved.</p><div className="flex flex-wrap gap-4">{utilityLinks.filter(l=>l.enabled).map(link=><SmartLink key={link.id} href={link.href} label={link.label}/>)}</div></div>
       </div>
     </footer>
   )

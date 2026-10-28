@@ -87,6 +87,7 @@ export default function NewArticlePage() {
           writer_id: selectedWriter?.id || null,
           created_at: now,
           updated_at: now,
+          editorial_updated_at: null,
         })
         .select("id")
         .single();

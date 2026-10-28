@@ -167,6 +167,7 @@ export default function ArticleEditorPage() {
   const [draftRecovered, setDraftRecovered] = useState(false);
   const draftReadyRef = useRef(false);
   const editVersionRef = useRef(0);
+  const originalArticleRef = useRef<Article>(blankArticle);
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState("");
   const [preview, setPreview] = useState(false);
@@ -251,6 +252,7 @@ export default function ArticleEditorPage() {
         ...row,
         author_name: row.author_name || row.author || blankArticle.author_name,
       };
+      originalArticleRef.current = databaseArticle;
       let nextArticle = databaseArticle;
       try {
         const rawDraft = localStorage.getItem(draftKey);
@@ -412,6 +414,9 @@ export default function ArticleEditorPage() {
       processedBody = rawBody
     }
 
+    const now = new Date().toISOString();
+    const editorialFields = ["title", "body", "excerpt", "author_name", "author", "writer_id", "category", "subcategory", "column_name", "image_url", "image_alt", "image_caption", "image_credit"];
+    const substantiveChange = isNew || editorialFields.some((field) => JSON.stringify(article[field] ?? null) !== JSON.stringify(originalArticleRef.current[field] ?? null)) || (article.status !== originalArticleRef.current.status && status === "published");
     const payload = {
       title,
       slug,
@@ -438,7 +443,8 @@ export default function ArticleEditorPage() {
       google_news_headline: article.google_news_headline || article.seo_title || title,
       google_news_include: article.google_news_include !== false,
       seo_generated_at: article.seo_generated_at || null,
-      updated_at: new Date().toISOString(),
+      updated_at: now,
+      editorial_updated_at: substantiveChange ? now : (article.editorial_updated_at || null),
       front_page_photo: !!article.front_page_photo,
       status,
       featured: !!article.featured,
@@ -460,6 +466,7 @@ export default function ArticleEditorPage() {
 
     if (error) setMessage(error.message);
     else {
+      originalArticleRef.current = { ...article, ...payload };
       if (payload.front_page_photo && savedId) {
         const { error: clearPhotoError } = await supabase
           .from("articles")

@@ -10,6 +10,7 @@ type Article = {
   author_name?: string | null;
   published_at?: string | null;
   updated_at?: string | null;
+  editorial_updated_at?: string | null;
   image_url?: string | null;
   cover_image_url?: string | null;
   og_image_url?: string | null;
@@ -40,7 +41,7 @@ export default function NewsArticleJsonLd({ article, authorUrl }: { article: Art
     description,
     ...(image ? { image: [absoluteUrl(image)] } : {}),
     datePublished: article.published_at || undefined,
-    dateModified: article.updated_at || article.published_at || undefined,
+    dateModified: article.editorial_updated_at || article.published_at || undefined,
     author: [{ "@type": isStaff ? "Organization" : "Person", name: authorName, ...(!isStaff && authorUrl ? { url: absoluteUrl(authorUrl) } : {}) }],
     publisher: {
       "@type": "NewsMediaOrganization",

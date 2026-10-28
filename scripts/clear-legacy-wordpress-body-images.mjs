@@ -14,12 +14,16 @@ const db = createClient(url, key, { auth: { persistSession: false, autoRefreshTo
 const legacyImage = /<img\b(?=[^>]*(?:\/wp-content\/uploads\/|https?:\/\/i[0-9]\.wp\.com\/))[^>]*>/gi
 const legacyMarkdownImage = /!\[[^\]]*\]\((?:https?:\/\/)?(?:[^/]+\/wp-content\/uploads\/|i[0-9]\.wp\.com\/)[^)]*\)/gi
 const containsLegacy = (value) => /(?:\/wp-content\/uploads\/|https?:\/\/i[0-9]\.wp\.com\/)/i.test(String(value || ""))
-const hasEmptyFigure = (value) => /<figure\b[^>]*>\s*<\/figure>/i.test(String(value || ""))
+// Legacy cleanup can leave a figcaption behind after its image is removed.
+// A figure without an image has no reader-facing purpose, whether or not it
+// contains whitespace, a caption or an empty link.
+const figureWithoutImage = /<figure\b[^>]*>[\s\S]*?<\/figure>/gi
+const hasEmptyFigure = (value) => [...String(value || "").matchAll(figureWithoutImage)].some(([figure]) => !/<img\b/i.test(figure))
 const clean = (value) => String(value || "")
   .replace(legacyImage, "")
   .replace(legacyMarkdownImage, "")
   .replace(/<a\b[^>]*>\s*<\/a>/gi, "")
-  .replace(/<figure\b[^>]*>\s*<\/figure>/gi, "")
+  .replace(figureWithoutImage, (figure) => /<img\b/i.test(figure) ? figure : "")
 
 let offset = 0
 const articles = []

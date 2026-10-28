@@ -11,13 +11,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticPaths = [
     "", "/articles", "/news", "/letters", "/opinion", "/opinion/editorials", "/opinion/on-the-record",
     "/opinion/columns", "/opinion/guest-opinion", "/sports", "/authors", "/events", "/marketplace",
-    "/obituaries", "/weather", "/digital-paper", "/about", "/community-standards", "/request-correction",
+    "/obituaries", "/weather", "/digital-paper", "/about", "/community-standards", "/request-correction", "/editorial-standards", "/corrections", "/corrections-log",
   ];
 
   const staticRoutes: MetadataRoute.Sitemap = staticPaths.map((path) => ({ url: absoluteUrl(path || "/"), lastModified: now }));
 
   const [{ data: articles }, { data: authors }, { data: pages }] = await Promise.all([
-    supabase.from("articles").select("slug,updated_at,published_at,status").eq("status", "published").not("slug", "is", null).order("published_at", { ascending: false }).limit(5000),
+    supabase.from("articles").select("slug,updated_at,editorial_updated_at,published_at,status").eq("status", "published").not("slug", "is", null).order("published_at", { ascending: false }).limit(5000),
     supabase.from("hgn_authors").select("slug,is_active").eq("is_active", true).not("slug", "is", null).limit(500),
     supabase.from("hgn_site_pages").select("slug,updated_at,status,visibility").eq("status", "published").eq("visibility", "public").not("slug", "is", null).limit(1000),
   ]);
@@ -25,7 +25,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const safeSlug = (value: unknown) => /^[a-z0-9][a-z0-9-]*$/i.test(String(value || "").trim())
   const articleRoutes: MetadataRoute.Sitemap = (articles || []).filter((article: any) => safeSlug(article.slug)).map((article: any) => ({
     url: absoluteUrl(`/articles/${article.slug}`),
-    lastModified: new Date(article.updated_at || article.published_at || Date.now()),
+    lastModified: new Date(article.editorial_updated_at || article.published_at || Date.now()),
   }));
   const authorRoutes: MetadataRoute.Sitemap = (authors || []).filter((author: any) => safeSlug(author.slug)).map((author: any) => ({ url: absoluteUrl(`/authors/${author.slug}`), lastModified: now }));
   const duplicateManagedPageSlugs = new Set(["about", "advertise", "community-standards", "contact", "corrections", "membership", "privacy", "subscribe", "support", "terms"])
