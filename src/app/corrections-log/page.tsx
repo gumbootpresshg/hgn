@@ -1,0 +1,6 @@
+import { pageMetadata } from "@/lib/page-metadata"
+import Link from "next/link"
+
+export const metadata = pageMetadata("Corrections Log", "Published corrections and clarifications from Haida Gwaii News.", "/corrections-log")
+
+export default function CorrectionsLogPage() { return <main className="mx-auto max-w-4xl px-4 py-10"><p className="text-sm font-black uppercase tracking-[.2em] text-hgnBlue">Accuracy</p><h1 className="mt-2 font-serif text-5xl font-bold text-hgnNavy">Corrections log</h1><p className="mt-4 max-w-3xl text-lg leading-8 text-slate-600">This page records significant factual corrections and clarifications published by Haida Gwaii News.</p><section className="mt-8 rounded-3xl border bg-white p-7 shadow-sm"><h2 className="font-serif text-3xl font-bold">Current log</h2><p className="mt-3 leading-7 text-slate-700">No significant corrections or clarifications have been published in the current log.</p><p className="mt-3 leading-7 text-slate-700">Routine spelling, formatting and presentation edits are normally corrected without a log entry. Corrections that change factual meaning are added here and noted on the relevant article.</p><Link href="/corrections" className="mt-5 inline-block font-bold text-hgnBlue underline">Request a correction or clarification →</Link></section></main> }
