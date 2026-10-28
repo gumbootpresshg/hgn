@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { HgnAuthor, writerSlug } from "@/lib/writers";
+import AuthorPortraitEditor from "@/components/AuthorPortraitEditor";
 
 const writerTypes = ["publisher / editor", "editor", "reporter", "staff", "columnist", "contributor", "guest"];
 
@@ -25,7 +26,6 @@ export default function AdminAuthorsPage() {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [newName, setNewName] = useState("");
   const [message, setMessage] = useState("");
-  const [uploadingId, setUploadingId] = useState<string | null>(null);
 
   async function load() {
     const { data, error } = await supabase
@@ -96,24 +96,6 @@ export default function AdminAuthorsPage() {
     } catch (error: any) { setMessage(error?.message || "Could not save author."); }
   }
 
-  async function uploadPhoto(item: HgnAuthor, file: File | null) {
-    if (!file) return;
-    setUploadingId(item.id);
-    setMessage("");
-    try {
-      const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
-      const path = `authors/${item.id}-${Date.now()}.${ext}`;
-      const { error } = await supabase.storage.from("article-images").upload(path, file, { upsert: false });
-      if (error) throw error;
-      const { data } = supabase.storage.from("article-images").getPublicUrl(path);
-      await updateAuthor(item, { photo_url: data.publicUrl });
-    } catch (error: any) {
-      setMessage(error?.message || "Photo upload failed.");
-    } finally {
-      setUploadingId(null);
-    }
-  }
-
   return (
     <main className="mx-auto max-w-6xl space-y-6 px-6 py-10">
       <section className="rounded-3xl border bg-white p-8 shadow-sm">
@@ -180,10 +162,10 @@ export default function AdminAuthorsPage() {
                   </div>
                   <label className="mt-4 block"><span className="text-sm font-semibold">Short bio</span><textarea defaultValue={item.short_bio || ""} onBlur={(e) => updateAuthor(item, { short_bio: e.target.value || null })} rows={2} className="mt-2 w-full rounded-xl border px-4 py-3" /></label>
                   <label className="mt-4 block"><span className="text-sm font-semibold">Full public bio</span><textarea defaultValue={item.bio || ""} onBlur={(e) => updateAuthor(item, { bio: e.target.value || null })} rows={5} className="mt-2 w-full rounded-xl border px-4 py-3" /></label>
-                  <div className="mt-4 grid gap-3 md:grid-cols-[1fr_auto] md:items-end">
+                  <div className="mt-4">
                     <Field label="Photo URL" value={item.photo_url || ""} onBlur={(value) => updateAuthor(item, { photo_url: value || null })} />
-                    <label className="hgn-btn-secondary cursor-pointer text-center">{uploadingId === item.id ? "Uploading…" : "Upload photo"}<input type="file" accept="image/*" className="hidden" disabled={uploadingId === item.id} onChange={(e) => uploadPhoto(item, e.target.files?.[0] || null)} /></label>
                   </div>
+                  <AuthorPortraitEditor authorName={item.display_name} slug={item.slug} value={item.photo_url} onChange={(photo_url) => updateAuthor(item, { photo_url })} />
                   <div className="mt-5 flex flex-wrap gap-2">
                     <button type="button" onClick={() => updateAuthor(item, { is_active: item.is_active === false })} className="hgn-btn-secondary">{item.is_active === false ? "Reactivate author" : "Deactivate author"}</button>
                     <Link href={`/authors/${item.slug}`} className="hgn-btn-secondary">View public profile</Link>

@@ -1,6 +1,6 @@
 {
   "name": "hgn-website-build",
-  "version": "0.67.41",
+  "version": "0.67.42",
   "private": true,
   "scripts": {
     "dev": "next dev",
