@@ -3,7 +3,7 @@ import { serviceClient } from "@/lib/newsletters/server";
 
 export const runtime = "nodejs";
 
-const allowed = new Set(["article_view", "ad_impression", "ad_click", "newsletter_signup", "support_click", "marketplace_lead", "event_interest", "search_submit"]);
+const allowed = new Set(["page_view", "article_view", "ad_impression", "ad_click", "newsletter_signup", "support_click", "marketplace_lead", "event_interest", "search_submit"]);
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function text(value: unknown, maximum: number) {

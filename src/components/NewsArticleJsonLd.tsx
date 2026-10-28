@@ -22,13 +22,15 @@ type Article = {
   google_news_headline?: string | null;
 };
 
-export default function NewsArticleJsonLd({ article, authorUrl }: { article: Article; authorUrl?: string | null }) {
+type CreditedAuthor = { name: string; url?: string | null; organization?: boolean };
+
+export default function NewsArticleJsonLd({ article, authorUrl, authors }: { article: Article; authorUrl?: string | null; authors?: CreditedAuthor[] }) {
   const headline = article.google_news_headline || article.seo_title || article.title || SITE.name;
   const description =
     article.meta_description ||
     stripHtml(article.excerpt || "").slice(0, 180) ||
     SITE.description;
-  const image = article.og_image_url || article.cover_image_url || article.image_url || null;
+  const image = article.og_image_url || article.cover_image_url || article.image_url || SITE.defaultImage;
   const url = article.slug ? absoluteUrl(`/articles/${article.slug}`) : SITE.url;
   const authorName = article.author_name || article.author || SITE.name;
   const isStaff = /^(staff report|submitted\b|haida gwaii news|hgn)$/i.test(authorName.trim());
@@ -39,10 +41,12 @@ export default function NewsArticleJsonLd({ article, authorUrl }: { article: Art
     "@type": "NewsArticle",
     headline,
     description,
-    ...(image ? { image: [absoluteUrl(image)] } : {}),
+    image: [absoluteUrl(image)],
     datePublished: article.published_at || undefined,
     dateModified: article.editorial_updated_at || article.published_at || undefined,
-    author: [{ "@type": isStaff ? "Organization" : "Person", name: authorName, ...(!isStaff && authorUrl ? { url: absoluteUrl(authorUrl) } : {}) }],
+    author: authors?.length
+      ? authors.map((author) => ({ "@type": author.organization ? "Organization" : "Person", name: author.name, ...(author.url ? { url: absoluteUrl(author.url) } : {}) }))
+      : [{ "@type": isStaff ? "Organization" : "Person", name: authorName, ...(authorUrl ? { url: absoluteUrl(authorUrl) } : {}) }],
     publisher: {
       "@type": "NewsMediaOrganization",
       name: SITE.name,

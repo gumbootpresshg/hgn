@@ -1,8 +1,8 @@
 import Link from "next/link"
 import { supabase } from "@/lib/supabase"
-import { pageMetadata } from "@/lib/page-metadata"
+import { nonNewsPageMetadata } from "@/lib/page-metadata"
 export const revalidate=0
-export const metadata = { ...pageMetadata("Search", "Search Haida Gwaii News articles, community information and writers.", "/search"), robots: { index: false, follow: false } }
+export const metadata = { ...nonNewsPageMetadata("Search", "Search Haida Gwaii News articles, community information and writers.", "/search"), robots: { index: false, follow: false } }
 function cleanQ(q:string){return q.replace(/[,%()]/g,' ').replace(/\s+/g,' ').trim()}
 export default async function SearchPage({searchParams}:{searchParams?:Promise<{q?:string}>}){const params=await searchParams;const q=cleanQ(String(params?.q||''));let groups:{title:string;items:any[]}[]=[];if(q){const like=`%${q}%`;const [articles,pages,events,obits,notices,editions,authors]=await Promise.all([
   supabase.from('articles').select('id,title,slug,excerpt,body,published_at').in('status',['published','approved','public','live','active']).or(`title.ilike.${like},body.ilike.${like},excerpt.ilike.${like}`).order('published_at',{ascending:false,nullsFirst:false}).limit(30),

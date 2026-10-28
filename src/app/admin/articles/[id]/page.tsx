@@ -422,6 +422,7 @@ export default function ArticleEditorPage() {
     const now = new Date().toISOString();
     const editorialFields = ["title", "body", "excerpt", "author_name", "author", "writer_id", "category", "subcategory", "column_name", "image_url", "image_alt", "image_caption", "image_credit"];
     const substantiveChange = isNew || editorialFields.some((field) => JSON.stringify(article[field] ?? null) !== JSON.stringify(originalArticleRef.current[field] ?? null)) || (article.status !== originalArticleRef.current.status && status === "published");
+    const editorialUpdatedAt = substantiveChange ? now : (article.editorial_updated_at || null);
     const payload = {
       title,
       slug,
@@ -449,7 +450,7 @@ export default function ArticleEditorPage() {
       google_news_include: article.google_news_include !== false,
       seo_generated_at: article.seo_generated_at || null,
       updated_at: now,
-      editorial_updated_at: substantiveChange ? now : (article.editorial_updated_at || null),
+      editorial_updated_at: editorialUpdatedAt,
       front_page_photo: !!article.front_page_photo,
       status,
       featured: !!article.featured,
@@ -658,6 +659,11 @@ export default function ArticleEditorPage() {
               Published date
               <span className="ml-2 text-xs font-normal text-slate-500">{newsroomTimezone}</span>
               <input type="datetime-local" value={toNewsroomDateTimeInput(article.published_at, newsroomTimezone)} onChange={(e) => update("published_at", fromNewsroomDateTimeInput(e.target.value, newsroomTimezone))} />
+            </label>
+            <label>
+              Editorial update date <span className="text-xs font-normal text-slate-500">(meaningful changes only)</span>
+              <input type="datetime-local" value={toNewsroomDateTimeInput(article.editorial_updated_at, newsroomTimezone)} onChange={(e) => update("editorial_updated_at", fromNewsroomDateTimeInput(e.target.value, newsroomTimezone))} />
+              <span className="mt-1 block text-xs font-normal text-slate-500">Saving changed copy, byline, category or image records the current time automatically. Use this only to enter the real date of an earlier correction or substantive update.</span>
             </label>
           </div>
 

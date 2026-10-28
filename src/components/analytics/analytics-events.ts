@@ -2,7 +2,7 @@
 
 import { track } from "@vercel/analytics";
 
-export type HgnAnalyticsEvent = "article_view" | "ad_impression" | "ad_click" | "newsletter_signup" | "support_click" | "marketplace_lead" | "event_interest" | "search_submit";
+export type HgnAnalyticsEvent = "page_view" | "article_view" | "ad_impression" | "ad_click" | "newsletter_signup" | "support_click" | "marketplace_lead" | "event_interest" | "search_submit";
 
 type EventDetails = {
   pagePath?: string;

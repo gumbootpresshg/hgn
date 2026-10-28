@@ -117,9 +117,12 @@ export default async function ArticlePage({ params }: PageProps) {
   const image = typed.image_url || typed.cover_image_url || typed.og_image_url;
   const author = displayAuthor(typed) || typed.author_name || typed.author || SITE.name;
   const linkableAuthor = !/^(submitted\b|staff report|haida gwaii news)$/i.test(author.trim())
-  const { data: writer } = typed.writer_id
-    ? await supabase.from("hgn_authors").select("display_name,slug,is_active").eq("id", typed.writer_id).maybeSingle()
-    : { data: null };
+  const [{ data: writer }, { data: coAuthorRows }] = await Promise.all([
+    typed.writer_id ? supabase.from("hgn_authors").select("display_name,slug,is_active,writer_type").eq("id", typed.writer_id).maybeSingle() : Promise.resolve({ data: null }),
+    typed.id ? supabase.from("hgn_article_authors").select("author:hgn_authors(display_name,slug,is_active,writer_type)").eq("article_id", typed.id).order("sort_order", { ascending: true }) : Promise.resolve({ data: [] }),
+  ]);
+  const coAuthors = (coAuthorRows || []).map((row: any) => row.author).filter((author: any) => author?.display_name && author.is_active !== false);
+  const creditedAuthors = coAuthors.length ? coAuthors : (writer?.display_name ? [writer] : []);
   const publishedDate = formatPublishingDate(typed.published_at, publishingSettings);
   const publishedTime = formatPublishingTime(typed.published_at, publishingSettings);
   const modifiedDate = formatPublishingDate(typed.editorial_updated_at, publishingSettings);
@@ -127,7 +130,7 @@ export default async function ArticlePage({ params }: PageProps) {
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-10">
-      <NewsArticleJsonLd article={typed} authorUrl={writer?.slug && writer?.is_active !== false ? `/authors/${writer.slug}` : null} />
+      <NewsArticleJsonLd article={typed} authorUrl={writer?.slug && writer?.is_active !== false ? `/authors/${writer.slug}` : null} authors={creditedAuthors.length ? creditedAuthors.map((item: any) => ({ name: item.display_name, url: item.slug ? `/authors/${item.slug}` : null, organization: /^submitted\b/i.test(item.display_name) })) : undefined} />
       <ArticleAnalyticsTracker articleId={typed.id} slug={typed.slug} />
 
       <Link href="/articles" className="text-sm font-bold text-hgnBlue hover:underline">
@@ -144,7 +147,7 @@ export default async function ArticlePage({ params }: PageProps) {
         </h1>
 
         <div className="mt-4 border-b border-slate-200 pb-5 text-sm text-slate-600">
-          <span>By {linkableAuthor && writer?.slug && writer?.is_active !== false ? <Link href={`/authors/${writer.slug}`} className="font-semibold hover:underline">{author}</Link> : author}</span>
+          <span>By {creditedAuthors.length ? creditedAuthors.map((item: any, index: number) => <span key={item.slug || item.display_name}>{index ? index === creditedAuthors.length - 1 ? " and " : ", " : ""}{item.slug ? <Link href={`/authors/${item.slug}`} className="font-semibold hover:underline">{item.display_name}</Link> : item.display_name}</span>) : linkableAuthor && writer?.slug && writer?.is_active !== false ? <Link href={`/authors/${writer.slug}`} className="font-semibold hover:underline">{author}</Link> : author}</span>
           {publishedDate ? <span>{" "}· Published {publishedDate}{publishedTime ? ` at ${publishedTime}` : ""}</span> : null}
           {modifiedDate && modifiedDate !== publishedDate ? <span>{" "}· Updated {modifiedDate}{modifiedTime ? ` at ${modifiedTime}` : ""}</span> : null}
         </div>

@@ -44,13 +44,18 @@ export default async function AuthorProfilePage({ params }: PageProps) {
   if (!author) notFound();
   const typedAuthor = author as HgnAuthor;
 
-  const [{ data: articles }, { data: columns }, publishingSettings] = await Promise.all([
+  const [{ data: articles }, { data: coauthoredRows }, { data: columns }, publishingSettings] = await Promise.all([
     supabase
       .from("articles")
       .select("id,title,slug,excerpt,category,subcategory,column_name,published_at")
       .eq("status", "published")
       .eq("writer_id", typedAuthor.id)
       .order("published_at", { ascending: false })
+      .limit(100),
+    supabase
+      .from("hgn_article_authors")
+      .select("article:articles(id,title,slug,excerpt,category,subcategory,column_name,published_at,status)")
+      .eq("author_id", typedAuthor.id)
       .limit(100),
     supabase
       .from("columnists")
@@ -61,7 +66,13 @@ export default async function AuthorProfilePage({ params }: PageProps) {
     getPublishingSettings(),
   ]);
 
-  const stories = (articles || []) as ArticleRow[];
+  const storiesById = new Map<string, ArticleRow>();
+  for (const story of (articles || []) as ArticleRow[]) storiesById.set(story.id, story);
+  for (const row of coauthoredRows || []) {
+    const story = (row as any).article as (ArticleRow & { status?: string }) | null;
+    if (story?.id && story.status === "published") storiesById.set(story.id, story);
+  }
+  const stories = [...storiesById.values()].sort((a, b) => new Date(b.published_at || 0).getTime() - new Date(a.published_at || 0).getTime()).slice(0, 100);
 
   const personJsonLd = { "@context": "https://schema.org", "@type": "Person", name: typedAuthor.display_name, url: absoluteUrl(`/authors/${typedAuthor.slug}`), ...(typedAuthor.photo_url ? { image: absoluteUrl(typedAuthor.photo_url) } : {}), ...(typedAuthor.short_bio ? { description: typedAuthor.short_bio } : {}), worksFor: { "@type": "NewsMediaOrganization", name: SITE.name, url: SITE.url } };
 

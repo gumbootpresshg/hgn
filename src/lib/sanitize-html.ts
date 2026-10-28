@@ -6,7 +6,7 @@ const allowedTags = [
 ]
 
 export function sanitizeArticleHtml(value?: string | null) {
-  return sanitizeHtml(String(value || ""), {
+  const cleaned = sanitizeHtml(String(value || ""), {
     allowedTags,
     allowedAttributes: {
       a: ["href", "title", "target", "rel"],
@@ -32,4 +32,7 @@ export function sanitizeArticleHtml(value?: string | null) {
     disallowedTagsMode: "discard",
     enforceHtmlBoundary: true,
   })
+  // Old WordPress bodies can retain a caption-only figure after the broken
+  // image is removed. Never render a visual container without an image.
+  return cleaned.replace(/<figure\b[^>]*>[\s\S]*?<\/figure>/gi, (figure) => /<img\b/i.test(figure) ? figure : "")
 }

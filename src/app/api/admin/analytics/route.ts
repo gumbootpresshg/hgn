@@ -77,6 +77,7 @@ export async function GET(req: NextRequest) {
     traffic: vercel,
     totals: {
       trackedEvents: rows.length,
+      pageViews: actions.page_view || 0,
       articleViews: actions.article_view || 0,
       newsletterSignups: actions.newsletter_signup || 0,
       adImpressions: actions.ad_impression || 0,
