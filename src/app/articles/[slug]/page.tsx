@@ -116,7 +116,7 @@ export default async function ArticlePage({ params }: PageProps) {
   const typed = article as Article;
   const image = typed.image_url || typed.cover_image_url || typed.og_image_url;
   const author = displayAuthor(typed) || typed.author_name || typed.author || SITE.name;
-  const linkableAuthor = !/^(submitted|staff report|haida gwaii news)$/i.test(author.trim())
+  const linkableAuthor = !/^(submitted\b|staff report|haida gwaii news)$/i.test(author.trim())
   const { data: writer } = typed.writer_id
     ? await supabase.from("hgn_authors").select("display_name,slug,is_active").eq("id", typed.writer_id).maybeSingle()
     : { data: null };

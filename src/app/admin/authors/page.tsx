@@ -6,7 +6,17 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { HgnAuthor, writerSlug } from "@/lib/writers";
 
-const writerTypes = ["staff", "columnist", "contributor", "guest"];
+const writerTypes = ["publisher / editor", "editor", "reporter", "staff", "columnist", "contributor", "guest"];
+
+function missingProfileDetails(item: HgnAuthor) {
+  return [
+    !item.writer_type && "role",
+    !item.short_bio && "short bio",
+    !item.bio && "full bio",
+    !item.photo_url && "photo",
+    !item.public_email && "public email",
+  ].filter(Boolean) as string[];
+}
 
 export default function AdminAuthorsPage() {
   const [items, setItems] = useState<HgnAuthor[]>([]);
@@ -38,6 +48,8 @@ export default function AdminAuthorsPage() {
         .some((value) => String(value || "").toLowerCase().includes(needle));
     });
   }, [items, query, showInactive]);
+
+  const incompleteProfiles = useMemo(() => items.filter((item) => item.is_active !== false && missingProfileDetails(item).length > 0), [items]);
 
   async function availableSlug(value: string, excludeId?: string) {
     const base = writerSlug(value) || "author";
@@ -116,6 +128,12 @@ export default function AdminAuthorsPage() {
         {message ? <p className="mt-4 rounded-2xl bg-slate-50 p-4 text-sm">{message}</p> : null}
       </section>
 
+      <section className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
+        <h2 className="text-xl font-black text-amber-950">Public profile checklist</h2>
+        <p className="mt-2 text-sm leading-6 text-amber-900">Active writers should have a role, photo, short bio, full bio and public email. This is what makes their author pages credible and useful to readers.</p>
+        <p className="mt-3 text-sm font-bold text-amber-950">{incompleteProfiles.length ? `${incompleteProfiles.length} active profile${incompleteProfiles.length === 1 ? " needs" : "s need"} attention.` : "All active author profiles are complete."}</p>
+      </section>
+
       <section className="rounded-2xl border bg-white p-5 shadow-sm">
         <h2 className="text-xl font-black">Add author</h2>
         <div className="mt-4 grid gap-3 md:grid-cols-[1fr_auto]">
@@ -144,6 +162,7 @@ export default function AdminAuthorsPage() {
                   <div className="min-w-0">
                     <h2 className="truncate text-lg font-black">{item.display_name}</h2>
                     <p className="text-sm text-slate-500">{item.writer_type || "contributor"} · {item.is_active === false ? "Inactive" : "Active"}</p>
+                    {missingProfileDetails(item).length && item.is_active !== false ? <p className="mt-1 text-xs font-semibold text-amber-700">Needs: {missingProfileDetails(item).join(", ")}</p> : null}
                   </div>
                 </div>
                 <span className="text-sm font-bold">{isOpen ? "Close" : "Edit ▾"}</span>

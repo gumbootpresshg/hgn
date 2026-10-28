@@ -14,7 +14,7 @@ const securityHeaders = [
       "form-action 'self'",
       "frame-ancestors 'self'",
       "object-src 'none'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.supabase.co",
+      "script-src 'self' 'unsafe-inline' https://*.supabase.co",
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https:",
       "font-src 'self' data:",

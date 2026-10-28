@@ -392,6 +392,11 @@ export default function ArticleEditorPage() {
 
     const saveVersion = editVersionRef.current;
     const status = nextStatus || article.status || "draft";
+    if (status === "published" && !article.image_url && !window.confirm("This story has no lead image. Publish without one? You can cancel and upload a photo first.")) {
+      setSaving(false);
+      setSaveAction(null);
+      return;
+    }
     const slug = article.slug?.trim() || slugify(title);
     const category = article.category || "News";
     const subcategory = article.subcategory || null;
@@ -543,6 +548,7 @@ export default function ArticleEditorPage() {
             <label className="block">
               <span className="block">Headline</span>
               <input className="mt-1" value={article.title || ""} onChange={(e) => update("title", e.target.value)} onBlur={() => !article.slug && update("slug", slugify(article.title || ""))} />
+              <p className={`mt-1 text-xs ${String(article.title || "").length > 65 ? "font-semibold text-amber-700" : "text-slate-500"}`}>{String(article.title || "").length} characters · aim for 65 or fewer when practical; keep the meaningful words first.</p>
             </label>
 
             <label className="block">
@@ -644,6 +650,11 @@ export default function ArticleEditorPage() {
               </span>
             </label>
             <label>
+              Published byline
+              <input value={article.author_name || ""} onChange={(e) => update("author_name", e.target.value)} placeholder="e.g. Submitted by Daajing Giids RCMP" />
+              <span className="mt-1 block text-xs font-normal text-slate-500">Use this for a named source on submitted material. Choose “Submitted” above first if you also want it grouped on that profile.</span>
+            </label>
+            <label>
               Published date
               <span className="ml-2 text-xs font-normal text-slate-500">{newsroomTimezone}</span>
               <input type="datetime-local" value={toNewsroomDateTimeInput(article.published_at, newsroomTimezone)} onChange={(e) => update("published_at", fromNewsroomDateTimeInput(e.target.value, newsroomTimezone))} />
@@ -672,7 +683,8 @@ export default function ArticleEditorPage() {
             </label>
             <label>
               Google News headline
-              <input value={article.google_news_headline || ""} onChange={(e) => update("google_news_headline", e.target.value)} maxLength={110} />
+              <input value={article.google_news_headline || ""} onChange={(e) => update("google_news_headline", e.target.value)} maxLength={65} />
+              <span className="mt-1 block text-xs font-normal text-slate-500">{String(article.google_news_headline || "").length}/65 characters</span>
             </label>
             <label>
               Social title

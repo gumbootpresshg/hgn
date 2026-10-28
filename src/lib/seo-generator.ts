@@ -76,7 +76,7 @@ export function generateSeoFields(source: SeoSource) {
     og_image_url: null as string | null,
     image_alt: imageAlt,
     seo_keywords: keywords,
-    google_news_headline: clipWords(title, 110),
+    google_news_headline: clipWords(title, 65),
     seo_generated_at: new Date().toISOString(),
   };
 }
