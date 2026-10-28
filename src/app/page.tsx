@@ -108,7 +108,10 @@ function PromotionBanner({ settings }: { settings: FrontPageSettings | null }) {
   if (!title || !href) return null
   const style = settings?.promotion_style
   const dark = style !== "cream"
-  const content = <div className={`relative overflow-hidden border px-5 py-4 sm:px-7 sm:py-4 ${promotionClasses(style)}`}>
+  const isPumpkinContest = href === "/pumpkin-carve-off"
+  const content = <div className={`relative overflow-hidden border px-5 py-4 sm:px-7 sm:py-4 ${promotionClasses(style)} ${isPumpkinContest ? "min-h-[178px] sm:min-h-[196px]" : ""}`}>
+    {isPumpkinContest ? <img src="/pumpkin-carve-off-2026-banner.webp" alt="" className="absolute inset-0 h-full w-full object-cover" /> : null}
+    {isPumpkinContest ? <div className="absolute inset-0 bg-gradient-to-r from-[#061626]/[.97] via-[#071b2f]/[.86] to-[#071b2f]/[.14]" /> : null}
     <div className="relative z-[1] max-w-4xl sm:flex sm:items-center sm:gap-6">
       <div className="min-w-0 flex-1">
       {settings?.promotion_eyebrow ? <p className={`text-[11px] font-bold uppercase tracking-[.17em] ${dark ? "text-red-300" : "text-hgnRed"}`}>{settings.promotion_eyebrow}</p> : null}
@@ -117,7 +120,7 @@ function PromotionBanner({ settings }: { settings: FrontPageSettings | null }) {
       </div>
       <span className={`mt-4 inline-block shrink-0 border px-4 py-2 text-sm font-bold sm:mt-0 ${dark ? "border-[#f4eee3] bg-[#f4eee3] text-stone-950" : "border-stone-950 bg-stone-950 text-white"}`}>{settings?.promotion_button_text?.trim() || "Learn more"} →</span>
     </div>
-    {settings?.promotion_image_url ? <img src={settings.promotion_image_url} alt="" className="absolute inset-y-0 right-0 hidden h-full w-[32%] object-cover opacity-30 lg:block" /> : <div className={`pointer-events-none absolute -right-8 -top-14 h-44 w-44 rounded-full border-[20px] ${dark ? "border-white/10" : "border-stone-950/10"}`} />}
+    {!isPumpkinContest && (settings?.promotion_image_url ? <img src={settings.promotion_image_url} alt="" className="absolute inset-y-0 right-0 hidden h-full w-[32%] object-cover opacity-30 lg:block" /> : <div className={`pointer-events-none absolute -right-8 -top-14 h-44 w-44 rounded-full border-[20px] ${dark ? "border-white/10" : "border-stone-950/10"}`} />)}
   </div>
   return <section className="py-4"><Link href={href} className="block transition hover:opacity-95">{content}</Link></section>
 }
