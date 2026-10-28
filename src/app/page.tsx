@@ -132,10 +132,9 @@ function StoryMeta({ article, settings }: { article: Article; settings: Publishi
 
 export default async function Home() {
   const publishingSettings = await getPublishingSettings()
-  const [{ data: frontPageSettings }, { data: mainStories }, { data: frontPagePhotos }, { data: featuredStories }, { data: latestStories }] = await Promise.all([
+  const [{ data: frontPageSettings }, { data: mainStories }, { data: featuredStories }, { data: latestStories }] = await Promise.all([
     supabase.from("front_page_settings").select("*").eq("id", "current").maybeSingle(),
     supabase.from("articles").select("*").eq("status", "published").eq("front_page_main", true).order("published_at", { ascending: false }).limit(1),
-    supabase.from("articles").select("*").eq("status", "published").eq("front_page_photo", true).not("image_url", "is", null).order("published_at", { ascending: false }).limit(1),
     supabase.from("articles").select("*").eq("status", "published").eq("featured", true).order("published_at", { ascending: false }).limit(8),
     supabase.from("articles").select("*").eq("status", "published").order("published_at", { ascending: false }).limit(80),
   ])
@@ -172,12 +171,14 @@ export default async function Home() {
     const { data } = await supabase.from("articles").select("*").eq("id", settings.related_article_id).eq("status", "published").maybeSingle()
     managedRelatedArticle = (data || undefined) as Article | undefined
   }
-  const legacyFrontPagePhoto = (frontPagePhotos?.[0] || [main, ...(featuredStories || []), ...(latestStories || [])].find((article: Article | undefined) => article && getArticleImage(article))) as Article | undefined
-  const frontPagePhoto = photoInWindow && settings?.photo_url ? managedRelatedArticle : legacyFrontPagePhoto
-  const frontPageImage = photoInWindow && settings?.photo_url ? settings.photo_url : (legacyFrontPagePhoto ? getArticleImage(legacyFrontPagePhoto) : null)
-  const frontPageCaption = photoInWindow && settings?.photo_url ? settings.photo_caption : legacyFrontPagePhoto?.image_caption
-  const frontPageCredit = photoInWindow && settings?.photo_url ? settings.photo_credit : legacyFrontPagePhoto?.image_credit
-  const frontPageAlt = photoInWindow && settings?.photo_url ? settings.photo_alt : legacyFrontPagePhoto?.image_alt
+  // The lead image must belong to the lead story. The old front_page_photo
+  // fallback could pair today's headline with another article's election photo.
+  // Editors can still deliberately use the independent front-page photo above.
+  const leadStoryImage = main ? getArticleImage(main) : null
+  const frontPageImage = photoInWindow && settings?.photo_url ? settings.photo_url : leadStoryImage
+  const frontPageCaption = photoInWindow && settings?.photo_url ? settings.photo_caption : main?.image_caption
+  const frontPageCredit = photoInWindow && settings?.photo_url ? settings.photo_credit : main?.image_credit
+  const frontPageAlt = photoInWindow && settings?.photo_url ? settings.photo_alt : main?.image_alt
   const frontPageHref = managedRelatedArticle ? `/articles/${managedRelatedArticle.slug}` : null
   const chronological = sortArticlesNewest((latestStories || []) as Article[])
   const featured = sortArticlesNewest(((featuredStories || []) as Article[]).filter((a) => a.slug !== main?.slug))

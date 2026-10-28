@@ -13,7 +13,7 @@ import Image from "next/image";
 import { formatPublishingDate, formatPublishingTime, getPublishingSettings } from "@/lib/publishing-settings";
 import ArticleAnalyticsTracker from "@/components/analytics/ArticleAnalyticsTracker";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 type PageProps = { params: Promise<{ slug: string }> };
 
@@ -130,7 +130,7 @@ export default async function ArticlePage({ params }: PageProps) {
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-10">
-      <NewsArticleJsonLd article={typed} authorUrl={writer?.slug && writer?.is_active !== false ? `/authors/${writer.slug}` : null} authors={creditedAuthors.length ? creditedAuthors.map((item: any) => ({ name: item.display_name, url: item.slug ? `/authors/${item.slug}` : null, organization: /^submitted\b/i.test(item.display_name) })) : undefined} />
+      <NewsArticleJsonLd article={typed} authorUrl={writer?.slug && writer?.is_active !== false ? `/authors/${writer.slug}` : null} authors={creditedAuthors.length ? creditedAuthors.map((item: any) => ({ name: item.display_name, url: item.slug ? `/authors/${item.slug}` : null, organization: /^(submitted\b|staff report|haida gwaii news|hgn)$/i.test(item.display_name.trim()) })) : undefined} />
       <ArticleAnalyticsTracker articleId={typed.id} slug={typed.slug} />
 
       <Link href="/articles" className="text-sm font-bold text-hgnBlue hover:underline">

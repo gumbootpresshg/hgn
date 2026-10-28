@@ -6,6 +6,10 @@ const securityHeaders = [
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(self), browsing-topics=()" },
   { key: "Cross-Origin-Opener-Policy", value: "same-origin-allow-popups" },
   { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
+  // Static CSP preserves ISR/CDN caching. Next.js uses inline style attributes
+  // for image layout and a few UI components, so style-src must allow them.
+  // We intentionally do not allow eval.
+  { key: "Content-Security-Policy", value: "default-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' https://*.supabase.co; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://earthquake.usgs.gov https://weather.gc.ca; frame-src 'self' https:; upgrade-insecure-requests" },
 ]
 
 const nextConfig = {

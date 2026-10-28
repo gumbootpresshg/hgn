@@ -7,26 +7,10 @@ const internalRoute = /^\/(?:admin|account|api)(?:\/|$)/;
 const workInProgressRoute = /^\/(?:[^/]+-status|beta(?:-|\/|$)|mock(?:-|\/|$)|launch(?:-|\/|$)|deployment(?:-|\/|$)|production(?:-|\/|$)|release(?:-|\/|$)|workflow(?:-|\/|$)|handoff(?:-|\/|$)|reader-ready(?:-|\/|$)|publish-sweep(?:-|\/|$)|security-hardening(?:-|\/|$)|stale-check(?:-|\/|$)|trim-status(?:-|\/|$))/;
 
 export function proxy(request: NextRequest) {
-  const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
-  const csp = [
-    "default-src 'self'",
-    "base-uri 'self'",
-    "form-action 'self'",
-    "frame-ancestors 'self'",
-    "object-src 'none'",
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://*.supabase.co`,
-    `style-src 'self' 'nonce-${nonce}'`,
-    "img-src 'self' data: blob: https:",
-    "font-src 'self' data:",
-    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://earthquake.usgs.gov https://weather.gc.ca",
-    "frame-src 'self' https:",
-    "upgrade-insecure-requests",
-  ].join("; ");
-  const requestHeaders = new Headers(request.headers);
-  requestHeaders.set("x-nonce", nonce);
-  requestHeaders.set("Content-Security-Policy", csp);
-  const response = NextResponse.next({ request: { headers: requestHeaders } });
-  response.headers.set("Content-Security-Policy", csp);
+  // A fresh nonce makes every route dynamic, which prevents Vercel's CDN from
+  // caching public news pages. CSP is therefore supplied as a static header in
+  // next.config.mjs; this proxy only handles route-specific robots directives.
+  const response = NextResponse.next();
   const path = request.nextUrl.pathname;
   if (internalRoute.test(path) || workInProgressRoute.test(path)) {
     response.headers.set("X-Robots-Tag", "noindex, nofollow, noarchive");
