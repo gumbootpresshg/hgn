@@ -1,0 +1,49 @@
+name: Verify HGN build
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+# Cancel an older check when a newer commit for the same branch arrives.
+concurrency:
+  group: hgn-verify-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Typecheck and production build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install exact dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Production compilation
+        # Vercel runs the full production build with the real Supabase settings.
+        # This mode verifies the compiled application without querying live data.
+        run: npx next build --experimental-build-mode compile
+        env:
+          # Compile-time placeholders only. Production uses Vercel's real values.
+          NEXT_PUBLIC_SUPABASE_URL: https://build-check.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: build-check-anon-key
+          SUPABASE_SERVICE_ROLE_KEY: build-check-service-role-key
