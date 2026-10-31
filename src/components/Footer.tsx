@@ -12,7 +12,7 @@ function SmartLink({ href, label, className="" }: { href:string; label:string; c
 export function Footer({ initialPlatformConfig }: { initialPlatformConfig?: SitePlatformConfig }) {
   const { labels } = useSiteTheme()
   const footer = initialPlatformConfig?.footer || defaultFooter
-  const haidaGwaiiOnlineUrl = "https://haidagwaionline.com"
+  const haidaGwaiiOnlineUrl = "https://haidagwaiionline.com"
   const footerGroups = [...footer.groups]
   if (!footerGroups.some((group) => group.links.some((link) => link.href === haidaGwaiiOnlineUrl))) footerGroups.push({ id: "haida-gwaii-online", title: "Explore the islands", enabled: true, links: [{ id: "haida-gwaii-online", label: "Haida Gwaii Online ↗", href: haidaGwaiiOnlineUrl, enabled: true }] })
   const utilityLinks = [...footer.utilityLinks]
