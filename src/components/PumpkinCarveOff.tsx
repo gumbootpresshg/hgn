@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import type { PumpkinContest, PumpkinEntry } from '@/lib/pumpkin'
 import { isOpen, vancouverDate } from '@/lib/pumpkin'
 
@@ -14,16 +14,30 @@ export default function PumpkinCarveOff({ contest, entries, leaders }: { contest
   const [name, setName] = useState('')
   const [code, setCode] = useState('')
   const [voteStarted, setVoteStarted] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const submittingRef = useRef(false)
   const selection = new Set(selected)
 
   const choose = (id: string) => setSelected(now => now.includes(id) ? now.filter(x => x !== id) : now.length >= contest.max_votes_per_voter ? now : [...now, id])
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    setMessage('Uploading your pumpkin…')
-    const response = await fetch('/api/pumpkin-carve-off/submit', { method: 'POST', body: new FormData(event.currentTarget) })
-    const body = await response.json()
-    setMessage(response.ok ? 'Thanks — your photo is in the HGN review queue. It will appear in the gallery once approved.' : body.error || 'Could not submit your entry.')
+    if (submittingRef.current) return
+
+    submittingRef.current = true
+    setSubmitting(true)
+    setMessage('Uploading your pumpkin… Please do not submit again.')
+
+    try {
+      const response = await fetch('/api/pumpkin-carve-off/submit', { method: 'POST', body: new FormData(event.currentTarget) })
+      const body = await response.json()
+      setMessage(response.ok ? 'Thanks — your photo is in the HGN review queue. It will appear in the gallery once approved.' : body.error || 'Could not submit your entry.')
+    } catch {
+      setMessage('Could not submit your pumpkin. Please try again.')
+    } finally {
+      submittingRef.current = false
+      setSubmitting(false)
+    }
   }
 
   async function startVote(event: React.FormEvent) {
@@ -72,7 +86,7 @@ export default function PumpkinCarveOff({ contest, entries, leaders }: { contest
         <label className="grid gap-1 font-bold">Tell us about it <span className="font-normal text-stone-500">(optional)</span><textarea name="description" rows={3} /></label>
         <label className="grid gap-1 font-bold">Pumpkin photo<input required name="photo" type="file" accept="image/jpeg,image/png,image/webp" /></label>
         <p className="text-sm leading-6 text-stone-600">{contest.rules}</p>
-        <button disabled={!entriesOpen} className="hgn-btn-primary disabled:opacity-50">{entriesOpen ? 'Submit pumpkin' : 'Entries closed'}</button>
+        <button disabled={!entriesOpen || submitting} className="hgn-btn-primary disabled:opacity-50">{!entriesOpen ? 'Entries closed' : submitting ? 'Uploading…' : 'Submit pumpkin'}</button>
       </form>
     </section> : null}
 
