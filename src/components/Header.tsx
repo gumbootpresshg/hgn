@@ -9,6 +9,8 @@ import { useSiteTheme } from "@/components/theme/SiteThemeProvider"
 import { supabase } from "@/lib/supabase"
 import { defaultNavigation, type SiteNavEntry, type SitePlatformConfig, type Visibility } from "@/lib/site-platform-config"
 
+const haidaGwaiiOnlineUrl = "https://haidagwaionline.com"
+
 const utilityLinks = [
   { href: "/support", label: "Support HGN" },
   { href: "/newsletter", label: "Newsletter" },
@@ -268,9 +270,10 @@ export function Header({ initialPlatformConfig }: { initialPlatformConfig?: Site
   const navItems: NavItem[] = useMemo(() => {
     const fallback: SiteNavEntry[] = defaultNavigation
     const source = configuredNav?.length ? configuredNav : fallback
-    const visible = source.filter((item) => item.enabled && canSeeVisibility(item.visibility, audience))
+    const isRetiredGuideLink = (item: { id: string; href?: string }) => item.id === "guide" || ["/explore", "/visitor-guide", "/visitor-mode", "/business-directory"].some((prefix) => item.href?.startsWith(prefix))
+    const visible = source.filter((item) => item.enabled && canSeeVisibility(item.visibility, audience) && !isRetiredGuideLink(item))
     return visible.map((item) => {
-      const children = (item.children || []).filter((child) => child.enabled && canSeeVisibility(child.visibility, audience)).map((child) => {
+      const children = (item.children || []).filter((child) => child.enabled && canSeeVisibility(child.visibility, audience) && !isRetiredGuideLink(child)).map((child) => {
         if (child.id === "columns") return { href: child.href || "/columns", label: child.label, children: columns }
         return { href: child.href || "/", label: child.label }
       })
@@ -323,6 +326,7 @@ export function Header({ initialPlatformConfig }: { initialPlatformConfig?: Site
             ) : (
               <Link key={item.label} href={item.href ?? "/"} onClick={closeAllMenus} className="newspaper-nav-link">{item.label}</Link>
             ))}
+            <a href={haidaGwaiiOnlineUrl} target="_blank" rel="noreferrer" className="newspaper-nav-link whitespace-nowrap">Haida Gwaii Online ↗</a>
           </div>
           <div className="flex items-center gap-1">
             <Link href="/search" onClick={closeAllMenus} aria-label="Search" className="grid h-10 w-10 place-items-center hover:text-hgnRed"><Search size={19} strokeWidth={1.7} /></Link>
@@ -359,6 +363,7 @@ export function Header({ initialPlatformConfig }: { initialPlatformConfig?: Site
             ) : (
               <Link key={item.label} href={item.href ?? "/"} onClick={closeAllMenus} className="block border-b border-stone-300 px-1 py-4 font-serif text-xl font-bold">{item.label}</Link>
             ))}
+            <a href={haidaGwaiiOnlineUrl} target="_blank" rel="noreferrer" className="mt-5 block border border-stone-900 px-3 py-4 text-center font-serif text-xl font-bold">Explore Haida Gwaii Online ↗</a>
             <div className="grid grid-cols-2 gap-2 py-5 text-sm font-semibold">
               {utilityLinks.map((link) => <Link key={link.href} href={link.href} onClick={closeAllMenus} className="border border-stone-300 px-3 py-3 text-center">{link.label}</Link>)}
               <Link href="/account" onClick={closeAllMenus} className="border border-stone-300 px-3 py-3 text-center">My HGN</Link>

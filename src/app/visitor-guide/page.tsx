@@ -1,5 +1,8 @@
-import { redirect } from "next/navigation"
+import { permanentRedirect } from "next/navigation"
 
-// The former Visitor Guide is now a preserved public alias. Its legacy records
-// remain in Supabase while all reader-facing Guide work lives under /explore.
-export default function VisitorGuideRedirect() { redirect("/explore") }
+const haidaGwaiiOnlineUrl = "https://haidagwaionline.com"
+
+// Haida Gwaii Online is the public home for maps, places, businesses and travel planning.
+export default function HaidaGwaiiOnlineRedirect() {
+  permanentRedirect(haidaGwaiiOnlineUrl)
+}
