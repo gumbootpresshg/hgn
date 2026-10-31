@@ -9,7 +9,7 @@ import { useSiteTheme } from "@/components/theme/SiteThemeProvider"
 import { supabase } from "@/lib/supabase"
 import { defaultNavigation, type SiteNavEntry, type SitePlatformConfig, type Visibility } from "@/lib/site-platform-config"
 
-const haidaGwaiiOnlineUrl = "https://haidagwaionline.com"
+const haidaGwaiiOnlineUrl = "https://haidagwaiionline.com"
 
 const utilityLinks = [
   { href: "/support", label: "Support HGN" },
