@@ -1,4 +1,8 @@
-import { redirect } from "next/navigation"
+import { permanentRedirect } from "next/navigation"
 
-// Keep old shared listing URLs safe while retiring the duplicate Guide surface.
-export default async function VisitorListingRedirect() { redirect("/explore/directory") }
+const haidaGwaiiOnlineUrl = "https://haidagwaionline.com"
+
+// Haida Gwaii Online is the public home for maps, places, businesses and travel planning.
+export default function HaidaGwaiiOnlineRedirect() {
+  permanentRedirect(haidaGwaiiOnlineUrl)
+}

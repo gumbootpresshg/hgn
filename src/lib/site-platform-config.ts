@@ -59,7 +59,7 @@ export const defaultNavigation: SiteNavEntry[] = [
   ]},
   { id: "marketplace", label: "Marketplace", href: "/marketplace", enabled: true, visibility: "public" },
   { id: "horoscopes", label: "Horoscopes", href: "/horoscope", enabled: true, visibility: "public" },
-  { id: "guide", label: "Haida Gwaii Guide", enabled: true, visibility: "public", children: [
+  { id: "guide", label: "Haida Gwaii Guide", enabled: false, visibility: "public", children: [
     { id: "guide-home", label: "Guide Home", href: "/explore", enabled: true, visibility: "public" },
     { id: "guide-map", label: "Island Map", href: "/explore/map", enabled: true, visibility: "public" },
     { id: "guide-travel", label: "Ferries & Travel", href: "/explore/travel", enabled: true, visibility: "public" },
@@ -105,7 +105,7 @@ export const defaultFooter: SiteFooterConfig = {
 }
 
 export const defaultFeatures: SiteFeatureConfig = {
-  marketplace: true, events: true, guide: true, obituaries: true, polls: true, newsletter: true,
+  marketplace: true, events: true, guide: false, obituaries: true, polls: true, newsletter: true,
   reader_accounts: true, membership: true, weather: true, tides: true, emergency_alerts: true, island_lens: true,
 }
 
@@ -132,7 +132,7 @@ export function normalizeSitePlatformConfig(value: Partial<SitePlatformConfig> |
   return {
     navigation: withGames.nav,
     sections: withGames.nextSections,
-    features: { ...defaultFeatures, ...(value?.features || {}) },
+    features: { ...defaultFeatures, ...(value?.features || {}), guide: false },
     footer: withGames.footer,
     updatedAt: value?.updatedAt,
   }

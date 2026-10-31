@@ -12,6 +12,9 @@ function SmartLink({ href, label, className="" }: { href:string; label:string; c
 export function Footer({ initialPlatformConfig }: { initialPlatformConfig?: SitePlatformConfig }) {
   const { labels } = useSiteTheme()
   const footer = initialPlatformConfig?.footer || defaultFooter
+  const haidaGwaiiOnlineUrl = "https://haidagwaionline.com"
+  const footerGroups = [...footer.groups]
+  if (!footerGroups.some((group) => group.links.some((link) => link.href === haidaGwaiiOnlineUrl))) footerGroups.push({ id: "haida-gwaii-online", title: "Explore the islands", enabled: true, links: [{ id: "haida-gwaii-online", label: "Haida Gwaii Online ↗", href: haidaGwaiiOnlineUrl, enabled: true }] })
   const utilityLinks = [...footer.utilityLinks]
   for (const link of [{ id: "editorial-standards", label: "Editorial Standards", href: "/editorial-standards", enabled: true }, { id: "corrections-log", label: "Corrections Log", href: "/corrections-log", enabled: true }]) {
     if (!utilityLinks.some((item) => item.href === link.href)) utilityLinks.push(link)
@@ -26,7 +29,7 @@ export function Footer({ initialPlatformConfig }: { initialPlatformConfig?: Site
             <div className="mt-5 flex gap-4 text-sm font-bold"><a href="https://www.facebook.com/haidagwaiinews" target="_blank" rel="noreferrer">Facebook</a></div>
           </div>
           <div className="grid gap-8 sm:grid-cols-3">
-            {footer.groups.filter(g=>g.enabled).map(group => <div key={group.id}><h2 className="newspaper-kicker text-stone-900">{group.title}</h2><div className="mt-3 grid gap-2 text-sm text-stone-700">{group.links.filter(l=>l.enabled).map(link=><SmartLink key={link.id} href={link.href} label={link.label} className="hover:text-hgnRed"/>)}</div></div>)}
+            {footerGroups.filter(g=>g.enabled).map(group => <div key={group.id}><h2 className="newspaper-kicker text-stone-900">{group.title}</h2><div className="mt-3 grid gap-2 text-sm text-stone-700">{group.links.filter(l=>l.enabled).map(link=><SmartLink key={link.id} href={link.href} label={link.label} className="hover:text-hgnRed"/>)}</div></div>)}
           </div>
           <div><h2 className="newspaper-kicker text-stone-900">Support local journalism</h2><p className="mt-3 text-sm leading-6 text-stone-700">Help keep local reporting and community information accessible.</p><div className="mt-5 flex flex-wrap gap-2"><Link href="/support-us" className="newspaper-button">{labels.support}</Link><Link href="/subscribe" className="newspaper-button-outline">{labels.subscribe}</Link></div></div>
         </div>

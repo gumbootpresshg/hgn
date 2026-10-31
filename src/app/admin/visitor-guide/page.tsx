@@ -1,2 +1,6 @@
-import { redirect } from "next/navigation";
-export default function AdminVisitorGuidePage(){redirect("/admin/guide-manager")}
+import { redirect } from "next/navigation"
+
+// Guide and directory management now live with Haida Gwaii Online.
+export default function RetiredGuideAdminRoute() {
+  redirect("/admin")
+}

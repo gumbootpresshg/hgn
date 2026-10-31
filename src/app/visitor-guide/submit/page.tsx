@@ -1,4 +1,8 @@
-import { redirect } from "next/navigation"
+import { permanentRedirect } from "next/navigation"
 
-// New visitor-facing places are created by HGN editors in Guide Manager.
-export default function VisitorGuideSubmitRedirect() { redirect("/explore") }
+const haidaGwaiiOnlineUrl = "https://haidagwaionline.com"
+
+// Haida Gwaii Online is the public home for maps, places, businesses and travel planning.
+export default function HaidaGwaiiOnlineRedirect() {
+  permanentRedirect(haidaGwaiiOnlineUrl)
+}
