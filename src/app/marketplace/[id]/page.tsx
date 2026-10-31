@@ -11,6 +11,8 @@ export default async function MarketplaceListingPage({ params }: { params: Promi
     .from("classifieds")
     .select("*")
     .eq("id", id)
+    .in("status", ["approved", "published", "public", "live", "active"])
+    .is("deleted_at", null)
     .single()
 
   if (error || !item) {

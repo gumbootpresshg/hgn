@@ -32,7 +32,7 @@ export default async function MarketplacePage({
   const todayOnly = params?.today === "1"
 
   const [{ data, error }, { data: settings }] = await Promise.all([
-    supabase.from("classifieds").select("*").in("status", ["approved", "published", "public", "live", "active"]).order("is_featured", { ascending: false }).order("created_at", { ascending: false }).limit(300),
+    supabase.from("classifieds").select("*").in("status", ["approved", "published", "public", "live", "active"]).is("deleted_at", null).order("is_featured", { ascending: false }).order("created_at", { ascending: false }).limit(300),
     supabase.from("classified_settings").select("setting_type,label,slug,sort_order").eq("is_active", true).order("sort_order", { ascending: true }),
   ])
 
