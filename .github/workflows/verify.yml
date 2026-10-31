@@ -38,8 +38,10 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
-      - name: Production build
-        run: npm run build
+      - name: Production compilation
+        # Vercel runs the full production build with the real Supabase settings.
+        # This mode verifies the compiled application without querying live data.
+        run: npx next build --experimental-build-mode compile
         env:
           # Compile-time placeholders only. Production uses Vercel's real values.
           NEXT_PUBLIC_SUPABASE_URL: https://build-check.supabase.co
