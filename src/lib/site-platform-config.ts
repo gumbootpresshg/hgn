@@ -70,7 +70,7 @@ export const defaultNavigation: SiteNavEntry[] = [
 
 export const defaultSections: SiteSectionConfig[] = [
   ["news","News","/news"], ["opinion","Opinion","/opinion"], ["sports","Sports","/sports"], ["events","Events","/events"],
-  ["marketplace","Marketplace","/marketplace"], ["guide","Guide","/explore"], ["obituaries","Obituaries","/obituaries"],
+  ["marketplace","Marketplace","/marketplace"], ["obituaries","Obituaries","/obituaries"],
   ["island-lens","Island Lens","/island-lens"], ["games","Games","/games"], ["archives","Archives","/digital-paper"], ["weather","Weather","/weather"],
 ].map(([id,label,route]) => ({ id, label, route, enabled: true, visibility: "public" as Visibility, includeInApp: true, includeOnHomepage: true }))
 
