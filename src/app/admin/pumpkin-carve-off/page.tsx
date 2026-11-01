@@ -17,26 +17,28 @@ const blank = {
   max_votes_per_voter: 5, show_leaderboard: true, leaderboard_size: 10, status: 'draft',
 }
 
+// B.C. now uses permanent Pacific Time (PCT), UTC−7. Do not depend on
+// a device's America/Vancouver timezone data, which can lag this 2026 change.
+const PCT_OFFSET_MS = 7 * 60 * 60 * 1000
+
 function pacificInput(value: string | null | undefined) {
   if (!value) return ''
-  const parts = new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'America/Vancouver', year: 'numeric', month: '2-digit', day: '2-digit',
-    hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
-  }).formatToParts(new Date(value))
-  const part = (type: string) => parts.find(item => item.type === type)?.value || ''
-  return `${part('year')}-${part('month')}-${part('day')}T${part('hour')}:${part('minute')}`
+  const local = new Date(new Date(value).getTime() - PCT_OFFSET_MS)
+  const pad = (number: number) => String(number).padStart(2, '0')
+  return `${local.getUTCFullYear()}-${pad(local.getUTCMonth() + 1)}-${pad(local.getUTCDate())}T${pad(local.getUTCHours())}:${pad(local.getUTCMinutes())}`
 }
 
 function iso(value: string) {
   if (!value) return null
-  const date = new Date(value)
-  return Number.isNaN(date.getTime()) ? null : date.toISOString()
+  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(value)
+  if (!match) return null
+  return new Date(`${match[1]}-${match[2]}-${match[3]}T${match[4]}:${match[5]}:00-07:00`).toISOString()
 }
 
 function savedTime(value: string | null | undefined) {
   if (!value) return 'not set'
   return new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'America/Vancouver', dateStyle: 'medium', timeStyle: 'short',
+    timeZone: 'Etc/GMT+7', dateStyle: 'medium', timeStyle: 'short',
   }).format(new Date(value))
 }
 
@@ -98,7 +100,7 @@ export default function AdminPumpkin() {
         return
       }
       if (data.contest) select(data.contest)
-      setMessage(`Competition saved. Voting opens ${savedTime(data.contest?.voting_open_at)} and closes ${savedTime(data.contest?.voting_close_at)} (Pacific time).`)
+      setMessage(`Competition saved. Voting opens ${savedTime(data.contest?.voting_open_at)} and closes ${savedTime(data.contest?.voting_close_at)} (Pacific Time, PCT / UTC−7).`)
       await load(false)
     } catch {
       setMessage('Could not save competition. Please try again.')
@@ -133,7 +135,7 @@ export default function AdminPumpkin() {
         <div className="grid gap-4 sm:grid-cols-2"><label>Title<input value={form.title || ''} onChange={event => setForm({ ...form, title: event.target.value })} /></label><label>URL ending<input value={form.slug || ''} onChange={event => setForm({ ...form, slug: event.target.value })} /></label></div>
         <label className="mt-4 block">Intro<textarea rows={3} value={form.intro || ''} onChange={event => setForm({ ...form, intro: event.target.value })} /></label>
         <label className="mt-4 block">Rules<textarea rows={3} value={form.rules || ''} onChange={event => setForm({ ...form, rules: event.target.value })} /></label>
-        <p className="mt-4 text-sm font-bold text-slate-700">All schedule times are Pacific time (Haida Gwaii).</p>
+        <p className="mt-4 text-sm font-bold text-slate-700">All schedule times are Pacific Time (PCT, UTC−7), year-round.</p>
         <div className="mt-2 grid gap-4 sm:grid-cols-2"><label>Entries open<input type="datetime-local" value={form.entry_open_at || ''} onChange={event => setForm({ ...form, entry_open_at: event.target.value })} /></label><label>Entries close<input type="datetime-local" value={form.entry_close_at || ''} onChange={event => setForm({ ...form, entry_close_at: event.target.value })} /></label><label>Voting opens<input type="datetime-local" value={form.voting_open_at || ''} onChange={event => setForm({ ...form, voting_open_at: event.target.value })} /></label><label>Voting closes<input type="datetime-local" value={form.voting_close_at || ''} onChange={event => setForm({ ...form, voting_close_at: event.target.value })} /></label></div>
         <div className="mt-4 grid gap-4 sm:grid-cols-3"><label>Status<select value={form.status || 'draft'} onChange={event => setForm({ ...form, status: event.target.value })}>{['draft', 'entries', 'voting', 'results', 'archived'].map(status => <option key={status}>{status}</option>)}</select></label><label>Votes per person<input type="number" min="1" max="10" value={form.max_votes_per_voter || 5} onChange={event => setForm({ ...form, max_votes_per_voter: event.target.value })} /></label><label>Leader cards<input type="number" min="1" max="20" value={form.leaderboard_size || 10} onChange={event => setForm({ ...form, leaderboard_size: event.target.value })} /></label></div>
         <label className="mt-4 flex gap-2"><input type="checkbox" checked={!!form.show_leaderboard} onChange={event => setForm({ ...form, show_leaderboard: event.target.checked })} />Show live leaders on public page</label>
