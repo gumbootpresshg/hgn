@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { PumpkinContest, PumpkinEntry } from '@/lib/pumpkin'
 import { isOpen, vancouverDate } from '@/lib/pumpkin'
 
@@ -10,13 +10,12 @@ export default function PumpkinCarveOff({ contest, entries, leaders }: { contest
   const [tab, setTab] = useState<'gallery' | 'enter' | 'vote'>(entriesOpen && !entries.length ? 'enter' : 'gallery')
   const [message, setMessage] = useState('')
   const [selected, setSelected] = useState<string[]>([])
-  const [email, setEmail] = useState('')
-  const [name, setName] = useState('')
-  const [code, setCode] = useState('')
-  const [voteStarted, setVoteStarted] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [voting, setVoting] = useState(false)
+  const [hasVoted, setHasVoted] = useState(false)
   const submittingRef = useRef(false)
   const submissionTokenRef = useRef(typeof crypto === 'undefined' ? '' : crypto.randomUUID())
+  const voterTokenRef = useRef('')
   const selection = new Set(selected)
 
   const choose = (id: string) => setSelected(now => now.includes(id) ? now.filter(x => x !== id) : now.length >= contest.max_votes_per_voter ? now : [...now, id])
@@ -49,19 +48,39 @@ export default function PumpkinCarveOff({ contest, entries, leaders }: { contest
     }
   }
 
-  async function startVote(event: React.FormEvent) {
-    event.preventDefault()
-    const response = await fetch('/api/pumpkin-carve-off/vote', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'start', contest_id: contest.id, entry_ids: selected, email, name }) })
-    const body = await response.json()
-    setMessage(body.message || body.error || '')
-    if (response.ok) setVoteStarted(true)
-  }
+  useEffect(() => {
+    const key = `hgn-pumpkin-ballot-${contest.id}`
+    const saved = window.localStorage.getItem(key)
+    if (saved) {
+      voterTokenRef.current = saved
+      setHasVoted(true)
+      return
+    }
+    voterTokenRef.current = crypto.randomUUID()
+  }, [contest.id])
 
-  async function verify(event: React.FormEvent) {
-    event.preventDefault()
-    const response = await fetch('/api/pumpkin-carve-off/vote', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'verify', contest_id: contest.id, email, code }) })
-    const body = await response.json()
-    setMessage(body.message || body.error || '')
+  async function castVote() {
+    if (!selected.length || voting || hasVoted) return
+    setVoting(true)
+    const voterToken = voterTokenRef.current || crypto.randomUUID()
+    voterTokenRef.current = voterToken
+    try {
+      const response = await fetch('/api/pumpkin-carve-off/vote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contest_id: contest.id, entry_ids: selected, voter_token: voterToken }),
+      })
+      const body = await response.json()
+      setMessage(body.message || body.error || '')
+      if (response.ok) {
+        window.localStorage.setItem(`hgn-pumpkin-ballot-${contest.id}`, voterToken)
+        setHasVoted(true)
+      }
+    } catch {
+      setMessage('Could not save your ballot. Please try again.')
+    } finally {
+      setVoting(false)
+    }
   }
 
   return <>
@@ -101,9 +120,9 @@ export default function PumpkinCarveOff({ contest, entries, leaders }: { contest
     </section> : null}
 
     {votingOpen && tab === 'vote' ? <section className="mt-7">
-      <div className="rounded-3xl border bg-[#10243b] p-6 text-white"><p className="newspaper-kicker text-orange-200">Choose your favourites</p><h2 className="mt-2 font-serif text-4xl font-bold">Pick up to {contest.max_votes_per_voter} pumpkins</h2><p className="mt-3 text-stone-200">Voting closes {vancouverDate(contest.voting_close_at)}. Your email confirms one ballot; it is never shown publicly.</p><p className="mt-3 text-sm font-bold text-orange-200">{selected.length} of {contest.max_votes_per_voter} selected</p></div>
+      <div className="rounded-3xl border bg-[#10243b] p-6 text-white"><p className="newspaper-kicker text-orange-200">Choose your favourites</p><h2 className="mt-2 font-serif text-4xl font-bold">Pick up to {contest.max_votes_per_voter} pumpkins</h2><p className="mt-3 text-stone-200">Voting closes {vancouverDate(contest.voting_close_at)}. No email or sign-in needed. Choose your favourites and cast your ballot.</p><p className="mt-3 text-sm font-bold text-orange-200">{selected.length} of {contest.max_votes_per_voter} selected</p></div>
       <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{entries.map(entry => <button onClick={() => choose(entry.id)} key={entry.id} className={`overflow-hidden rounded-2xl border bg-white text-left shadow-sm ${selection.has(entry.id) ? 'ring-4 ring-orange-400' : ''}`}><img src={entry.photo_url} alt="" className="aspect-square w-full object-cover" /><div className="p-4"><b>{entry.title || 'Pumpkin entry'}</b><span className="mt-1 block text-sm text-stone-600">{selection.has(entry.id) ? 'Selected for your ballot' : 'Tap to select'}</span></div></button>)}</div>
-      {selected.length ? <form onSubmit={voteStarted ? verify : startVote} className="mt-6 max-w-xl rounded-3xl border bg-white p-6"><h3 className="font-serif text-3xl font-bold">{voteStarted ? 'Confirm your ballot' : 'Send confirmation code'}</h3>{!voteStarted ? <><label className="mt-4 grid gap-1 font-bold">Your name <input value={name} onChange={event => setName(event.target.value)} /></label><label className="mt-4 grid gap-1 font-bold">Your email<input required type="email" value={email} onChange={event => setEmail(event.target.value)} /></label><button className="hgn-btn-primary mt-5">Email my code</button></> : <><label className="mt-4 grid gap-1 font-bold">Six-digit code<input required inputMode="numeric" value={code} onChange={event => setCode(event.target.value)} /></label><button className="hgn-btn-primary mt-5">Confirm ballot</button></>}</form> : null}
+      {hasVoted ? <p className="mt-6 max-w-xl rounded-3xl border border-emerald-200 bg-emerald-50 p-6 font-bold text-emerald-900">Your ballot from this browser has been counted. Thanks for taking part!</p> : selected.length ? <section className="mt-6 max-w-xl rounded-3xl border bg-white p-6"><h3 className="font-serif text-3xl font-bold">Ready to vote?</h3><p className="mt-2 text-stone-600">No email or sign-in needed. You can cast one ballot from this browser.</p><button disabled={voting} onClick={() => void castVote()} className="hgn-btn-primary mt-5 disabled:opacity-50">{voting ? 'Casting your votes…' : 'Cast my votes'}</button></section> : null}
     </section> : null}
 
     {votingOpen && contest.show_leaderboard && leaders.length ? <section className="mt-12 border-t border-stone-900 pt-7"><p className="newspaper-kicker text-hgnRed">Community favourites</p><h2 className="mt-2 font-serif text-4xl font-bold">Leading pumpkins</h2><div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">{leaders.map((entry, index) => <article key={entry.id} className="rounded-2xl border bg-white p-3"><p className="text-xs font-black text-hgnRed">#{index + 1}</p><img src={entry.photo_url} alt="" className="mt-2 aspect-square w-full object-cover" /><p className="mt-2 font-bold">{entry.title || entry.display_name}</p></article>)}</div></section> : null}
