@@ -11,12 +11,16 @@ export async function POST(req: Request) {
     const display_name = clean(form.get('display_name'), 100)
     const email = clean(form.get('email'), 254).toLowerCase()
     const file = form.get('photo') as File | null
+    const submission_token = clean(form.get('submission_token'), 80)
 
     if (!display_name || !/^\S+@\S+\.\S+$/.test(email) || !file?.size) {
       return NextResponse.json({ error: 'Your name, email and pumpkin photo are required.' }, { status: 400 })
     }
     if (file.size > 12 * 1024 * 1024 || !['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
       return NextResponse.json({ error: 'Use a JPG, PNG or WebP photo under 12 MB.' }, { status: 400 })
+    }
+    if (!/^[a-z0-9-]{20,80}$/i.test(submission_token)) {
+      return NextResponse.json({ error: 'Please refresh the page and try your submission again.' }, { status: 400 })
     }
 
     const db = serviceClient()
@@ -28,16 +32,16 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'The entry window is not open right now.' }, { status: 403 })
     }
 
+    // An email may submit more than one pumpkin. The one-time form token makes
+    // retrying the same upload safe without turning a household into a one-entry limit.
     const { data: existing, error: existingError } = await db
       .from('hgn_pumpkin_entries')
       .select('id')
       .eq('contest_id', contest.id)
-      .eq('contact_email', email)
-      .limit(1)
+      .eq('submission_token', submission_token)
+      .maybeSingle()
     if (existingError) throw existingError
-    if (existing?.length) {
-      return NextResponse.json({ error: 'An entry has already been received for this email/household. Please contact HGN if you need to replace it.' }, { status: 409 })
-    }
+    if (existing) return NextResponse.json({ ok: true, duplicate: true })
 
     const ext = file.type === 'image/jpeg' ? 'jpg' : file.type.split('/')[1]
     const path = `pumpkin-carve-off/${contest.slug}/${crypto.randomUUID()}.${ext}`
@@ -53,9 +57,15 @@ export async function POST(req: Request) {
       description: clean(form.get('description'), 600) || null,
       contact_email: email,
       contact_phone: clean(form.get('phone'), 40) || null,
+      submission_token,
       photo_url,
     })
-    if (error) throw error
+    if (error) {
+      // A rapid network retry can lose the pre-insert check; the unique index
+      // remains the final guard against creating a second copy of this upload.
+      if ((error as { code?: string }).code === '23505') return NextResponse.json({ ok: true, duplicate: true })
+      throw error
+    }
 
     return NextResponse.json({ ok: true })
   } catch (error: any) {
