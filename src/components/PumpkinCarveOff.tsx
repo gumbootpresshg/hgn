@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import type { PumpkinContest, PumpkinEntry } from '@/lib/pumpkin'
 import { isOpen, vancouverDate } from '@/lib/pumpkin'
 
@@ -9,6 +10,7 @@ function SharePumpkinButton({ entry, onShare }: { entry: PumpkinEntry; onShare: 
 }
 
 export default function PumpkinCarveOff({ contest, entries, leaders }: { contest: PumpkinContest; entries: PumpkinEntry[]; leaders: PumpkinEntry[] }) {
+  const router = useRouter()
   const entriesOpen = isOpen(contest.entry_open_at, contest.entry_close_at)
   const votingOpen = isOpen(contest.voting_open_at, contest.voting_close_at)
   const [tab, setTab] = useState<'gallery' | 'enter' | 'vote'>(entriesOpen && !entries.length ? 'enter' : 'gallery')
@@ -101,6 +103,7 @@ export default function PumpkinCarveOff({ contest, entries, leaders }: { contest
       if (response.ok) {
         window.localStorage.setItem(`hgn-pumpkin-ballot-${contest.id}`, voterToken)
         setHasVoted(true)
+        router.refresh()
       }
     } catch {
       setMessage('Could not save your ballot. Please try again.')
@@ -161,6 +164,6 @@ export default function PumpkinCarveOff({ contest, entries, leaders }: { contest
       {hasVoted ? <p className="mt-6 max-w-xl rounded-3xl border border-emerald-200 bg-emerald-50 p-6 font-bold text-emerald-900">Your ballot from this browser has been counted. Thanks for taking part!</p> : selected.length ? <section className="mt-6 max-w-xl rounded-3xl border bg-white p-6"><h3 className="font-serif text-3xl font-bold">Ready to vote?</h3><p className="mt-2 text-stone-600">No email or sign-in needed. You can cast one ballot from this browser.</p><button disabled={voting} onClick={() => void castVote()} className="hgn-btn-primary mt-5 disabled:opacity-50">{voting ? 'Casting your votes…' : 'Cast my votes'}</button></section> : null}
     </section> : null}
 
-    {votingOpen && leaders.length ? <section className="mt-12 border-t border-stone-900 pt-7"><p className="newspaper-kicker text-hgnRed">Community favourites</p><h2 className="mt-2 font-serif text-4xl font-bold">Top 10 pumpkins</h2><p className="mt-2 text-stone-600">Current leaders, updated as ballots come in.</p><div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">{leaders.map((entry, index) => <article id={`pumpkin-${entry.id}`} key={entry.id} className="scroll-mt-24 rounded-2xl border bg-white p-3"><p className="text-xs font-black text-hgnRed">#{index + 1}</p><img src={entry.photo_url} alt="" className="mt-2 aspect-square w-full object-cover" /><p className="mt-2 font-bold">{entry.title || entry.display_name}</p><SharePumpkinButton entry={entry} onShare={sharePumpkin} /></article>)}</div></section> : null}
+    {votingOpen && leaders.length ? <section className="mt-12 border-t border-stone-900 pt-7"><p className="newspaper-kicker text-hgnRed">Community favourites</p><h2 className="mt-2 font-serif text-4xl font-bold">Top 10 pumpkins</h2><p className="mt-2 text-stone-600">Current leaders, updated as ballots come in.</p><div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">{leaders.map((entry, index) => <article id={`pumpkin-${entry.id}`} key={entry.id} className="scroll-mt-24 rounded-2xl border bg-white p-3"><p className="text-xs font-black text-hgnRed">#{index + 1}</p><img src={entry.photo_url} alt="" className="mt-2 aspect-square w-full object-cover" /><p className="mt-2 font-bold">{entry.title || entry.display_name}</p><p className="mt-1 text-sm font-bold text-hgnRed">{entry.votes === 1 ? '1 vote' : `${entry.votes || 0} votes`}</p><SharePumpkinButton entry={entry} onShare={sharePumpkin} /></article>)}</div></section> : null}
   </>
 }
