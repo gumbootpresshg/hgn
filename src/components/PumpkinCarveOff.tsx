@@ -112,7 +112,7 @@ export default function PumpkinCarveOff({ contest, entries, leaders }: { contest
   return <>
     <div className="mt-7 flex flex-wrap gap-2">
       <button onClick={() => setTab('gallery')} className={tab === 'gallery' ? 'hgn-btn-primary' : 'rounded-full border px-5 py-3 font-bold'}>Pumpkin gallery</button>
-      <button onClick={() => setTab('enter')} className={tab === 'enter' ? 'hgn-btn-primary' : 'rounded-full border px-5 py-3 font-bold'}>Enter a pumpkin</button>
+      {entriesOpen ? <button onClick={() => setTab('enter')} className={tab === 'enter' ? 'hgn-btn-primary' : 'rounded-full border px-5 py-3 font-bold'}>Enter a pumpkin</button> : null}
       {votingOpen ? <button onClick={() => setTab('vote')} className={tab === 'vote' ? 'hgn-btn-primary' : 'rounded-full border px-5 py-3 font-bold'}>Vote for favourites</button> : null}
     </div>
 
