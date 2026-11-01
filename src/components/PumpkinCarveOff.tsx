@@ -13,7 +13,7 @@ export default function PumpkinCarveOff({ contest, entries, leaders }: { contest
   const router = useRouter()
   const entriesOpen = isOpen(contest.entry_open_at, contest.entry_close_at)
   const votingOpen = isOpen(contest.voting_open_at, contest.voting_close_at)
-  const [tab, setTab] = useState<'gallery' | 'enter' | 'vote' | 'top10'>(entriesOpen && !entries.length ? 'enter' : 'gallery')
+  const [tab, setTab] = useState<'enter' | 'vote' | 'top10'>(votingOpen ? 'vote' : entriesOpen ? 'enter' : 'top10')
   const [message, setMessage] = useState('')
   const [selected, setSelected] = useState<string[]>([])
   const [submitting, setSubmitting] = useState(false)
@@ -114,7 +114,6 @@ export default function PumpkinCarveOff({ contest, entries, leaders }: { contest
 
   return <>
     <div className="mt-7 flex flex-wrap gap-2">
-      <button onClick={() => setTab('gallery')} className={tab === 'gallery' ? 'hgn-btn-primary' : 'rounded-full border px-5 py-3 font-bold'}>2026 Gallery</button>
       {entriesOpen ? <button onClick={() => setTab('enter')} className={tab === 'enter' ? 'hgn-btn-primary' : 'rounded-full border px-5 py-3 font-bold'}>Enter a pumpkin</button> : null}
       {votingOpen ? <button onClick={() => setTab('vote')} className={tab === 'vote' ? 'hgn-btn-primary' : 'rounded-full border px-5 py-3 font-bold'}>Vote for pumpkins</button> : null}
       {votingOpen ? <button onClick={() => setTab('top10')} className={tab === 'top10' ? 'hgn-btn-primary' : 'rounded-full border px-5 py-3 font-bold'}>Top 10</button> : null}
@@ -122,15 +121,7 @@ export default function PumpkinCarveOff({ contest, entries, leaders }: { contest
 
     {message ? <p className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-medium text-amber-950">{message}</p> : null}
 
-    {tab === 'gallery' ? <section className="mt-7">
-      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {entries.map(entry => <article id={`pumpkin-${entry.id}`} key={entry.id} className="scroll-mt-24 overflow-hidden rounded-2xl border bg-white shadow-sm">
-          <img src={entry.photo_url} alt={entry.title || `Pumpkin by ${entry.display_name}`} className="aspect-square w-full object-cover" />
-          <div className="p-4"><p className="text-xs font-black uppercase tracking-[.14em] text-hgnRed">{entry.community || 'Haida Gwaii'}</p><h2 className="mt-1 font-serif text-2xl font-bold">{entry.title || 'Pumpkin Carve-Off entry'}</h2><p className="mt-1 text-sm font-bold text-stone-700">By {entry.display_name}</p>{entry.description ? <p className="mt-3 text-sm leading-6 text-stone-600">{entry.description}</p> : null}<SharePumpkinButton entry={entry} onShare={sharePumpkin} /></div>
-        </article>)}
-      </div>
-      {!entries.length ? <p className="rounded-2xl border border-dashed p-8 text-stone-600">Approved pumpkins will appear here soon. Send in the first one!</p> : null}
-    </section> : null}
+
 
     {tab === 'enter' ? <section className="mt-7 max-w-2xl rounded-3xl border bg-white p-6 shadow-sm">
       <h2 className="font-serif text-4xl font-bold">Enter your pumpkin</h2>
