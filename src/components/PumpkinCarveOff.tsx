@@ -27,7 +27,7 @@ export default function PumpkinCarveOff({ contest, entries, leaders }: { contest
   const choose = (id: string) => setSelected(now => now.includes(id) ? now.filter(x => x !== id) : now.length >= contest.max_votes_per_voter ? now : [...now, id])
 
   async function sharePumpkin(entry: PumpkinEntry) {
-    const url = `${window.location.origin}${window.location.pathname}#pumpkin-${entry.id}`
+    const url = `${window.location.origin}/pumpkin-carve-off/${entry.id}`
     const title = entry.title || 'A pumpkin in the Great Haida Gwaii Pumpkin Carve-Off'
     const text = `Check out "${title}" in the Great Haida Gwaii Pumpkin Carve-Off and cast your vote!`
 
