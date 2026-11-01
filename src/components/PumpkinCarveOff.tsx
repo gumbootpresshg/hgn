@@ -16,6 +16,7 @@ export default function PumpkinCarveOff({ contest, entries, leaders }: { contest
   const [voteStarted, setVoteStarted] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const submittingRef = useRef(false)
+  const submissionTokenRef = useRef(typeof crypto === 'undefined' ? '' : crypto.randomUUID())
   const selection = new Set(selected)
 
   const choose = (id: string) => setSelected(now => now.includes(id) ? now.filter(x => x !== id) : now.length >= contest.max_votes_per_voter ? now : [...now, id])
@@ -29,9 +30,17 @@ export default function PumpkinCarveOff({ contest, entries, leaders }: { contest
     setMessage('Uploading your pumpkin… Please do not submit again.')
 
     try {
-      const response = await fetch('/api/pumpkin-carve-off/submit', { method: 'POST', body: new FormData(event.currentTarget) })
+      const form = new FormData(event.currentTarget)
+      form.set('submission_token', submissionTokenRef.current)
+      const response = await fetch('/api/pumpkin-carve-off/submit', { method: 'POST', body: form })
       const body = await response.json()
-      setMessage(response.ok ? 'Thanks — your photo is in the HGN review queue. It will appear in the gallery once approved.' : body.error || 'Could not submit your entry.')
+      if (response.ok) {
+        setMessage('Thanks — your photo is in the HGN review queue. It will appear in the gallery once approved.')
+        event.currentTarget.reset()
+        submissionTokenRef.current = crypto.randomUUID()
+      } else {
+        setMessage(body.error || 'Could not submit your entry.')
+      }
     } catch {
       setMessage('Could not submit your pumpkin. Please try again.')
     } finally {
@@ -79,6 +88,7 @@ export default function PumpkinCarveOff({ contest, entries, leaders }: { contest
       <p className="mt-2 text-stone-600">{entriesOpen ? `Entries close ${vancouverDate(contest.entry_close_at)}. Every entry is reviewed before it appears in the gallery.` : 'Entries are currently closed.'}</p>
       <form onSubmit={submit} className="mt-6 grid gap-4">
         <input className="hidden" name="website" tabIndex={-1} />
+        <input type="hidden" name="submission_token" />
         <div className="grid gap-4 sm:grid-cols-2"><label className="grid gap-1 font-bold">Your name / family name<input required name="display_name" /></label><label className="grid gap-1 font-bold">Community<input name="community" placeholder="e.g. Masset" /></label></div>
         <label className="grid gap-1 font-bold">Email <span className="font-normal text-stone-500">(not public)</span><input required name="email" type="email" /></label>
         <label className="grid gap-1 font-bold">Phone <span className="font-normal text-stone-500">(optional, not public)</span><input name="phone" /></label>
