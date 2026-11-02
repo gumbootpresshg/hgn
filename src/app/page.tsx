@@ -118,7 +118,7 @@ function PromotionBanner({ settings }: { settings: FrontPageSettings | null }) {
       <h2 className="mt-1 font-serif text-2xl font-bold leading-[1.05] sm:text-3xl">{title}</h2>
       {settings?.promotion_description ? <p className={`mt-2 max-w-2xl text-sm leading-5 ${dark ? "text-stone-200" : "text-stone-700"}`}>{settings.promotion_description}</p> : null}
       </div>
-      <span className={`mt-4 inline-block shrink-0 border px-4 py-2 text-sm font-bold sm:mt-0 ${dark ? "border-[#f4eee3] bg-[#f4eee3] text-stone-950" : "border-stone-950 bg-stone-950 text-white"}`}>{settings?.promotion_button_text?.trim() || "Learn more"} →</span>
+      <span className={`mt-4 inline-block shrink-0 border px-4 py-2 text-sm font-bold sm:mt-0 ${dark ? "border-[#f4eee3] bg-[#f4eee3] text-stone-950" : "border-stone-950 bg-stone-950 text-white"}`}>{isPumpkinContest ? "Vote now" : settings?.promotion_button_text?.trim() || "Learn more"} →</span>
     </div>
     {!isPumpkinContest && (settings?.promotion_image_url ? <img src={settings.promotion_image_url} alt="" className="absolute inset-y-0 right-0 hidden h-full w-[32%] object-cover opacity-30 lg:block" /> : <div className={`pointer-events-none absolute -right-8 -top-14 h-44 w-44 rounded-full border-[20px] ${dark ? "border-white/10" : "border-stone-950/10"}`} />)}
   </div>
