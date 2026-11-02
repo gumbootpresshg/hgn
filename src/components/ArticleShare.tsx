@@ -1,13 +1,16 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
+import { SITE } from "@/lib/site"
 
 export default function ArticleShare({ title }: { title: string }) {
   const [url, setUrl] = useState("")
   const [copied, setCopied] = useState(false)
 
   useEffect(() => {
-    setUrl(window.location.href)
+    // Sharing a Vercel preview URL makes Facebook label the story as vercel.app.
+    // Always use the public canonical domain, even while an editor is previewing a build.
+    setUrl(new URL(`${window.location.pathname}${window.location.search}`, SITE.url).toString())
   }, [])
 
   const links = useMemo(() => {
