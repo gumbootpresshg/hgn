@@ -24,8 +24,7 @@ export default async function EventsPage({
 
   const { data, error } = await fetchPublicEvents(supabase)
 
-  const allEvents = (data || [])
-    .filter((event: any) => eventOverlapsRange(event, start, end))
+  const publishedEvents = (data || [])
     .sort((a: any, b: any) => {
       const aDate = String(a.start_date || a.event_date || "")
       const bDate = String(b.start_date || b.event_date || "")
@@ -33,7 +32,11 @@ export default async function EventsPage({
       if (dateCompare !== 0) return dateCompare
       return String(a.start_time || "").localeCompare(String(b.start_time || ""))
     })
-  const communities = Array.from(new Set(allEvents.map((event: any) => event.community).filter(Boolean))).sort()
+  const allEvents = publishedEvents.filter((event: any) => eventOverlapsRange(event, start, end))
+  const todayKey = new Date().toISOString().slice(0, 10)
+  const weekEnd = new Date(Date.now() + 8 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+  const thisWeek = publishedEvents.filter((event: any) => eventOverlapsRange(event, todayKey, weekEnd)).slice(0, 8)
+  const communities = Array.from(new Set(publishedEvents.map((event: any) => event.community).filter(Boolean))).sort()
   const selectedCommunity = params?.community || ""
 
   const events = selectedCommunity
@@ -54,23 +57,26 @@ export default async function EventsPage({
 
   return (
     <main className="mx-auto max-w-7xl space-y-8 px-6 py-8">
-      <section className="rounded-3xl border bg-white p-8 shadow-sm">
-        <div className="grid gap-5 lg:grid-cols-[1fr_auto] lg:items-end">
+      <section className="overflow-hidden rounded-3xl border border-[#0e4361] bg-[#071f35] p-7 text-white shadow-sm sm:p-10">
+        <div className="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-end">
           <div>
-            <p className="text-sm font-semibold tracking-[0.18em] text-hgnBlue">Community Calendar</p>
-            <h1 className="mt-3 text-5xl font-black tracking-tight">Events</h1>
-            <p className="mt-4 max-w-3xl text-slate-600">
-              What’s happening across Haida Gwaii: meetings, markets, sports, community events and important dates.
-            </p>
+            <p className="text-[11px] font-black uppercase tracking-[0.2em] text-red-300">Haida Gwaii Community Calendar</p>
+            <h1 className="mt-3 font-serif text-5xl font-bold tracking-tight sm:text-6xl">Events</h1>
+            <p className="mt-4 max-w-3xl text-stone-200">Find out what’s happening across the islands — meetings, markets, sports, performances, gatherings and important community dates.</p>
           </div>
-
-          <Link href="/submit-event" className="rounded-full bg-slate-950 px-6 py-3 text-center text-sm font-bold text-white">
-            Submit Event
-          </Link>
+          <Link href="/submit-event" className="rounded-full bg-white px-6 py-3 text-center text-sm font-black text-[#071f35]">Add an event →</Link>
         </div>
       </section>
 
       {error ? <p className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-amber-900">{error.message}</p> : null}
+
+      <section className="rounded-3xl border border-[#d9e4ea] bg-[#edf5f7] p-5 sm:p-7">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div><p className="text-[11px] font-black uppercase tracking-[0.18em] text-hgnBlue">Make plans</p><h2 className="mt-1 font-serif text-3xl font-bold text-stone-950">On this week</h2></div>
+          <Link href="/submit-event" className="text-sm font-bold text-hgnRed hover:underline">Have something happening? Add it →</Link>
+        </div>
+        {thisWeek.length ? <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">{thisWeek.map((event: any) => <a key={event.id} href={`#event-${event.id}`} className="rounded-2xl border border-white bg-white p-4 shadow-sm transition hover:border-hgnRed"><p className="text-xs font-black uppercase tracking-wide text-hgnRed">{formatEventDateRange(event)}</p><h3 className="mt-2 font-serif text-xl font-bold leading-tight">{event.title}</h3><p className="mt-2 text-sm text-stone-600">{[event.is_all_day ? "All day" : event.start_time, event.location || event.community].filter(Boolean).join(" · ")}</p></a>)}</div> : <p className="mt-4 text-sm text-stone-600">No events are published for the next seven days yet.</p>}
+      </section>
 
       <section className="grid gap-8 lg:grid-cols-[1.25fr_0.75fr]">
         <div className="rounded-3xl border bg-white p-5 shadow-sm">
@@ -89,7 +95,8 @@ export default async function EventsPage({
             {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => <div key={day}>{day}</div>)}
           </div>
 
-          <div className="mt-2 grid grid-cols-7 gap-2">
+          <div className="mt-4 overflow-x-auto pb-2">
+          <div className="min-w-[720px] grid grid-cols-7 gap-2">
             {calendarDays.map((cell) => {
               const dayEvents = cell.date ? eventsByDay[cell.key] || [] : []
               return (
@@ -113,6 +120,7 @@ export default async function EventsPage({
                 </div>
               )
             })}
+          </div>
           </div>
         </div>
 

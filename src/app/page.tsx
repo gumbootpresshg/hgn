@@ -244,6 +244,8 @@ export default async function Home() {
 
       {promotionInWindow ? <PromotionBanner settings={settings} /> : null}
 
+      <HomeUpcomingEvents hideWhenEmpty />
+
       <section className="py-4 lg:hidden">
         {main ? (
           <article className="border-b border-stone-400 pb-5">
@@ -317,7 +319,6 @@ export default async function Home() {
           </section>
         ) : null}
 
-        <HomeUpcomingEvents hideWhenEmpty />
         <HomePoll />
 
         {mobileMoreNews.length ? (
@@ -523,8 +524,7 @@ export default async function Home() {
               ))}
             </div>
           </div>
-          <HomeUpcomingEvents hideWhenEmpty />
-          <HomePoll />
+            <HomePoll />
           <section className="border-y border-stone-400 py-5">
             <p className="newspaper-kicker text-hgnRed">Support local journalism</p>
             <h2 className="mt-2 font-serif text-3xl font-bold leading-tight">Independent reporting matters.</h2>
