@@ -51,7 +51,7 @@ export default function EarthquakeAlertBanner({ compact = false }: { compact?: b
 
   if (data.active && data.alert) {
     return (
-      <section className="border-b border-amber-950 bg-amber-600 px-4 py-3 text-white">
+      <section className="border-b border-amber-950 bg-amber-600 px-4 py-2 text-white">
         <div className="mx-auto flex max-w-7xl flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div>
             <p className="text-xs font-black uppercase tracking-[0.22em] text-amber-100">Recent Earthquake</p>
