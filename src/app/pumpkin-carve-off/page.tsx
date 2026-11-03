@@ -29,9 +29,14 @@ export default async function Page() {
   const { data: entries } = await db.from('hgn_pumpkin_entries').select('*').eq('contest_id', contest.id).eq('status', 'approved').order('featured', { ascending: false }).order('created_at', { ascending: false })
   const all = (entries || []).map((entry: any) => ({ ...entry, votes: 0 })) as PumpkinEntry[]
   const votingOpen = isOpen(contest.voting_open_at, contest.voting_close_at)
+  // Once voting has closed, publish the complete ordered standings rather than
+  // leaving the leaderboard blank. The vote API rejects ballots after the close time.
+  const resultsVisible = contest.status === 'results' || Boolean(
+    contest.voting_close_at && new Date(contest.voting_close_at).getTime() <= Date.now()
+  )
   let leaders: PumpkinEntry[] = []
 
-  if (votingOpen) {
+  if (votingOpen || resultsVisible) {
     const ids = all.map(entry => entry.id)
     const { data: votes } = ids.length ? await db.from('hgn_pumpkin_votes').select('entry_id').in('entry_id', ids) : { data: [] as any[] }
     const count = new Map<string, number>()
@@ -39,7 +44,6 @@ export default async function Page() {
     leaders = [...all]
       .map(entry => ({ ...entry, votes: count.get(entry.id) || 0 }))
       .sort((a, b) => (b.votes || 0) - (a.votes || 0))
-      .slice(0, 10)
   }
 
   return <main className="newspaper-shell py-7">
