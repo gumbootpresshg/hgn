@@ -51,6 +51,7 @@ export const defaultNavigation: SiteNavEntry[] = [
     { id: "events", label: "Events", href: "/events", enabled: true, visibility: "public" },
     { id: "island-lens", label: "Island Lens", href: "/island-lens", enabled: true, visibility: "public" },
     { id: "games", label: "Games", href: "/games", enabled: true, visibility: "public" },
+    { id: "contests", label: "Contests", href: "/contests", enabled: true, visibility: "public" },
     { id: "election", label: "Election Guide", href: "/election", enabled: true, visibility: "public" },
     { id: "bc-election-2026", label: "B.C. Election Results", href: "/bc-election-2026", enabled: true, visibility: "public" },
     { id: "obituaries", label: "Obituaries", href: "/obituaries", enabled: true, visibility: "public" },
@@ -71,7 +72,7 @@ export const defaultNavigation: SiteNavEntry[] = [
 export const defaultSections: SiteSectionConfig[] = [
   ["news","News","/news"], ["opinion","Opinion","/opinion"], ["sports","Sports","/sports"], ["events","Events","/events"],
   ["marketplace","Marketplace","/marketplace"], ["obituaries","Obituaries","/obituaries"],
-  ["island-lens","Island Lens","/island-lens"], ["games","Games","/games"], ["archives","Archives","/digital-paper"], ["weather","Weather","/weather"],
+  ["island-lens","Island Lens","/island-lens"], ["games","Games","/games"], ["contests","Contests","/contests"], ["archives","Archives","/digital-paper"], ["weather","Weather","/weather"],
 ].map(([id,label,route]) => ({ id, label, route, enabled: true, visibility: "public" as Visibility, includeInApp: true, includeOnHomepage: true }))
 
 
@@ -87,6 +88,7 @@ export const defaultFooter: SiteFooterConfig = {
       { id: "events", label: "Events", href: "/events", enabled: true },
       { id: "notices", label: "Notices", href: "/notices", enabled: true },
       { id: "games", label: "Games", href: "/games", enabled: true },
+      { id: "contests", label: "Contests", href: "/contests", enabled: true },
       { id: "marketplace", label: "Marketplace", href: "/marketplace", enabled: true },
       { id: "archives", label: "Archives", href: "/digital-paper", enabled: true },
     ]},
@@ -116,11 +118,17 @@ function addNewGamesLinks(navigation: SiteNavEntry[], sections: SiteSectionConfi
     if (entry.id !== "community") return entry
     const children = [...(entry.children || [])]
     if (!children.some((child) => child.id === "games")) children.push({ id: "games", label: "Games", href: "/games", enabled: true, visibility: "public" as Visibility })
+    if (!children.some((child) => child.id === "contests")) children.push({ id: "contests", label: "Contests", href: "/contests", enabled: true, visibility: "public" as Visibility })
     if (!children.some((child) => child.id === "bc-election-2026")) children.push({ id: "bc-election-2026", label: "B.C. Election Results", href: "/bc-election-2026", enabled: true, visibility: "public" as Visibility })
     return { ...entry, children }
   })
-  const nextSections = sections.some((section) => section.id === "games") ? sections : [...sections, { id: "games", label: "Games", route: "/games", enabled: true, visibility: "public" as Visibility, includeInApp: true, includeOnHomepage: true }]
-  const groups = footer.groups.map((group) => group.id !== "community" || group.links.some((link) => link.id === "games") ? group : { ...group, links: [...group.links, { id: "games", label: "Games", href: "/games", enabled: true }] })
+  const nextSections = sections.some((section) => section.id === "contests")
+    ? sections
+    : [...sections, { id: "contests", label: "Contests", route: "/contests", enabled: true, visibility: "public" as Visibility, includeInApp: true, includeOnHomepage: true }]
+  const groups = footer.groups.map((group) => {
+    if (group.id !== "community" || group.links.some((link) => link.id === "contests")) return group
+    return { ...group, links: [...group.links, { id: "contests", label: "Contests", href: "/contests", enabled: true }] }
+  })
   return { nav, nextSections, footer: { ...footer, groups } }
 }
 
