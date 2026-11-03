@@ -1,4 +1,4 @@
-import { formatPrice } from "@/lib/marketplace-options"
+import { formatPrice, haidaGwaiiCommunities } from "@/lib/marketplace-options"
 import { nonNewsPageMetadata } from "@/lib/page-metadata"
 export const metadata = nonNewsPageMetadata("Marketplace", "Browse local classifieds, jobs, services and items for sale on Haida Gwaii.", "/marketplace")
 import Link from "next/link"
@@ -51,7 +51,12 @@ export default async function MarketplacePage({
   })
 
   const configuredTowns = (settings || []).filter((item: any) => item.setting_type === "town").map((item: any) => item.label)
-  const towns = configuredTowns.length ? configuredTowns : Array.from(new Set(allListings.map((item: any) => item.town || item.location).filter(Boolean))).sort()
+  // Keep the full island list visible even before a town has its first listing.
+  const towns = Array.from(new Set([
+    ...haidaGwaiiCommunities,
+    ...configuredTowns,
+    ...allListings.map((item: any) => item.town || item.location).filter(Boolean),
+  ]))
   const configuredCategories = (settings || []).filter((item: any) => item.setting_type === "marketplace_category" && item.slug !== "all").map((item: any) => ({ label: item.label, slug: item.slug, icon: categoryIcon(item.slug) }))
   const publicCategories = configuredCategories.length ? configuredCategories : []
   const promoted = allListings.filter((item: any) => item.is_featured).slice(0, 3)

@@ -5,6 +5,8 @@ import { supabase } from "@/lib/supabase"
 import { fetchPublicEvents } from "@/lib/public-events"
 import { buildCalendarDays, eventDayKeysInRange, eventOverlapsRange, formatEventDateRange, formatMonthTitle } from "@/lib/events"
 
+const eventCommunities = ["Daajing Giids", "Skidegate", "Tlell", "Port Clements", "Masset", "Old Massett", "Sandspit", "Island-wide", "Other"]
+
 export const revalidate = 60
 
 export default async function EventsPage({
@@ -36,7 +38,8 @@ export default async function EventsPage({
   const todayKey = new Date().toISOString().slice(0, 10)
   const weekEnd = new Date(Date.now() + 8 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
   const thisWeek = publishedEvents.filter((event: any) => eventOverlapsRange(event, todayKey, weekEnd)).slice(0, 8)
-  const communities = Array.from(new Set(publishedEvents.map((event: any) => event.community).filter(Boolean))).sort()
+  // Filters should always include every island community, not just places with an event this month.
+  const communities = Array.from(new Set([...eventCommunities, ...publishedEvents.map((event: any) => event.community).filter(Boolean)]))
   const selectedCommunity = params?.community || ""
 
   const events = selectedCommunity
