@@ -193,7 +193,9 @@ export default async function Home() {
   secondary.forEach((article) => desktopUsed.add(article.slug))
   if (opinion?.slug) desktopUsed.add(opinion.slug)
 
-  const briefs = chronological.filter((article) => !desktopUsed.has(article.slug)).slice(0, 5)
+  // The Latest strip is a news-only headline feed. Columns, obituaries, opinion,
+  // sports and other verticals have their own dedicated places on the homepage.
+  const briefs = chronological.filter((article) => isLocalNews(article) && !desktopUsed.has(article.slug)).slice(0, 5)
   briefs.forEach((article) => desktopUsed.add(article.slug))
 
   const photoRailStories = secondary
