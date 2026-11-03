@@ -20,6 +20,7 @@ export default async function EventsPage({
   const year = selectedMonth.getUTCFullYear()
   const month = selectedMonth.getUTCMonth()
   const monthKey = `${year}-${String(month + 1).padStart(2, "0")}`
+  const currentMonthKey = new Date(Date.UTC(now.getFullYear(), now.getMonth(), 1)).toISOString().slice(0, 7)
 
   const start = new Date(Date.UTC(year, month, 1)).toISOString().slice(0, 10)
   const end = new Date(Date.UTC(year, month + 1, 1)).toISOString().slice(0, 10)
@@ -60,12 +61,12 @@ export default async function EventsPage({
 
   return (
     <main className="mx-auto max-w-7xl space-y-8 px-6 py-8">
-      <section className="overflow-hidden rounded-3xl border border-[#0e4361] bg-[#071f35] p-7 text-white shadow-sm sm:p-10">
+      <section className="overflow-hidden rounded-3xl border border-[#0e4361] bg-[#071f35] p-5 text-white shadow-sm sm:p-7">
         <div className="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-end">
           <div>
             <p className="text-[11px] font-black uppercase tracking-[0.2em] text-red-300">Haida Gwaii Community Calendar</p>
-            <h1 className="mt-3 font-serif text-5xl font-bold tracking-tight sm:text-6xl">Events</h1>
-            <p className="mt-4 max-w-3xl text-stone-200">Find out what’s happening across the islands — meetings, markets, sports, performances, gatherings and important community dates.</p>
+            <h1 className="mt-2 font-serif text-4xl font-bold tracking-tight sm:text-5xl">Events</h1>
+            <p className="mt-3 max-w-3xl text-sm leading-6 text-stone-200">Find out what’s happening across the islands — meetings, markets, sports, performances, gatherings and important community dates.</p>
           </div>
           <Link href="/submit-event" className="rounded-full bg-white px-6 py-3 text-center text-sm font-black text-[#071f35]">Add an event →</Link>
         </div>
@@ -81,16 +82,17 @@ export default async function EventsPage({
         {thisWeek.length ? <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">{thisWeek.map((event: any) => <a key={event.id} href={`#event-${event.id}`} className="rounded-2xl border border-white bg-white p-4 shadow-sm transition hover:border-hgnRed"><p className="text-xs font-black uppercase tracking-wide text-hgnRed">{formatEventDateRange(event)}</p><h3 className="mt-2 font-serif text-xl font-bold leading-tight">{event.title}</h3><p className="mt-2 text-sm text-stone-600">{[event.is_all_day ? "All day" : event.start_time, event.location || event.community].filter(Boolean).join(" · ")}</p></a>)}</div> : <p className="mt-4 text-sm text-stone-600">No events are published for the next seven days yet.</p>}
       </section>
 
-      <section className="grid gap-8 lg:grid-cols-[1.25fr_0.75fr]">
-        <div className="rounded-3xl border bg-white p-5 shadow-sm">
+      <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_250px]">
+        <div className="rounded-3xl border bg-white p-4 shadow-sm sm:p-5">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b pb-4">
             <div>
               <p className="text-xs font-black uppercase tracking-[0.18em] text-hgnBlue">Calendar</p>
               <h2 className="text-3xl font-black">{formatMonthTitle(selectedMonth)}</h2>
             </div>
-            <div className="flex gap-2">
-              <Link href={`/events?month=${previous}${selectedCommunity ? `&community=${encodeURIComponent(selectedCommunity)}` : ""}`} className="rounded-full border px-4 py-2 text-sm font-bold">← Previous</Link>
-              <Link href={`/events?month=${next}${selectedCommunity ? `&community=${encodeURIComponent(selectedCommunity)}` : ""}`} className="rounded-full border px-4 py-2 text-sm font-bold">Next →</Link>
+            <div className="flex flex-wrap gap-2">
+              {monthKey !== currentMonthKey ? <Link href={`/events?month=${currentMonthKey}${selectedCommunity ? `&community=${encodeURIComponent(selectedCommunity)}` : ""}`} className="rounded-full border border-hgnRed px-3 py-2 text-sm font-bold text-hgnRed">Today</Link> : null}
+              <Link href={`/events?month=${previous}${selectedCommunity ? `&community=${encodeURIComponent(selectedCommunity)}` : ""}`} className="rounded-full border px-3 py-2 text-sm font-bold">← Previous</Link>
+              <Link href={`/events?month=${next}${selectedCommunity ? `&community=${encodeURIComponent(selectedCommunity)}` : ""}`} className="rounded-full border px-3 py-2 text-sm font-bold">Next →</Link>
             </div>
           </div>
 
@@ -103,7 +105,7 @@ export default async function EventsPage({
             {calendarDays.map((cell) => {
               const dayEvents = cell.date ? eventsByDay[cell.key] || [] : []
               return (
-                <div key={cell.key} className={["min-h-28 rounded-2xl border p-2", cell.date ? "bg-white" : "bg-slate-50"].join(" ")}>
+                <div key={cell.key} className={["min-h-[96px] rounded-xl border p-2", cell.date ? cell.key === todayKey ? "border-hgnRed bg-red-50/40" : "bg-white" : "bg-slate-50"].join(" ")}>
                   {cell.date ? (
                     <>
                       <div className="flex items-center justify-between">
@@ -112,8 +114,8 @@ export default async function EventsPage({
                       </div>
                       <div className="mt-2 space-y-1">
                         {dayEvents.slice(0, 3).map((event: any) => (
-                          <a key={event.id} href={`#event-${event.id}`} className="block truncate rounded-lg bg-slate-100 px-2 py-1 text-left text-[11px] font-bold hover:text-hgnBlue">
-                            {event.is_all_day ? "All day · " : event.start_time ? `${event.start_time} · ` : ""}{event.title}
+                          <a key={event.id} href={`#event-${event.id}`} className="block rounded-lg bg-[#edf5f7] px-2 py-1.5 text-left text-[11px] font-bold leading-[1.2] text-[#143d59] transition hover:bg-hgnBlue hover:text-white">
+                            <span className="mr-1 text-hgnRed">{event.is_all_day ? "All day" : event.start_time || ""}</span><span className="block line-clamp-2">{event.title}</span>
                           </a>
                         ))}
                         {dayEvents.length > 3 ? <p className="text-[11px] font-bold text-slate-400">+{dayEvents.length - 3} more</p> : null}
@@ -128,7 +130,7 @@ export default async function EventsPage({
         </div>
 
         <aside className="space-y-5">
-          <section className="rounded-3xl border bg-white p-5 shadow-sm">
+          <section className="rounded-3xl border border-[#d9e4ea] bg-[#f8fbfc] p-5 shadow-sm">
             <h2 className="text-2xl font-black">Filters</h2>
             <div className="mt-4 flex flex-wrap gap-2">
               <Link href={`/events?month=${monthKey}`} className={["rounded-full px-4 py-2 text-sm font-bold", selectedCommunity ? "border" : "bg-slate-950 text-white"].join(" ")}>All communities</Link>
@@ -140,7 +142,7 @@ export default async function EventsPage({
             </div>
           </section>
 
-          <section className="rounded-3xl border bg-slate-950 p-6 text-white shadow-sm">
+          <section className="rounded-3xl border border-[#0e4361] bg-[#071f35] p-5 text-white shadow-sm">
             <p className="text-xs font-black uppercase tracking-[0.18em] text-hgnBlue">HGN Events</p>
             <h2 className="mt-2 text-2xl font-black">Got an event?</h2>
             <p className="mt-3 text-sm leading-6 text-slate-300">
