@@ -13,7 +13,12 @@ export default function PumpkinCarveOff({ contest, entries, leaders }: { contest
   const router = useRouter()
   const entriesOpen = isOpen(contest.entry_open_at, contest.entry_close_at)
   const votingOpen = isOpen(contest.voting_open_at, contest.voting_close_at)
-  const [tab, setTab] = useState<'enter' | 'vote' | 'top10'>(votingOpen ? 'vote' : entriesOpen ? 'enter' : 'top10')
+  const resultsVisible = contest.status === 'results' || Boolean(
+    contest.voting_close_at && new Date(contest.voting_close_at).getTime() <= Date.now()
+  )
+  const [tab, setTab] = useState<'enter' | 'vote' | 'top10' | 'results'>(
+    resultsVisible ? 'results' : votingOpen ? 'vote' : entriesOpen ? 'enter' : 'results'
+  )
   const [message, setMessage] = useState('')
   const [selected, setSelected] = useState<string[]>([])
   const [submitting, setSubmitting] = useState(false)
@@ -117,6 +122,7 @@ export default function PumpkinCarveOff({ contest, entries, leaders }: { contest
       {entriesOpen ? <button onClick={() => setTab('enter')} className={tab === 'enter' ? 'hgn-btn-primary' : 'rounded-full border px-5 py-3 font-bold'}>Enter a pumpkin</button> : null}
       {votingOpen ? <button onClick={() => setTab('vote')} className={tab === 'vote' ? 'hgn-btn-primary' : 'rounded-full border px-5 py-3 font-bold'}>Vote for pumpkins</button> : null}
       {votingOpen ? <button onClick={() => setTab('top10')} className={tab === 'top10' ? 'hgn-btn-primary' : 'rounded-full border px-5 py-3 font-bold'}>Top 10</button> : null}
+      {resultsVisible ? <button onClick={() => setTab('results')} className={tab === 'results' ? 'hgn-btn-primary' : 'rounded-full border px-5 py-3 font-bold'}>2026 Results</button> : null}
     </div>
 
     {message ? <p className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-medium text-amber-950">{message}</p> : null}
@@ -156,6 +162,8 @@ export default function PumpkinCarveOff({ contest, entries, leaders }: { contest
       {hasVoted ? <p className="mt-6 max-w-xl rounded-3xl border border-emerald-200 bg-emerald-50 p-6 font-bold text-emerald-900">Your ballot from this browser has been counted. Thanks for taking part!</p> : selected.length ? <section className="mt-6 max-w-xl rounded-3xl border bg-white p-6"><h3 className="font-serif text-3xl font-bold">Ready to vote?</h3><p className="mt-2 text-stone-600">No email or sign-in needed. You can cast one ballot from this browser.</p><button disabled={voting} onClick={() => void castVote()} className="hgn-btn-primary mt-5 disabled:opacity-50">{voting ? 'Casting your votes…' : 'Cast my votes'}</button></section> : null}
     </section> : null}
 
-    {votingOpen && tab === 'top10' ? <section className="mt-7"><p className="newspaper-kicker text-hgnRed">Community favourites</p><h2 className="mt-2 font-serif text-4xl font-bold">Top 10 pumpkins</h2><p className="mt-2 text-stone-600">Current leaders, updated as ballots come in.</p>{leaders.length ? <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">{leaders.map((entry, index) => <article id={`pumpkin-${entry.id}`} key={entry.id} className="scroll-mt-24 rounded-2xl border bg-white p-3"><p className="text-xs font-black text-hgnRed">#{index + 1}</p><img src={entry.photo_url} alt="" className="mt-2 aspect-square w-full object-cover" /><p className="mt-2 font-bold">{entry.title || entry.display_name}</p><p className="mt-1 text-sm font-bold text-hgnRed">{entry.votes === 1 ? '1 vote' : `${entry.votes || 0} votes`}</p><SharePumpkinButton entry={entry} onShare={sharePumpkin} /></article>)}</div> : <p className="mt-5 rounded-2xl border border-dashed p-8 text-stone-600">Votes are just getting started. Check back soon for the first Top 10.</p>}</section> : null}
+    {votingOpen && tab === 'top10' ? <section className="mt-7"><p className="newspaper-kicker text-hgnRed">Community favourites</p><h2 className="mt-2 font-serif text-4xl font-bold">Top 10 pumpkins</h2><p className="mt-2 text-stone-600">Current leaders, updated as ballots come in.</p>{leaders.length ? <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">{leaders.slice(0, 10).map((entry, index) => <article id={`pumpkin-${entry.id}`} key={entry.id} className="scroll-mt-24 rounded-2xl border bg-white p-3"><p className="text-xs font-black text-hgnRed">#{index + 1}</p><img src={entry.photo_url} alt="" className="mt-2 aspect-square w-full object-cover" /><p className="mt-2 font-bold">{entry.title || entry.display_name}</p><p className="mt-1 text-sm font-bold text-hgnRed">{entry.votes === 1 ? '1 vote' : `${entry.votes || 0} votes`}</p><SharePumpkinButton entry={entry} onShare={sharePumpkin} /></article>)}</div> : <p className="mt-5 rounded-2xl border border-dashed p-8 text-stone-600">Votes are just getting started. Check back soon for the first Top 10.</p>}</section> : null}
+
+    {resultsVisible && tab === 'results' ? <section className="mt-7"><p className="newspaper-kicker text-hgnRed">The Great Haida Gwaii Pumpkin Carve-Off</p><h2 className="mt-2 font-serif text-4xl font-bold">2026 Final Results</h2><p className="mt-2 max-w-2xl text-stone-600">Voting has closed. Here are the final standings for every approved pumpkin entered in the 2026 contest. Thanks to everyone who carved, entered and voted.</p>{leaders.length ? <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{leaders.map((entry, index) => <article id={`pumpkin-${entry.id}`} key={entry.id} className="scroll-mt-24 overflow-hidden rounded-2xl border bg-white shadow-sm"><div className="relative"><img src={entry.photo_url} alt={entry.title || 'Pumpkin entry'} className="aspect-square w-full object-cover" /><p className="absolute left-3 top-3 rounded-full bg-stone-950 px-3 py-1 text-sm font-black text-white">#{index + 1}</p></div><div className="p-4"><p className="font-bold">{entry.title || entry.display_name}</p><p className="mt-1 text-sm font-bold text-hgnRed">{entry.votes === 1 ? '1 vote' : `${entry.votes || 0} votes`}</p><SharePumpkinButton entry={entry} onShare={sharePumpkin} /></div></article>)}</div> : <p className="mt-5 rounded-2xl border border-dashed p-8 text-stone-600">Final results are being prepared.</p>}</section> : null}
   </>
 }
