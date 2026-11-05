@@ -31,13 +31,15 @@ export default async function HomeUpcomingEvents({ hideWhenEmpty = false }: { hi
   return (
     <section className="my-3 overflow-hidden rounded-2xl border border-[#0e4361] bg-[#071f35] text-white shadow-sm sm:my-4 sm:rounded-3xl">
       <div className="grid gap-3 p-4 sm:p-5 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
-        <div className="flex items-start justify-between gap-3 lg:block">
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-red-300 sm:text-[11px]">What’s on Haida Gwaii</p>
-            <h2 className="mt-1 font-serif text-[2rem] font-bold leading-none sm:text-3xl">This week</h2>
-            <p className="mt-2 hidden max-w-md text-sm leading-5 text-stone-200 sm:block">Markets, meetings, performances, sports and island gatherings — all in one place.</p>
+        <div>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-red-300 sm:text-[11px]">What’s on Haida Gwaii</p>
+              <h2 className="mt-1 font-serif text-[2rem] font-bold leading-none sm:text-3xl">This week</h2>
+            </div>
+            <Link href="/events" className="shrink-0 rounded-full bg-white px-3 py-2 text-xs font-black text-[#071f35] sm:hidden">Calendar →</Link>
           </div>
-          <Link href="/events" className="shrink-0 rounded-full bg-white px-3 py-2 text-xs font-black text-[#071f35] sm:hidden">Calendar →</Link>
+          <p className="mt-2 hidden max-w-md text-sm leading-5 text-stone-200 sm:block">Markets, meetings, performances, sports and island gatherings — all in one place.</p>
           <div className="mt-4 hidden flex-wrap gap-2 sm:flex">
             <Link href="/events" className="rounded-full bg-white px-4 py-2 text-sm font-black text-[#071f35]">View calendar →</Link>
             <Link href="/submit-event" className="rounded-full border border-white/50 px-4 py-2 text-sm font-black text-white">Add an event</Link>
