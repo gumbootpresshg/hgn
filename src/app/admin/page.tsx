@@ -6,6 +6,8 @@ import { ArrowRight, ExternalLink, Search } from "lucide-react"
 import { adminGroups, adminTools, normalizeAdminRole, type AdminRole } from "@/lib/admin-workspaces"
 import { supabase } from "@/lib/supabase"
 
+const NEW_WINDOW_MS = 30 * 24 * 60 * 60 * 1000
+
 export default function AdminDashboardPage() {
   const [role, setRole] = useState<AdminRole>("publisher")
   const [name, setName] = useState("")
@@ -30,12 +32,13 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     let active = true
     void (async () => {
+      const since = new Date(Date.now() - NEW_WINDOW_MS).toISOString()
       const [contacts, letters, events, tips, obits] = await Promise.all([
-        supabase.from("submission_inbox").select("id", { count: "exact", head: true }).eq("submission_type", "contact_message").is("archived_at", null).is("read_at", null),
-        supabase.from("letters_to_editor").select("id", { count: "exact", head: true }).in("status", ["new", "pending", "submitted", "review"]),
-        supabase.from("event_submissions").select("id", { count: "exact", head: true }).in("status", ["new", "pending", "submitted", "review"]),
-        supabase.from("story_tips").select("id", { count: "exact", head: true }).in("status", ["new", "pending", "submitted", "review"]),
-        supabase.from("obituaries").select("id", { count: "exact", head: true }).in("status", ["new", "pending", "submitted", "review"]),
+        supabase.from("submission_inbox").select("id", { count: "exact", head: true }).eq("submission_type", "contact_message").is("archived_at", null).is("read_at", null).gte("created_at", since),
+        supabase.from("letters_to_editor").select("id", { count: "exact", head: true }).in("status", ["new", "pending", "submitted", "review"]).gte("created_at", since),
+        supabase.from("event_submissions").select("id", { count: "exact", head: true }).in("status", ["new", "pending", "submitted", "review"]).gte("created_at", since),
+        supabase.from("story_tips").select("id", { count: "exact", head: true }).in("status", ["new", "pending", "submitted", "review"]).gte("created_at", since),
+        supabase.from("obituaries").select("id", { count: "exact", head: true }).in("status", ["new", "pending", "submitted", "review"]).gte("created_at", since),
       ])
       if (!active) return
       setIncoming({
@@ -61,26 +64,25 @@ export default function AdminDashboardPage() {
   return <main className="mx-auto max-w-7xl space-y-8 px-4 py-8 sm:px-6">
     <section className="overflow-hidden rounded-3xl border bg-slate-950 p-7 text-white shadow-sm sm:p-9">
       <p className="text-xs font-black uppercase tracking-[.2em] text-blue-300">{workspaceName} workspace</p>
-      <h1 className="mt-3 font-serif text-4xl font-bold sm:text-5xl">{name ? `Welcome, ${name}` : "HGN control room"}</h1>
+      <h1 className="mt-3 font-serif text-4xl font-bold sm:text-5xl">{name ? \`Welcome, \${name}\` : "HGN control room"}</h1>
       <p className="mt-3 max-w-3xl text-slate-300">The tools you need most are up front. Everything else remains searchable without turning the newsroom into a hallway of unlabeled doors.</p>
       <div className="mt-6 flex flex-wrap gap-3">
-        <button type="button" onClick={() => setShowAll(false)} className={`rounded-full px-4 py-2 text-sm font-black ${!showAll ? "bg-white text-slate-950" : "border border-slate-600"}`}>My workspace</button>
-        <button type="button" onClick={() => setShowAll(true)} className={`rounded-full px-4 py-2 text-sm font-black ${showAll ? "bg-white text-slate-950" : "border border-slate-600"}`}>All connected tools</button>
+        <button type="button" onClick={() => setShowAll(false)} className={\`rounded-full px-4 py-2 text-sm font-black \${!showAll ? "bg-white text-slate-950" : "border border-slate-600"}\`}>My workspace</button>
+        <button type="button" onClick={() => setShowAll(true)} className={\`rounded-full px-4 py-2 text-sm font-black \${showAll ? "bg-white text-slate-950" : "border border-slate-600"}\`}>All connected tools</button>
         <a href="https://office.haidagwaiinews.com" target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full bg-blue-300 px-4 py-2 text-sm font-black text-slate-950 hover:bg-blue-200">HGN Operations <ExternalLink size={15}/></a>
       </div>
     </section>
 
-
     <section className="grid gap-4 sm:grid-cols-2">
       <Link href="/admin/inbox" className="rounded-3xl border bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-hgnBlue hover:shadow-md">
-        <p className="text-xs font-black uppercase tracking-[.18em] text-hgnBlue">Incoming</p>
+        <p className="text-xs font-black uppercase tracking-[.18em] text-hgnBlue">New in the last 30 days</p>
         <div className="mt-2 flex items-end justify-between gap-4"><h2 className="font-serif text-3xl font-bold">Inbox</h2><strong className="text-4xl">{incoming.unread}</strong></div>
-        <p className="mt-2 text-sm text-slate-600">Unread reader messages that may need a reply.</p>
+        <p className="mt-2 text-sm text-slate-600">Unread reader messages. Older mail is kept in the Inbox backlog.</p>
       </Link>
       <Link href="/admin/submissions" className="rounded-3xl border bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-hgnBlue hover:shadow-md">
-        <p className="text-xs font-black uppercase tracking-[.18em] text-hgnBlue">Incoming</p>
+        <p className="text-xs font-black uppercase tracking-[.18em] text-hgnBlue">New in the last 30 days</p>
         <div className="mt-2 flex items-end justify-between gap-4"><h2 className="font-serif text-3xl font-bold">Submissions</h2><strong className="text-4xl">{incoming.submissions}</strong></div>
-        <p className="mt-2 text-sm text-slate-600">Items waiting for editorial or community review.</p>
+        <p className="mt-2 text-sm text-slate-600">New items needing editorial or community review.</p>
       </Link>
     </section>
 
