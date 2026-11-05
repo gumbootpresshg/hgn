@@ -19,7 +19,7 @@ async function clients(req: NextRequest) {
   const token = (req.headers.get("authorization") || "").replace(/^Bearer\s+/, "");
   if (!token) throw new Error("Login required.");
   const auth = createClient(url, anon, {
-    global: { headers: { Authorization: \`Bearer \${token}\` } },
+    global: { headers: { Authorization: `Bearer ${token}` } },
     auth: { persistSession: false },
   });
   const { data: { user } } = await auth.auth.getUser(token);
