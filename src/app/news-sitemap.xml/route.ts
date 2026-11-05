@@ -1,49 +1,68 @@
 import { supabase } from "@/lib/supabase";
-import { absoluteUrl, xmlEscape } from "@/lib/site";
+import {
+  includeInNewsSitemap,
+  NEWS_SITEMAP_LIMIT,
+  newsSitemapCutoff,
+  renderNewsSitemap,
+  type NewsSitemapArticle,
+} from "@/lib/news-sitemap";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+const NEWS_COLUMNS = "title,slug,published_at,editorial_updated_at,google_news_include";
+const PUBLISHED_COLUMNS = "title,slug,published_at,editorial_updated_at";
+
+async function loadRecentNewsArticles(cutoffIso: string) {
+  const cutoffMs = new Date(cutoffIso).getTime();
+  const primary = await supabase
+    .from("articles")
+    .select(NEWS_COLUMNS)
+    .eq("status", "published")
+    .or("google_news_include.eq.true,google_news_include.is.null")
+    .not("slug", "is", null)
+    .gte("published_at", cutoffIso)
+    .order("published_at", { ascending: false })
+    .limit(NEWS_SITEMAP_LIMIT);
+
+  let rows = primary.data as NewsSitemapArticle[] | null;
+  if (primary.error) {
+    // A failed select used to become a 200 empty urlset. The regular sitemap
+    // already reads published stories without the Google News columns.
+    console.error("Google News sitemap query failed; retrying without news columns.", primary.error.message);
+    const fallback = await supabase
+      .from("articles")
+      .select(PUBLISHED_COLUMNS)
+      .eq("status", "published")
+      .not("slug", "is", null)
+      .gte("published_at", cutoffIso)
+      .order("published_at", { ascending: false })
+      .limit(NEWS_SITEMAP_LIMIT);
+    if (fallback.error) {
+      console.error("Google News sitemap fallback query failed.", fallback.error.message);
+      return [];
+    }
+    rows = fallback.data as NewsSitemapArticle[] | null;
+  }
+
+  return (rows || []).filter((article) => includeInNewsSitemap(article, cutoffMs));
+}
 
 export async function GET() {
-  const twoDaysAgo = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+  const articles = await loadRecentNewsArticles(newsSitemapCutoff());
+  const xml = renderNewsSitemap(articles);
 
-  const { data: articles } = await supabase
-    .from("articles")
-    .select("title,google_news_headline,slug,published_at,updated_at,editorial_updated_at,status,google_news_include")
-    .eq("status", "published")
-    .eq("google_news_include", true)
-    .not("slug", "is", null)
-    .gte("published_at", twoDaysAgo)
-    .order("published_at", { ascending: false })
-    .limit(1000);
-
-  const urls = (articles || [])
-    .filter((article: any) => article.slug && article.title && article.published_at)
-    .map((article: any) => {
-      const loc = absoluteUrl(`/articles/${article.slug}`);
-      const publishedAt = new Date(article.published_at).toISOString();
-      return [
-        "<url>",
-        `<loc>${xmlEscape(loc)}</loc>`,
-        "<news:news>",
-        "<news:publication>",
-        "<news:name>Haida Gwaii News</news:name>",
-        "<news:language>en</news:language>",
-        "</news:publication>",
-        `<news:publication_date>${publishedAt}</news:publication_date>`,
-        `<news:title>${xmlEscape(article.google_news_headline || article.title)}</news:title>`,
-        "</news:news>",
-        article.editorial_updated_at ? `<lastmod>${new Date(article.editorial_updated_at).toISOString()}</lastmod>` : "",
-        "</url>",
-      ].join("");
-    })
-    .join("");
-
-  const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:news="http://www.google.com/schemas/sitemap-news/0.9">${urls}</urlset>`;
+  // An empty file must not sit in the CDN. The previous 15-minute cache, plus
+  // an hour of stale-while-revalidate, kept serving zero <url> entries after
+  // a story was published.
+  const cacheControl = articles.length
+    ? "public, max-age=0, s-maxage=120, must-revalidate"
+    : "private, no-store";
 
   return new Response(xml, {
     headers: {
       "Content-Type": "application/xml; charset=utf-8",
-      "Cache-Control": "public, s-maxage=900, stale-while-revalidate=3600",
+      "Cache-Control": cacheControl,
     },
   });
 }
