@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   description: SITE.description,
   applicationName: SITE.name,
   category: "news",
-  alternates: { canonical: "/", types: { "application/rss+xml": absoluteUrl("/rss.xml") } },
+  alternates: { canonical: "/", types: { "application/rss+xml": absoluteUrl("/rss.xml"), "application/atom+xml": absoluteUrl("/atom.xml") } },
   openGraph: { type: "website", locale: "en_CA", siteName: SITE.name, title: SITE.name, description: SITE.description, url: SITE.url, images: [{ url: absoluteUrl(SITE.defaultImage), width: 1200, height: 630, alt: SITE.name }] },
   twitter: { card: "summary_large_image", title: SITE.name, description: SITE.description, images: [absoluteUrl(SITE.defaultImage)] },
   robots: { index: true, follow: true, googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1, "max-video-preview": -1 } },
