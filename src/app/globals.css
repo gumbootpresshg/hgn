@@ -128,3 +128,13 @@ html[data-masthead="compact"] #hgn-masthead .masthead-wordmark { font-size: clam
 html[data-masthead="compact"] #hgn-masthead > div:last-child { padding-top: 1rem; padding-bottom: 1rem; }
 html[data-theme="high-contrast"] a { text-decoration-thickness: 2px; }
 html[data-theme="high-contrast"] .newspaper-nav-link { text-decoration: underline; }
+
+
+/* Legacy editor fallback: old saved articles may contain a wrapper span with one child span per paragraph. */
+.article-body > span > span {
+  display: block;
+  margin: 0 0 1.15rem;
+}
+.article-body > span > span:empty {
+  display: none;
+}
