@@ -1,3 +1,4 @@
+import { articleStoryImage } from "@/lib/article-images";
 import { absoluteUrl, SITE, stripHtml } from "@/lib/site";
 
 type Article = {
@@ -30,7 +31,7 @@ export default function NewsArticleJsonLd({ article, authorUrl, authors }: { art
     article.meta_description ||
     stripHtml(article.excerpt || "").slice(0, 180) ||
     SITE.description;
-  const image = article.og_image_url || article.cover_image_url || article.image_url || SITE.defaultImage;
+  const image = articleStoryImage(article) || SITE.defaultImage;
   const url = article.slug ? absoluteUrl(`/articles/${article.slug}`) : SITE.url;
   const authorName = article.author_name || article.author || SITE.name;
   const isStaff = /^(staff report|submitted\b|haida gwaii news|hgn)$/i.test(authorName.trim());

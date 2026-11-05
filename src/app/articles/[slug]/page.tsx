@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import NewsArticleJsonLd from "@/components/NewsArticleJsonLd";
+import { articleStoryImage } from "@/lib/article-images";
 import { absoluteUrl, stripHtml, SITE } from "@/lib/site";
 import { sanitizeArticleHtml } from "@/lib/sanitize-html";
 import Image from "next/image";
@@ -72,7 +73,7 @@ export async function generateMetadata({ params }: PageProps) {
   const typed = article as Article;
   const title = typed.seo_title || typed.title || SITE.name;
   const description = articleDescription(typed);
-  const image = typed.og_image_url || typed.cover_image_url || typed.image_url || SITE.defaultImage;
+  const image = articleStoryImage(typed) || SITE.defaultImage;
   const url = typed.canonical_url || absoluteUrl(`/articles/${typed.slug || slug}`);
   const socialTitle = typed.social_title || title;
   const socialDescription = typed.social_description || description;
@@ -114,7 +115,7 @@ export default async function ArticlePage({ params }: PageProps) {
 
   const publishingSettings = await getPublishingSettings();
   const typed = article as Article;
-  const image = typed.image_url || typed.cover_image_url || typed.og_image_url;
+  const image = articleStoryImage(typed);
   const author = displayAuthor(typed) || typed.author_name || typed.author || SITE.name;
   const linkableAuthor = !/^(submitted\b|staff report|haida gwaii news)$/i.test(author.trim())
   const [{ data: writer }, { data: coAuthorRows }] = await Promise.all([
