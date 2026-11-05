@@ -9,9 +9,18 @@ function normalizeEditorParagraphBlocks(html: string) {
   // Browsers use div blocks for Enter inside contentEditable. Normalize them
   // before sanitizing because unsupported wrappers would otherwise be removed
   // along with every paragraph boundary.
-  return html
+  const withBlockParagraphs = html
     .replace(/<div\b[^>]*>/gi, "<p>")
     .replace(/<\/div>/gi, "</p>")
+
+  // Some editor sessions save every paragraph as a sibling span inside one
+  // wrapper span. Turn that exact root-level pattern into semantic paragraphs
+  // before sanitizing, while leaving ordinary inline formatting spans alone.
+  return withBlockParagraphs.replace(
+    /^(\s*)<span\b[^>]*>\s*((?:<span\b[^>]*>[\s\S]*?<\\/span>\s*)+)<\\/span>\s*$/i,
+    (_match, leading, paragraphs) =>
+      leading + paragraphs.replace(/<span\b[^>]*>([\s\S]*?)<\\/span>/gi, "<p>$1</p>")
+  )
 }
 
 function restorePlainTextParagraphs(html: string) {
