@@ -37,11 +37,15 @@ export default function AdminDashboardPage() {
       const [contacts, letters, events, tips, obits] = await Promise.all([
         supabase.from("submission_inbox").select("id", { count: "exact", head: true }).eq("submission_type", "contact_message").is("archived_at", null).is("read_at", null).gte("created_at", since),
         supabase.from("letters_to_editor").select("id", { count: "exact", head: true }).in("status", ["new", "pending", "submitted", "review"]).gte("created_at", since),
-        supabase.from("event_submissions").select("id", { count: "exact", head: true }).in("status", ["new", "pending", "submitted", "review"]).gte("created_at", since),
+        supabase.from("event_submissions").select("id, admin_notes").in("status", ["new", "pending", "submitted", "review"]).gte("created_at", since),
         supabase.from("story_tips").select("id", { count: "exact", head: true }).in("status", ["new", "pending", "submitted", "review"]).gte("created_at", since),
         supabase.from("obituaries").select("id", { count: "exact", head: true }).in("status", ["new", "pending", "submitted", "review"]).gte("created_at", since),
       ])
-      if (active) setIncoming({ unread: contacts.count || 0, submissions: (letters.count || 0) + (events.count || 0) + (tips.count || 0) + (obits.count || 0) })
+      // Keep the dashboard badge aligned with the actual Submissions queue.
+      // Automated AI Desk event research is intentionally excluded there, so
+      // it must never inflate this count.
+      const readerEvents = (events.data || []).filter((event: any) => !/^(AI Desk research promotion|Created from AI Desk item)/.test(String(event.admin_notes || ""))).length
+      if (active) setIncoming({ unread: contacts.count || 0, submissions: (letters.count || 0) + readerEvents + (tips.count || 0) + (obits.count || 0) })
     })()
     return () => { active = false }
   }, [])
