@@ -237,10 +237,10 @@ export default async function Home() {
       <section className="border-b border-stone-900 pb-3">
         <div className="flex items-center gap-3 whitespace-nowrap text-xs">
           <span className="shrink-0 font-bold uppercase tracking-[0.16em] text-hgnRed">Latest</span>
-          <div className="mobile-headline-strip flex min-w-0 flex-1 gap-5 overflow-x-auto text-stone-700">
-            {briefs.slice(0, 3).map((article) => <Link key={article.id} href={`/articles/${article.slug}`} className="shrink-0 max-w-[18rem] overflow-hidden text-ellipsis hover:text-hgnRed md:max-w-[24rem]">{article.title}</Link>)}
+          <div className="min-w-0 flex-1 overflow-hidden text-stone-700">
+            {briefs.slice(0, 3).map((article, index) => <Link key={article.id} href={`/articles/${article.slug}`} className={(index ? "hidden md:inline md:pr-5 " : "block truncate ") + "hover:text-hgnRed"}>{article.title}</Link>)}
           </div>
-          <Link href="/articles" className="ml-auto shrink-0 font-bold">All stories →</Link>
+          <Link href="/articles" className="ml-auto shrink-0 font-bold"><span className="sm:hidden">More →</span><span className="hidden sm:inline">All stories →</span></Link>
         </div>
       </section>
 
