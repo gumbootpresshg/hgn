@@ -2,6 +2,7 @@ import Link from "next/link";
 import DistributionTestButton from "@/components/admin/DistributionTestButton";
 import { supabase } from "@/lib/supabase";
 import { absoluteUrl } from "@/lib/site";
+import { INDEXNOW_KEY_PATH } from "@/lib/indexnow";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +15,6 @@ export default async function DistributionPage() {
   const latestUrl = latest?.slug ? absoluteUrl(`/articles/${latest.slug}`) : absoluteUrl("/");
   const googleVerified = Boolean(process.env.GOOGLE_SITE_VERIFICATION);
   const bingVerified = Boolean(process.env.BING_SITE_VERIFICATION);
-  const indexNow = Boolean(process.env.INDEXNOW_KEY);
   return <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
     <section className="border-b-4 border-double border-black pb-7"><p className="text-sm font-black uppercase tracking-[0.18em]">Publisher tools</p><h1 className="mt-2 font-serif text-5xl font-black">News Distribution</h1><p className="mt-3 max-w-3xl text-lg leading-8 text-stone-600">One place to check whether HGN is giving search engines, news aggregators and feed readers the signals they need. Publishing stays editorial. The plumbing stays automatic.</p></section>
     <section className="mt-8 grid gap-4 md:grid-cols-2">
@@ -24,12 +24,12 @@ export default async function DistributionPage() {
       <Status ok label="RSS + Atom feeds" detail="Main, News, Opinion and Sports feeds are available for readers and aggregators." />
       <Status ok={googleVerified} label="Google Search Console verification" detail={googleVerified ? "GOOGLE_SITE_VERIFICATION is configured." : "Add GOOGLE_SITE_VERIFICATION in Vercel after verifying the property in Google Search Console."} />
       <Status ok={bingVerified} label="Bing Webmaster verification" detail={bingVerified ? "BING_SITE_VERIFICATION is configured." : "Add BING_SITE_VERIFICATION in Vercel if Bing asks for a meta verification token."} />
-      <Status ok={indexNow} label="IndexNow" detail={indexNow ? "Published stories can notify participating search engines automatically." : "Add INDEXNOW_KEY in Vercel to enable instant URL notifications."} />
+      <Status ok label="IndexNow" detail={`Publishing or updating a live article submits that URL after it returns HTTP 200. The key file is ${INDEXNOW_KEY_PATH}.`} />
       <Status ok label="Author identity" detail="Writer profiles now expose canonical profile metadata and Person structured data." />
     </section>
     <section className="mt-8 grid gap-6 lg:grid-cols-[1fr_1fr]">
       <div className="rounded-2xl border bg-white p-6"><h2 className="font-serif text-2xl font-black">Public endpoints</h2><div className="mt-4 grid gap-2 text-sm font-semibold">
-        <a className="hover:underline" href="/news-sitemap.xml" target="_blank">Google News sitemap →</a><a className="hover:underline" href="/sitemap.xml" target="_blank">Search sitemap →</a><a className="hover:underline" href="/rss.xml" target="_blank">Main RSS →</a><a className="hover:underline" href="/feeds/news.xml" target="_blank">News RSS →</a><a className="hover:underline" href="/feeds/opinion.xml" target="_blank">Opinion RSS →</a><a className="hover:underline" href="/feeds/sports.xml" target="_blank">Sports RSS →</a><a className="hover:underline" href="/atom.xml" target="_blank">Atom feed →</a>
+        <a className="hover:underline" href="/news-sitemap.xml" target="_blank">Google News sitemap →</a><a className="hover:underline" href="/sitemap.xml" target="_blank">Search sitemap →</a><a className="hover:underline" href={INDEXNOW_KEY_PATH} target="_blank">IndexNow key →</a><a className="hover:underline" href="/rss.xml" target="_blank">Main RSS →</a><a className="hover:underline" href="/feeds/news.xml" target="_blank">News RSS →</a><a className="hover:underline" href="/feeds/opinion.xml" target="_blank">Opinion RSS →</a><a className="hover:underline" href="/feeds/sports.xml" target="_blank">Sports RSS →</a><a className="hover:underline" href="/atom.xml" target="_blank">Atom feed →</a>
       </div></div>
       <div className="rounded-2xl border bg-white p-6"><h2 className="font-serif text-2xl font-black">Latest published story</h2><p className="mt-3 font-bold">{latest?.title || "No published article found"}</p><p className="mt-1 break-all text-sm text-stone-500">{latestUrl}</p><div className="mt-5"><DistributionTestButton url={latestUrl} /></div></div>
     </section>

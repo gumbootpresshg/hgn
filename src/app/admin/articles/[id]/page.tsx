@@ -8,6 +8,7 @@ import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import RichTextEditor from "@/components/admin/RichTextEditor";
 import { generateSeoFields, seoReadiness } from "@/lib/seo-generator";
+import { notifyIndexNow } from "@/lib/indexnow-notify";
 
 type Article = Record<string, any>;
 
@@ -138,19 +139,6 @@ const blankArticle: Article = {
   google_news_include: true,
   seo_generated_at: null,
 };
-
-async function notifyIndexNow(path: string) {
-  try {
-    const { data } = await supabase.auth.getSession();
-    const token = data.session?.access_token;
-    if (!token) return;
-    await fetch("/api/distribution/indexnow", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ url: path }),
-    });
-  } catch {}
-}
 
 export default function ArticleEditorPage() {
   const params = useParams<{ id: string }>();
