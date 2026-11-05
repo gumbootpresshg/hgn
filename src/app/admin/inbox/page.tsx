@@ -75,8 +75,8 @@ export default function ContactMessagesPage() {
   async function startReply(item: ContactMessage) {
     if (!item.read_at) await updateItems([item], { read_at: new Date().toISOString(), status: "read" });
     setReplyingId(item.id);
-    setReplySubject(item.last_reply_subject || \`Re: \${String(item.title || "Your message to Haida Gwaii News").replace(/^Contact:\s*/i, "")}\`);
-    setReplyBody(\`Hi \${item.sender_name || "there"},\n\n\n\nThanks,\nHaida Gwaii News\`);
+    setReplySubject(item.last_reply_subject || `Re: ${String(item.title || "Your message to Haida Gwaii News").replace(/^Contact:\s*/i, "")}`);
+    setReplyBody(`Hi ${item.sender_name || "there"},\n\n\n\nThanks,\nHaida Gwaii News`);
   }
 
   async function sendReply(item: ContactMessage) {
@@ -85,23 +85,23 @@ export default function ContactMessagesPage() {
     const { data: sessionData } = await supabase.auth.getSession();
     const token = sessionData.session?.access_token;
     if (!token) { setMessage("Your login session could not be verified. Please sign in again."); setWorking(""); return; }
-    const response = await fetch(\`/api/admin/contact/\${encodeURIComponent(item.id)}/reply\`, {
-      method: "POST", headers: { "content-type": "application/json", authorization: \`Bearer \${token}\` },
+    const response = await fetch(`/api/admin/contact/${encodeURIComponent(item.id)}/reply`, {
+      method: "POST", headers: { "content-type": "application/json", authorization: `Bearer ${token}` },
       body: JSON.stringify({ subject: replySubject, message: replyBody }),
     });
     const result = await response.json().catch(() => ({}));
     if (!response.ok) setMessage(result.error || "Reply could not be sent.");
-    else { setMessage(\`Reply sent to \${item.sender_email}.\`); setReplyingId(""); setReplyBody(""); await load(); }
+    else { setMessage(`Reply sent to ${item.sender_email}.`); setReplyingId(""); setReplyBody(""); await load(); }
     setWorking("");
   }
 
   async function deleteMessage(item: ContactMessage) {
-    if (!window.confirm(\`Delete this message from \${item.sender_name || item.sender_email || "the sender"}? This cannot be undone.\`)) return;
+    if (!window.confirm(`Delete this message from ${item.sender_name || item.sender_email || "the sender"}? This cannot be undone.`)) return;
     setWorking(item.id);
     const { data: sessionData } = await supabase.auth.getSession();
     const token = sessionData.session?.access_token;
     if (!token) { setMessage("Your login session could not be verified. Please sign in again."); setWorking(""); return; }
-    const response = await fetch(\`/api/admin/contact/\${encodeURIComponent(item.id)}/delete\`, { method: "DELETE", headers: { authorization: \`Bearer \${token}\` } });
+    const response = await fetch(`/api/admin/contact/${encodeURIComponent(item.id)}/delete`, { method: "DELETE", headers: { authorization: `Bearer ${token}` } });
     const result = await response.json().catch(() => ({}));
     if (!response.ok) setMessage(result.error || "Message could not be deleted.");
     else { setMessage("Message deleted."); await load(); }
@@ -117,7 +117,7 @@ export default function ContactMessagesPage() {
         {(Object.keys(viewNames) as InboxView[]).map(key => <Stat key={key} label={viewNames[key]} value={groups[key].length} emphasis={key === "new"} />)}
       </div>
       <div className="mt-6 flex flex-wrap gap-2 border-b pb-4">
-        {(Object.keys(viewNames) as InboxView[]).map(key => <Tab key={key} active={view === key} onClick={() => { setView(key); setSelected(new Set()); }}>{viewNames[key]}{groups[key].length ? \` (\${groups[key].length})\` : ""}</Tab>)}
+        {(Object.keys(viewNames) as InboxView[]).map(key => <Tab key={key} active={view === key} onClick={() => { setView(key); setSelected(new Set()); }}>{viewNames[key]}{groups[key].length ? ` (${groups[key].length})` : ""}</Tab>)}
       </div>
       <div className="mt-4 flex flex-wrap gap-2">
         <button onClick={() => void load()} className="rounded-full bg-slate-950 px-4 py-2 text-sm font-semibold text-white">Refresh</button>
@@ -132,14 +132,14 @@ export default function ContactMessagesPage() {
       {visible.map(item => {
         const topic = String(item.payload?.topic || "General question");
         const isUnread = !item.read_at;
-        return <article key={item.id} className={\`rounded-3xl border bg-white p-6 shadow-sm \${isUnread ? "border-hgnBlue ring-1 ring-hgnBlue/20" : ""}\`}>
+        return <article key={item.id} className={`rounded-3xl border bg-white p-6 shadow-sm ${isUnread ? "border-hgnBlue ring-1 ring-hgnBlue/20" : ""}`}>
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="flex min-w-0 flex-1 items-start gap-3">
               <input aria-label="Select message" type="checkbox" className="mt-1" checked={selected.has(item.id)} onChange={event => setSelected(current => { const next = new Set(current); event.target.checked ? next.add(item.id) : next.delete(item.id); return next })} />
               <div><div className="flex flex-wrap items-center gap-2">{isUnread ? <Badge>New</Badge> : null}{item.replied_at ? <Badge colour="emerald">Replied</Badge> : null}{item.priority === "high" ? <Badge colour="amber">Priority</Badge> : null}</div>
                 <h2 className="mt-2 text-2xl font-bold text-hgnNavy">{topic}</h2>
-                <p className="mt-1 text-sm text-slate-600">{item.sender_name || "Unknown sender"} · <a className="font-semibold text-hgnBlue" href={\`mailto:\${item.sender_email || ""}\`}>{item.sender_email || "No email"}</a></p>
-                <p className="mt-1 text-xs text-slate-500">Received {item.created_at ? new Date(item.created_at).toLocaleString("en-CA") : "Unknown time"}{item.assigned_to ? \` · Assigned to \${item.assigned_to}\` : ""}</p>
+                <p className="mt-1 text-sm text-slate-600">{item.sender_name || "Unknown sender"} · <a className="font-semibold text-hgnBlue" href={`mailto:${item.sender_email || ""}`}>{item.sender_email || "No email"}</a></p>
+                <p className="mt-1 text-xs text-slate-500">Received {item.created_at ? new Date(item.created_at).toLocaleString("en-CA") : "Unknown time"}{item.assigned_to ? ` · Assigned to ${item.assigned_to}` : ""}</p>
               </div>
             </div>
           </div>
@@ -160,4 +160,4 @@ export default function ContactMessagesPage() {
 function rowTime(item: ContactMessage) { const parsed = new Date(item.created_at || 0).getTime(); return Number.isFinite(parsed) ? parsed : 0 }
 function Tab({ active, onClick, children }: { active: boolean, onClick: () => void, children: React.ReactNode }) { return <button onClick={onClick} className={active ? "rounded-full bg-slate-950 px-4 py-2 text-sm font-bold text-white" : "rounded-full bg-slate-100 px-4 py-2 text-sm font-bold text-slate-700"}>{children}</button> }
 function Stat({ label, value, emphasis }: { label: string, value: number, emphasis?: boolean }) { return <div className={emphasis ? "rounded-2xl bg-blue-50 p-4" : "rounded-2xl bg-slate-100 p-4"}><p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p><p className="mt-1 text-3xl font-bold">{value}</p></div> }
-function Badge({ children, colour = "blue" }: { children: React.ReactNode, colour?: "blue" | "emerald" | "amber" }) { const styles = { blue: "bg-blue-100 text-blue-800", emerald: "bg-emerald-100 text-emerald-800", amber: "bg-amber-100 text-amber-900" }; return <span className={\`rounded-full px-2.5 py-1 text-xs font-bold uppercase \${styles[colour]}\`}>{children}</span> }
+function Badge({ children, colour = "blue" }: { children: React.ReactNode, colour?: "blue" | "emerald" | "amber" }) { const styles = { blue: "bg-blue-100 text-blue-800", emerald: "bg-emerald-100 text-emerald-800", amber: "bg-amber-100 text-amber-900" }; return <span className={`rounded-full px-2.5 py-1 text-xs font-bold uppercase ${styles[colour]}`}>{children}</span> }
