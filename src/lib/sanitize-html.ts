@@ -17,9 +17,9 @@ function normalizeEditorParagraphBlocks(html: string) {
   // wrapper span. Turn that exact root-level pattern into semantic paragraphs
   // before sanitizing, while leaving ordinary inline formatting spans alone.
   return withBlockParagraphs.replace(
-    /^(\s*)<span\b[^>]*>\s*((?:<span\b[^>]*>[\s\S]*?<\\/span>\s*)+)<\\/span>\s*$/i,
+    /^(\s*)<span\b[^>]*>\s*((?:<span\b[^>]*>[\s\S]*?<\/span>\s*)+)<\/span>\s*$/i,
     (_match, leading, paragraphs) =>
-      leading + paragraphs.replace(/<span\b[^>]*>([\s\S]*?)<\\/span>/gi, "<p>$1</p>")
+      leading + paragraphs.replace(/<span\b[^>]*>([\s\S]*?)<\/span>/gi, "<p>$1</p>")
   )
 }
 
