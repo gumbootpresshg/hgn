@@ -2,7 +2,7 @@ import sanitizeHtml from "sanitize-html"
 
 const allowedTags = [
   "p", "br", "strong", "em", "b", "i", "u", "s", "blockquote", "ul", "ol", "li",
-  "h2", "h3", "h4", "a", "figure", "figcaption", "img", "hr", "code", "pre", "span"
+  "h2", "h3", "h4", "a", "figure", "figcaption", "img", "hr", "code", "pre", "span", "div"
 ]
 
 function restorePlainTextParagraphs(html: string) {
@@ -29,6 +29,9 @@ export function sanitizeArticleHtml(value?: string | null) {
     allowedSchemes: ["http", "https", "mailto", "tel"],
     allowedSchemesByTag: { img: ["http", "https"] },
     transformTags: {
+      // contentEditable and pasted Word/Google Docs text commonly use <div>
+      // for each paragraph. Preserve the break, but publish semantic <p>s.
+      div: () => ({ tagName: "p", attribs: {} }),
       a: (_tagName, attribs) => ({
         tagName: "a",
         attribs: {
