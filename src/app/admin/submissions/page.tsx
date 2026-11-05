@@ -47,8 +47,6 @@ const SOURCES: SourceSpec[] = [
   { table: "live_map_items", submissionType: "live_map", sourceLabel: "Live Map", workspaceHref: () => "/admin/live-map", normalize: r => ({ title: r.title || "Live Map submission", sender_name: r.contact_name, sender_email: r.contact_email, message: r.details, status: r.status || "pending" }) },
   { table: "classified_submissions", submissionType: "classified", sourceLabel: "Marketplace / Classifieds", workspaceHref: () => "/admin/marketplace", normalize: normalizeMarketplaceItem, kind: "classified" },
   { table: "classifieds", submissionType: "classified", sourceLabel: "Marketplace / Classifieds", workspaceHref: () => "/admin/marketplace", normalize: normalizeMarketplaceItem, kind: "classified" },
-  { table: "marketplace_posts", submissionType: "marketplace", sourceLabel: "Marketplace", workspaceHref: () => "/admin/marketplace", normalize: normalizeMarketplaceItem, kind: "classified" },
-  { table: "marketplace", submissionType: "marketplace", sourceLabel: "Marketplace", workspaceHref: () => "/admin/marketplace", normalize: normalizeMarketplaceItem, kind: "classified" },
   { table: "job_submissions", submissionType: "job", sourceLabel: "Jobs", workspaceHref: () => "/admin/marketplace", normalize: r => ({ title: r.job_title || r.title || "Job submission", sender_name: r.employer || r.contact_name, sender_email: r.contact_email || r.email, message: r.description || r.message, status: r.status || "pending" }), kind: "job" },
 ]
 
