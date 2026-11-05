@@ -14,7 +14,8 @@ import Image from "next/image";
 import { formatPublishingDate, formatPublishingTime, getPublishingSettings } from "@/lib/publishing-settings";
 import ArticleAnalyticsTracker from "@/components/analytics/ArticleAnalyticsTracker";
 
-export const revalidate = 60;
+// Refresh published article output promptly after an editor correction.
+export const revalidate = 30;
 
 type PageProps = { params: Promise<{ slug: string }> };
 
