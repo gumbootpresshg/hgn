@@ -68,9 +68,10 @@ export default function AdminSubmissionsPage() {
     return `${item._queueTable}:${item._queueId}`
   }
 
-  async function authHeaders() {
+  async function authHeaders(): Promise<Record<string, string>> {
     const { data } = await supabase.auth.getSession()
-    return data.session?.access_token ? { authorization: `Bearer ${data.session.access_token}` } : {}
+    const token = data.session?.access_token
+    return token ? { authorization: `Bearer ${token}` } : {}
   }
 
   async function action(actionName: "start" | "complete" | "return_new" | "archive" | "delete" | "restore", targets: QueueItem[]) {
