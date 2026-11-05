@@ -5,6 +5,15 @@ const allowedTags = [
   "h2", "h3", "h4", "a", "figure", "figcaption", "img", "hr", "code", "pre", "span", "div"
 ]
 
+function normalizeEditorParagraphBlocks(html: string) {
+  // Browsers use div blocks for Enter inside contentEditable. Normalize them
+  // before sanitizing because unsupported wrappers would otherwise be removed
+  // along with every paragraph boundary.
+  return html
+    .replace(/<div\b[^>]*>/gi, "<p>")
+    .replace(/<\/div>/gi, "</p>")
+}
+
 function restorePlainTextParagraphs(html: string) {
   // The newer editor can save a simple text article instead of HTML. Browsers
   // collapse its line breaks unless we turn its blank-line breaks into <p>s.
@@ -19,7 +28,8 @@ function restorePlainTextParagraphs(html: string) {
 }
 
 export function sanitizeArticleHtml(value?: string | null) {
-  const cleaned = sanitizeHtml(String(value || ""), {
+  const editorHtml = normalizeEditorParagraphBlocks(String(value || ""))
+  const cleaned = sanitizeHtml(editorHtml, {
     allowedTags,
     allowedAttributes: {
       a: ["href", "title", "target", "rel"],
