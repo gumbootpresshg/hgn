@@ -12,7 +12,7 @@ export default function DistributionTestButton({ url }: { url: string }) {
     if (!token) { setMessage("Login required."); setBusy(false); return; }
     const response = await fetch("/api/distribution/indexnow", { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify({ url }) });
     const result = await response.json().catch(() => ({}));
-    if (result?.submitted) setMessage(`Submitted ${result.count || 1} URL to IndexNow.`);
+    if (result?.submitted) setMessage(`Submitted ${result.count || 1} live URL to IndexNow (${result.status || 200}).`);
     else setMessage(result?.message || result?.error || "Could not submit the URL.");
     setBusy(false);
   }

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { notifyIndexNow } from "@/lib/indexnow-notify";
 
 const sections = ["Local News", "Sports", "Editorial", "Letters", "Community", "Business", "Weather", "Visitor Info"];
 
@@ -43,7 +44,10 @@ export default function PublishPage() {
     };
     const { error } = await supabase.from("articles").insert(payload);
     setMessage(error ? error.message : "Article saved.");
-    if (!error) e.currentTarget.reset();
+    if (!error) {
+      if (status === "published" && payload.slug) void notifyIndexNow(`/articles/${payload.slug}`);
+      e.currentTarget.reset();
+    }
   }
 
   if (!allowed) {

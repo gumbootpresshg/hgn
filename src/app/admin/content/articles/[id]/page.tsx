@@ -5,6 +5,7 @@ import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import { uploadArticleImage } from "@/lib/article-image-upload"
+import { notifyIndexNow } from "@/lib/indexnow-notify"
 
 type Article = Record<string, any>
 
@@ -80,7 +81,10 @@ export default function EditArticlePage() {
 
     const { error } = await supabase.from("articles").update(payload).eq("id", article.id)
     if (error) setMessage(error.message)
-    else setMessage("Saved.")
+    else {
+      setMessage("Saved.")
+      if (isPublished(nextStatus) && payload.slug) void notifyIndexNow(`/articles/${payload.slug}`)
+    }
     setSaving(false)
   }
 
