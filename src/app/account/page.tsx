@@ -92,13 +92,9 @@ export default function MyHGNPage() {
         <section className="rounded-3xl border border-hgnBlue bg-white p-6 shadow-sm">
           <p className="text-sm font-semibold tracking-[0.18em] text-hgnBlue">Publisher Tools</p>
           <h2 className="mt-2 text-3xl font-black tracking-tight">Admin Access</h2>
-          <p className="mt-3 text-slate-600">You have publisher/admin access for HGN.</p>
-          <div className="mt-5 grid gap-3 md:grid-cols-3">
-            <Link href="/admin" className="rounded-2xl bg-slate-950 px-4 py-3 text-sm font-bold text-white">Admin Dashboard</Link>
-            <Link href="/admin/articles" className="rounded-2xl border px-4 py-3 text-sm font-bold hover:border-hgnBlue">Articles</Link>
-            <Link href="/admin/members" className="rounded-2xl border px-4 py-3 text-sm font-bold hover:border-hgnBlue">Members</Link>
-            <Link href="/admin/marketplace" className="rounded-2xl border px-4 py-3 text-sm font-bold hover:border-hgnBlue">Marketplace</Link>
-            <Link href="/admin/polls" className="rounded-2xl border px-4 py-3 text-sm font-bold hover:border-hgnBlue">Polls</Link>
+          <p className="mt-3 text-slate-600">This is your personal account. Open Publisher Tools only when you need to manage the paper, inbox, submissions or site settings.</p>
+          <div className="mt-5">
+            <Link href="/admin" className="inline-flex rounded-2xl bg-slate-950 px-5 py-3 text-sm font-bold text-white">Open Publisher Tools</Link>
           </div>
         </section>
       ) : null}
