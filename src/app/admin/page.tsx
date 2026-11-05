@@ -64,11 +64,11 @@ export default function AdminDashboardPage() {
   return <main className="mx-auto max-w-7xl space-y-8 px-4 py-8 sm:px-6">
     <section className="overflow-hidden rounded-3xl border bg-slate-950 p-7 text-white shadow-sm sm:p-9">
       <p className="text-xs font-black uppercase tracking-[.2em] text-blue-300">{workspaceName} workspace</p>
-      <h1 className="mt-3 font-serif text-4xl font-bold sm:text-5xl">{name ? \`Welcome, \${name}\` : "HGN control room"}</h1>
+      <h1 className="mt-3 font-serif text-4xl font-bold sm:text-5xl">{name ? `Welcome, ${name}` : "HGN control room"}</h1>
       <p className="mt-3 max-w-3xl text-slate-300">The tools you need most are up front. Everything else remains searchable without turning the newsroom into a hallway of unlabeled doors.</p>
       <div className="mt-6 flex flex-wrap gap-3">
-        <button type="button" onClick={() => setShowAll(false)} className={\`rounded-full px-4 py-2 text-sm font-black \${!showAll ? "bg-white text-slate-950" : "border border-slate-600"}\`}>My workspace</button>
-        <button type="button" onClick={() => setShowAll(true)} className={\`rounded-full px-4 py-2 text-sm font-black \${showAll ? "bg-white text-slate-950" : "border border-slate-600"}\`}>All connected tools</button>
+        <button type="button" onClick={() => setShowAll(false)} className={`rounded-full px-4 py-2 text-sm font-black ${!showAll ? "bg-white text-slate-950" : "border border-slate-600"}`}>My workspace</button>
+        <button type="button" onClick={() => setShowAll(true)} className={`rounded-full px-4 py-2 text-sm font-black ${showAll ? "bg-white text-slate-950" : "border border-slate-600"}`}>All connected tools</button>
         <a href="https://office.haidagwaiinews.com" target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full bg-blue-300 px-4 py-2 text-sm font-black text-slate-950 hover:bg-blue-200">HGN Operations <ExternalLink size={15}/></a>
       </div>
     </section>
