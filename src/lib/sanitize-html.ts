@@ -5,6 +5,19 @@ const allowedTags = [
   "h2", "h3", "h4", "a", "figure", "figcaption", "img", "hr", "code", "pre", "span"
 ]
 
+function restorePlainTextParagraphs(html: string) {
+  // The newer editor can save a simple text article instead of HTML. Browsers
+  // collapse its line breaks unless we turn its blank-line breaks into <p>s.
+  // Existing rich-text articles already contain tags and are left untouched.
+  if (!html.trim() || /<\/?[a-z][^>]*>/i.test(html)) return html
+
+  return html
+    .trim()
+    .split(/\n\s*\n+/)
+    .map(paragraph => "<p>" + paragraph.trim().replace(/\n/g, "<br />") + "</p>")
+    .join("")
+}
+
 export function sanitizeArticleHtml(value?: string | null) {
   const cleaned = sanitizeHtml(String(value || ""), {
     allowedTags,
@@ -32,7 +45,7 @@ export function sanitizeArticleHtml(value?: string | null) {
     disallowedTagsMode: "discard",
     enforceHtmlBoundary: true,
   })
-  // Old WordPress bodies can retain a caption-only figure after the broken
-  // image is removed. Never render a visual container without an image.
-  return cleaned.replace(/<figure\b[^>]*>[\s\S]*?<\/figure>/gi, (figure) => /<img\b/i.test(figure) ? figure : "")
+
+  const withoutEmptyFigures = cleaned.replace(/<figure\b[^>]*>[\s\S]*?<\/figure>/gi, (figure) => /<img\b/i.test(figure) ? figure : "")
+  return restorePlainTextParagraphs(withoutEmptyFigures)
 }
