@@ -37,7 +37,7 @@ type SourceSpec = {
 
 const SOURCES: SourceSpec[] = [
   { table: "letters_to_editor", submissionType: "letter", sourceLabel: "Letters to the Editor", workspaceHref: () => "/admin/letters", normalize: r => ({ title: "Letter to the Editor", sender_name: r.name, sender_email: r.email, message: r.letter, status: r.status || "new" }) },
-  { table: "event_submissions", submissionType: "event", sourceLabel: "Events", workspaceHref: r => r.id ? \`/admin/events/\${r.id}\` : "/admin/events", normalize: r => ({ title: r.title || "Event submission", sender_name: r.organizer_name, sender_email: r.organizer_email, message: r.description, status: r.status || "pending" }) },
+  { table: "event_submissions", submissionType: "event", sourceLabel: "Events", workspaceHref: r => r.id ? `/admin/events/${r.id}` : "/admin/events", normalize: r => ({ title: r.title || "Event submission", sender_name: r.organizer_name, sender_email: r.organizer_email, message: r.description, status: r.status || "pending" }) },
   { table: "story_tips", submissionType: "story_tip", sourceLabel: "Story Tips", workspaceHref: () => "/admin/submissions", normalize: r => ({ title: r.title || "Story tip", sender_name: r.name, sender_email: r.email, message: r.details, status: r.status || "new" }) },
   { table: "correction_requests", submissionType: "correction", sourceLabel: "Corrections", workspaceHref: () => "/admin/trust", normalize: r => ({ title: r.story_url || r.article_url || r.article_title || "Correction request", sender_name: r.name || r.submitter_name, sender_email: r.email || r.submitter_email, message: r.details || r.message, status: r.status || "new" }) },
   { table: "photo_submissions", submissionType: "photo", sourceLabel: "Reader Photos", workspaceHref: () => "/admin/island-lens", normalize: r => ({ title: r.caption || "Reader photo", sender_name: r.name, sender_email: r.email, message: r.caption, status: r.status || "new" }) },
@@ -65,17 +65,17 @@ export default function AdminSubmissionsPage() {
   const [filter, setFilter] = useState<"all" | QueueItem["_kind"]>("all")
 
   function itemKey(item: QueueItem) {
-    return \`\${item._queueTable}:\${item._queueId}\`
+    return `${item._queueTable}:${item._queueId}`
   }
 
   async function authHeaders() {
     const { data } = await supabase.auth.getSession()
-    return data.session?.access_token ? { authorization: \`Bearer \${data.session.access_token}\` } : {}
+    return data.session?.access_token ? { authorization: `Bearer ${data.session.access_token}` } : {}
   }
 
   async function action(actionName: "start" | "complete" | "return_new" | "archive" | "delete" | "restore", targets: QueueItem[]) {
     if (!targets.length) return
-    if (actionName === "delete" && !window.confirm(\`Move \${targets.length === 1 ? "this submission" : \`\${targets.length} submissions\`} to Trash? The source record remains recoverable.\`)) return
+    if (actionName === "delete" && !window.confirm(`Move ${targets.length === 1 ? "this submission" : `${targets.length} submissions`} to Trash? The source record remains recoverable.`)) return
     setWorking(true)
     setMessage("")
     const response = await fetch("/api/admin/incoming-state", {
@@ -100,7 +100,7 @@ export default function AdminSubmissionsPage() {
     const statePromise = fetch("/api/admin/incoming-state", { headers: await authHeaders() }).then(async response => ({ response, body: await response.json().catch(() => ({})) }))
     const [inboxResult, ...tail] = await Promise.all([inboxPromise, ...sourcePromises, statePromise])
     const stateResult = tail.pop() as { response: Response, body: { states?: StateRow[], migration_required?: boolean } }
-    const stateMap = new Map<string, StateRow>((stateResult?.body.states || []).map(row => [\`\${row.source_table}:\${row.source_id}\`, row]))
+    const stateMap = new Map<string, StateRow>((stateResult?.body.states || []).map(row => [`${row.source_table}:${row.source_id}`, row]))
     const next: QueueItem[] = []
     const softErrors: string[] = []
 
@@ -128,7 +128,7 @@ export default function AdminSubmissionsPage() {
     }).sort((a, b) => rowTime(b) - rowTime(a))
     setItems(deduped)
     if (stateResult?.body.migration_required) setMessage("Run the new intake workflow SQL once to save New, In progress and Completed states.")
-    else if (softErrors.length) setMessage(\`Loaded available queues. \${softErrors.length} optional source\${softErrors.length === 1 ? "" : "s"} could not be read.\`)
+    else if (softErrors.length) setMessage(`Loaded available queues. ${softErrors.length} optional source${softErrors.length === 1 ? "" : "s"} could not be read.`)
     setLoading(false)
   }
 
@@ -153,7 +153,7 @@ export default function AdminSubmissionsPage() {
         <Stat label="Trash" value={counts.deleted} />
       </div>
       <div className="mt-6 flex flex-wrap gap-2 border-b pb-4">
-        {tabs.map(([stage, name]) => <TabButton key={stage} active={view === stage} onClick={() => { setView(stage); setSelected(new Set()) }}>{name}{counts[stage] ? \` (\${counts[stage]})\` : ""}</TabButton>)}
+        {tabs.map(([stage, name]) => <TabButton key={stage} active={view === stage} onClick={() => { setView(stage); setSelected(new Set()) }}>{name}{counts[stage] ? ` (${counts[stage]})` : ""}</TabButton>)}
       </div>
       <div className="mt-4 flex flex-wrap gap-2">
         <TabButton active={filter === "all"} onClick={() => setFilter("all")}>All types</TabButton>
@@ -213,7 +213,7 @@ function stageFor(item: QueueItem, state: StateRow | undefined, now: number): Wo
 
 function dedupe(items: QueueItem[]) {
   const seen = new Set<string>()
-  return items.filter(item => { const key = \`\${item._queueTable}:\${item._queueId}\`; if (!item._queueId || seen.has(key)) return false; seen.add(key); return true })
+  return items.filter(item => { const key = `${item._queueTable}:${item._queueId}`; if (!item._queueId || seen.has(key)) return false; seen.add(key); return true })
 }
 function classifyInboxKind(item: AnyItem): QueueItem["_kind"] {
   const type = String(item.submission_type || "").toLowerCase()
@@ -224,7 +224,7 @@ function classifyInboxKind(item: AnyItem): QueueItem["_kind"] {
 function normalizeMarketplaceItem(item: AnyItem) { return { title: item.title || item.name || item.item_title, message: item.description || item.body || item.details || item.message, sender_name: item.seller_name || item.contact_name || item.name || item.sender_name, sender_email: item.seller_email || item.contact_email || item.email || item.sender_email, status: item.status || "pending" } }
 function inboxWorkspace(type: string, row: AnyItem) {
   if (type.includes("letter")) return "/admin/letters"
-  if (type.includes("event")) return row.id ? \`/admin/events/\${row.id}\` : "/admin/events"
+  if (type.includes("event")) return row.id ? `/admin/events/${row.id}` : "/admin/events"
   if (type.includes("correction")) return "/admin/trust"
   if (type.includes("obituary")) return "/admin/obituaries"
   if (type.includes("visitor") || type.includes("guide")) return "/admin/visitor-guide"
@@ -240,7 +240,7 @@ function metaFor(item: QueueItem) {
   const name = item.sender_name || item.submitter_name || item.contact_name || item.organizer_name || item.employer || item.name || "Unknown sender"
   const email = item.sender_email || item.submitter_email || item.contact_email || item.organizer_email || item.email || "No email"
   const date = rowTime(item) ? new Date(rowTime(item)).toLocaleString("en-CA", { dateStyle: "medium", timeStyle: "short" }) : "Date unavailable"
-  return \`\${name} · \${email} · \${date}\`
+  return `${name} · ${email} · ${date}`
 }
 function TabButton({ active, onClick, children }: { active: boolean, onClick: () => void, children: React.ReactNode }) { return <button onClick={onClick} className={active ? "rounded-full bg-slate-950 px-4 py-2 text-sm font-bold text-white" : "rounded-full bg-slate-100 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-200"}>{children}</button> }
 function Stat({ label, value, emphasis }: { label: string, value: number, emphasis?: boolean }) { return <div className={emphasis ? "rounded-2xl bg-amber-100 p-4" : "rounded-2xl bg-slate-100 p-4"}><p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p><p className="mt-1 text-3xl font-bold">{value}</p></div> }
