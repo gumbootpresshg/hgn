@@ -237,8 +237,16 @@ export default async function Home() {
       <section className="border-b border-stone-900 pb-3">
         <div className="flex items-center gap-3 whitespace-nowrap text-xs">
           <span className="shrink-0 font-bold uppercase tracking-[0.16em] text-hgnRed">Latest</span>
-          <div className="min-w-0 flex-1 overflow-hidden text-stone-700">
-            {briefs.slice(0, 3).map((article, index) => <Link key={article.id} href={`/articles/${article.slug}`} className={(index ? "hidden md:inline md:pr-5 " : "block truncate ") + "hover:text-hgnRed"}>{article.title}</Link>)}
+          <div className="min-w-0 flex flex-1 items-center gap-5 overflow-hidden text-stone-700">
+            {briefs.slice(0, 3).map((article, index) => (
+              <Link
+                key={article.id}
+                href={`/articles/${article.slug}`}
+                className={`${index > 0 ? "hidden lg:block " : ""}min-w-0 flex-1 truncate hover:text-hgnRed`}
+              >
+                {article.title}
+              </Link>
+            ))}
           </div>
           <Link href="/articles" className="ml-auto shrink-0 font-bold"><span className="sm:hidden">More →</span><span className="hidden sm:inline">All stories →</span></Link>
         </div>
@@ -355,7 +363,7 @@ export default async function Home() {
               <article className={frontPageVideo || frontPageImage ? "pr-0 lg:border-r lg:border-stone-300 lg:pr-6" : "mx-auto w-full max-w-4xl"}>
                 <p className="newspaper-kicker">Top Story</p>
                 <Link href={`/articles/${main.slug}`} className="group">
-                  <h2 className="mt-2 max-w-[15ch] font-serif text-[1.95rem] font-bold leading-[1.02] tracking-[-0.035em] text-stone-950 group-hover:text-hgnRed sm:text-[2.75rem] lg:text-[3rem] xl:text-[3.2rem]">{main.title}</h2>
+                  <h2 className="mt-2 max-w-[15ch] font-serif text-[1.95rem] font-bold leading-[1.02] tracking-[-0.035em] text-stone-950 group-hover:text-hgnRed sm:text-[2.65rem] lg:text-[2.9rem] xl:text-[3.05rem]">{main.title}</h2>
                   <p className="mt-3 max-w-[42rem] text-sm leading-6 text-stone-600 line-clamp-4 sm:mt-4 sm:text-base sm:leading-7 sm:line-clamp-none">{plainExcerpt(main, 230)}</p>
                   <StoryMeta article={main} settings={publishingSettings} />
                   <span className="mt-5 inline-block text-xs font-bold uppercase tracking-[0.12em]">Read full story →</span>
