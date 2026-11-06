@@ -151,3 +151,11 @@ html[data-theme="high-contrast"] .newspaper-nav-link { text-decoration: underlin
 .hgn-house-ad > a > div:last-child {
   margin-top: 13px !important;
 }
+
+
+/* The home page often ends with the ad unit; do not leave a large blank band before the footer. */
+@media (min-width: 768px) {
+  #main-content:has(.newspaper-shell) + footer {
+    margin-top: 1.5rem;
+  }
+}
