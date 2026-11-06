@@ -138,3 +138,16 @@ html[data-theme="high-contrast"] .newspaper-nav-link { text-decoration: underlin
 .article-body > span > span:empty {
   display: none;
 }
+
+
+/* Keep the HGN house ad compact without affecting paid advertiser creative. */
+.hgn-house-ad > a {
+  padding: 18px !important;
+  border-radius: 18px !important;
+}
+.hgn-house-ad > a > div + div {
+  margin-top: 7px !important;
+}
+.hgn-house-ad > a > div:last-child {
+  margin-top: 13px !important;
+}
