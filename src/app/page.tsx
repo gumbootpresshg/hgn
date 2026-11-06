@@ -504,7 +504,7 @@ export default async function Home() {
                 </div>
               ))}
             </div>
-            <div className="mt-6 border-t border-stone-300 pt-1">
+            <div className="mt-3 border-t border-stone-300 pt-1">
               <AdSlot placement="home_middle" fallbackHouseAd className="mx-auto max-w-4xl" />
             </div>
           </section>
