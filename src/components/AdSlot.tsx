@@ -61,7 +61,7 @@ export default async function AdSlot({
           <HouseAdPromo compact />
         )}
       </AdImpressionTracker>
-      <p className={isHouseAd ? "mt-1 text-center text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400" : "mt-2 text-center text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400"} text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">
+      <p className={isHouseAd ? "mt-1 text-center text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400" : "mt-2 text-center text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400"}>
         Advertisement
       </p>
     </aside>
