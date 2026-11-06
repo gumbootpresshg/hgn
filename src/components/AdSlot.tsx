@@ -17,7 +17,7 @@ export default async function AdSlot({
 
   const { data } = await supabase
     .from("ads")
-    .select("id,title,advertiser_name,image_url,destination_url,alt_text,html_code,rotation_weight,display_mode,max_width_px")
+    .select("id,title,advertiser_name,image_url,destination_url,alt_text,html_code,rotation_weight,display_mode,max_width_px,is_house_ad")
     .eq("placement_key", placement)
     .in("status", ["active", "published", "live"])
     .or(`start_date.is.null,start_date.lte.${today}`)
@@ -38,12 +38,13 @@ export default async function AdSlot({
 
   const ad = pickWeightedAd(ads)
   const imageStyle = getAdImageStyle(ad, placement)
+  const isHouseAd = Boolean(ad.is_house_ad)
 
   return (
-    <aside className={`my-6 rounded-2xl border bg-white p-3 shadow-sm ${className}`} style={imageStyle.wrapper}>
+    <aside className={`${isHouseAd ? "my-3 p-1.5" : "my-6 p-3"} rounded-2xl border bg-white shadow-sm ${className}`} style={imageStyle.wrapper}>
       <AdImpressionTracker adId={ad.id} placement={placement}>
         {ad.html_code ? (
-          <div dangerouslySetInnerHTML={{ __html: ad.html_code }} />
+          <div className={isHouseAd ? "hgn-house-ad" : undefined} dangerouslySetInnerHTML={{ __html: ad.html_code }} />
         ) : ad.image_url ? (
           ad.destination_url ? (
             <a href={`/api/ad-click?id=${encodeURIComponent(ad.id)}&placement=${encodeURIComponent(placement)}&source=display&to=${encodeURIComponent(ad.destination_url)}`} target="_blank" rel="noopener noreferrer" className="block overflow-hidden rounded-xl" style={imageStyle.inner}>
@@ -60,7 +61,7 @@ export default async function AdSlot({
           <HouseAdPromo compact />
         )}
       </AdImpressionTracker>
-      <p className="mt-2 text-center text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">
+      <p className={isHouseAd ? "mt-1 text-center text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400" : "mt-2 text-center text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400"} text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">
         Advertisement
       </p>
     </aside>
