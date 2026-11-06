@@ -363,7 +363,7 @@ export default async function Home() {
               <article className={frontPageVideo || frontPageImage ? "pr-0 lg:border-r lg:border-stone-300 lg:pr-6" : "mx-auto w-full max-w-4xl"}>
                 <p className="newspaper-kicker">Top Story</p>
                 <Link href={`/articles/${main.slug}`} className="group">
-                  <h2 className="mt-2 max-w-[15ch] font-serif text-[1.95rem] font-bold leading-[1.02] tracking-[-0.035em] text-stone-950 group-hover:text-hgnRed sm:text-[2.75rem] lg:text-[3rem] xl:text-[3.2rem]">{main.title}</h2>
+                  <h2 className="mt-2 max-w-[15ch] font-serif text-[1.95rem] font-bold leading-[1.02] tracking-[-0.035em] text-stone-950 group-hover:text-hgnRed sm:text-[2.65rem] lg:text-[2.9rem] xl:text-[3.05rem]">{main.title}</h2>
                   <p className="mt-3 max-w-[42rem] text-sm leading-6 text-stone-600 line-clamp-4 sm:mt-4 sm:text-base sm:leading-7 sm:line-clamp-none">{plainExcerpt(main, 230)}</p>
                   <StoryMeta article={main} settings={publishingSettings} />
                   <span className="mt-5 inline-block text-xs font-bold uppercase tracking-[0.12em]">Read full story →</span>
