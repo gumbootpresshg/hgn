@@ -60,9 +60,12 @@ export default function EditClassifiedPage() {
       status: status || item.status || "pending",
       updated_at: new Date().toISOString(),
     }
-    const { error } = await supabase.from("classifieds").update(payload).eq("id", item.id)
-    if (error) setMessage(error.message)
-    else setMessage("Saved.")
+    const { data, error } = await supabase.from("classifieds").update(payload).eq("id", item.id).select("*").single()
+    if (error || !data) setMessage(error?.message || "The listing could not be saved.")
+    else {
+      setItem(data)
+      setMessage(status === "approved" ? "Approved and live on Marketplace." : status === "pending" ? "Returned to pending review." : status === "rejected" ? "Rejected." : "Saved.")
+    }
     setSaving(false)
   }
 
@@ -72,7 +75,7 @@ export default function EditClassifiedPage() {
     <main className="mx-auto max-w-5xl space-y-6 px-6 py-10">
       <Link href="/admin/classifieds" className="text-sm font-semibold text-slate-600">← Back to classifieds</Link>
       <section className="rounded-3xl border bg-white p-8 shadow-sm">
-        <h1 className="text-4xl font-bold tracking-tight">Edit Classified</h1>
+        <div className="flex flex-wrap items-center justify-between gap-3"><h1 className="text-4xl font-bold tracking-tight">Edit Classified</h1><span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-slate-700">Current: {item.status || "pending"}</span></div>
         {message ? <p className="mt-4 rounded-2xl bg-slate-100 p-4 text-sm">{message}</p> : null}
         <div className="mt-6 grid gap-4 md:grid-cols-2">
           {["title","category","listing_type","town","location","price","contact_name","contact_email","phone","image_url","employment_type","rate_of_pay","property_type","bedrooms","bathrooms","square_feet","lot_size","property_address","make","model","year","mileage","transmission","colour","map_url"].map((field) => (
