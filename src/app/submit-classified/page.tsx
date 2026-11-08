@@ -54,7 +54,7 @@ export default function SubmitClassifiedPage() {
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState("")
   const [preview, setPreview] = useState("")
-  const [category, setCategory] = useState(marketplaceCategories[0]?.value || "vehicles-boats")
+  const [category, setCategory] = useState("")
 
   const isJobCategory = useMemo(() => categoryMatches(category, jobCategoryKeywords), [category])
   const isRealEstateCategory = useMemo(() => categoryMatches(category, realEstateCategoryKeywords), [category])
@@ -111,7 +111,11 @@ export default function SubmitClassifiedPage() {
 
       const formElement = event.currentTarget
       const form = new FormData(formElement)
-      const selectedCategory = String(form.get("category") || category || "home")
+      const selectedCategory = String(form.get("category") || category).trim()
+      if (!selectedCategory) {
+        setMessage("Choose a category before posting your listing.")
+        return
+      }
       const photo = form.get("photo") as File | null
 
       let imageUrl = ""
@@ -181,7 +185,7 @@ export default function SubmitClassifiedPage() {
         setMessage(autoApproved ? "Listing posted live." : "Listing submitted for review.")
         setPreview("")
         formElement.reset()
-        setCategory(marketplaceCategories[0]?.value || "vehicles-boats")
+        setCategory("")
       }
     } catch (error: any) {
       setMessage(error?.message || "Unable to submit listing.")
@@ -229,6 +233,7 @@ export default function SubmitClassifiedPage() {
               onChange={(event) => setCategory(event.target.value)}
               className="mt-2 w-full rounded-2xl border px-4 py-3"
             >
+              <option value="" disabled>Choose a category</option>
               {marketplaceCategories.map((category) => <option key={category.value} value={category.value}>{category.label}</option>)}
             </select>
           </label>

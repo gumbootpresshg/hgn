@@ -5,6 +5,7 @@ export const marketplaceCategories = [
   { value: "jobs", label: "Jobs" },
   { value: "services", label: "Services" },
   { value: "home", label: "Home" },
+  { value: "tools-equipment", label: "Tools & Equipment" },
   { value: "electronics", label: "Electronics" },
   { value: "clothing-fashion", label: "Clothing & Fashion" },
   { value: "kids-baby", label: "Kids & Baby" },
@@ -15,8 +16,6 @@ export const marketplaceCategories = [
   { value: "pets", label: "Pets" },
   { value: "free-stuff", label: "Free Stuff" },
   { value: "tickets-events", label: "Tickets & Events" },
-  { value: "notices", label: "Notices" },
-  { value: "farm-industrial", label: "Farm & Industrial" },
 ]
 
 export const haidaGwaiiCommunities = [

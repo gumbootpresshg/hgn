@@ -14,6 +14,7 @@ export const marketplaceGroups = [
     title: "Buy & Sell",
     items: [
       { label: "Home", slug: "home", icon: "🛋" },
+      { label: "Tools & Equipment", slug: "tools-equipment", icon: "🧰" },
       { label: "Electronics", slug: "electronics", icon: "💻" },
       { label: "Clothing & Fashion", slug: "clothing-fashion", icon: "👕" },
       { label: "Kids & Baby", slug: "kids-baby", icon: "🧸" },
@@ -29,8 +30,6 @@ export const marketplaceGroups = [
     title: "Community",
     items: [
       { label: "Tickets & Events", slug: "tickets-events", icon: "🎟" },
-      { label: "Notices", slug: "notices", icon: "📌" },
-      { label: "Farm & Industrial", slug: "farm-industrial", icon: "🚜" },
     ],
   },
 ]
@@ -56,7 +55,7 @@ export function normalizedCategory(item: any) {
   if (["rental", "rentals"].includes(slug)) return "rentals"
   if (["wanted-rental", "wanted-rentals"].includes(slug)) return "wanted-rentals"
   if (["free", "free-stuff"].includes(slug)) return "free-stuff"
-  if (["notice", "notices", "community"].includes(slug)) return "notices"
+  if (["tool", "tools", "equipment", "tools-equipment", "farm-industrial", "farm", "industrial"].includes(slug)) return "tools-equipment"
   return slug || "home"
 }
 
