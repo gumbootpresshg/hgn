@@ -174,7 +174,6 @@ export default function SubmitClassifiedPage() {
         town: String(form.get("town") || ""),
         location: String(form.get("town") || ""),
         image_url: imageUrls[0] || "",
-        photos: imageUrls,
         photo_urls: imageUrls,
         description: String(form.get("description") || ""),
         contact_name: String(form.get("contact_name") || user.email || "HGN Marketplace User"),
