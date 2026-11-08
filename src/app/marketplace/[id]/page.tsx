@@ -85,9 +85,9 @@ export default async function MarketplaceListingPage({ params }: { params: Promi
 
           <div className="mt-6 border-t pt-6">
             <h2 className="text-xl font-black">Contact</h2>
-            <p className="mt-3 text-sm text-slate-700">{item.contact_name || "Seller"}</p>
             <div className="mt-4 flex flex-wrap gap-2">
               {item.contact_email ? <a href={`mailto:${item.contact_email}`} className="rounded-full bg-slate-950 px-5 py-3 text-sm font-bold text-white">Email seller</a> : null}
+              {item.phone ? <a href={`sms:${item.phone}`} className="rounded-full border px-5 py-3 text-sm font-bold">Text seller</a> : null}
               {item.phone ? <a href={`tel:${item.phone}`} className="rounded-full border px-5 py-3 text-sm font-bold">Call seller</a> : null}
             </div>
           </div>
