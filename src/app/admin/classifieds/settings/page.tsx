@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 
 type Setting = Record<string, any>
-const types = [["town", "Towns / locations"], ["marketplace_category", "Marketplace categories"], ["classified_category", "Legacy classified categories"], ["real_estate_type", "Real estate types"]]
+const types = [["town", "Towns / locations"], ["marketplace_category", "Marketplace categories"], ["real_estate_type", "Real estate types"]]
 
 export default function ClassifiedSettingsPage() {
   const [items, setItems] = useState<Setting[]>([])
