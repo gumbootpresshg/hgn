@@ -27,13 +27,4 @@ set label = excluded.label,
     is_active = true,
     updated_at = now();
 
--- Keep older supporting configuration tables consistent if they are still present.
-update public.marketplace_categories
-set name = 'Real Estate'
-where lower(coalesce(name, '')) = 'realty';
-
-update public.marketplace_categories
-set name = 'Tools & Equipment'
-where lower(coalesce(name, '')) = 'farm & industrial';
-
 notify pgrst, 'reload schema';
