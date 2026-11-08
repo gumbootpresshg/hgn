@@ -53,7 +53,7 @@ export default function SubmitClassifiedPage() {
   const [checking, setChecking] = useState(true)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState("")
-  const [preview, setPreview] = useState("")
+  const [previews, setPreviews] = useState<string[]>([])
   const [category, setCategory] = useState("")
 
   const isJobCategory = useMemo(() => categoryMatches(category, jobCategoryKeywords), [category])
@@ -79,16 +79,51 @@ export default function SubmitClassifiedPage() {
     check()
   }, [])
 
+  async function optimizePhoto(file: File) {
+    if (!file.type.startsWith("image/")) throw new Error("Choose image files only.")
+    if (file.size > 15 * 1024 * 1024) throw new Error("Each photo must be smaller than 15 MB.")
+
+    const sourceUrl = URL.createObjectURL(file)
+    try {
+      const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+        const next = new Image()
+        next.onload = () => resolve(next)
+        next.onerror = () => reject(new Error("This image could not be prepared. Please try a JPG, PNG, or WebP photo."))
+        next.src = sourceUrl
+      })
+      const longestEdge = Math.max(image.naturalWidth, image.naturalHeight)
+      const scale = Math.min(1, 1600 / Math.max(1, longestEdge))
+      const width = Math.max(1, Math.round(image.naturalWidth * scale))
+      const height = Math.max(1, Math.round(image.naturalHeight * scale))
+      const canvas = document.createElement("canvas")
+      canvas.width = width
+      canvas.height = height
+      const context = canvas.getContext("2d")
+      if (!context) throw new Error("This browser could not optimize the image.")
+      context.drawImage(image, 0, 0, width, height)
+      const blob = await new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob((result) => result ? resolve(result) : reject(new Error("Image conversion failed.")), "image/webp", 0.82)
+      })
+      const baseName = file.name.replace(/\.[^.]+$/, "").replace(/[^a-zA-Z0-9.-]/g, "-") || "marketplace-photo"
+      return new File([blob], `${baseName}.webp`, { type: "image/webp" })
+    } finally {
+      URL.revokeObjectURL(sourceUrl)
+    }
+  }
+
   async function uploadPhoto(file: File) {
     if (!user) return ""
 
-    const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, "-")
+    const optimized = await optimizePhoto(file)
+
+    const safeName = optimized.name.replace(/[^a-zA-Z0-9.-]/g, "-")
     const path = `${user.id}/${Date.now()}-${safeName}`
 
     const { error } = await supabase.storage
       .from("marketplace-photos")
-      .upload(path, file, {
+      .upload(path, optimized, {
         cacheControl: "3600",
+        contentType: "image/webp",
         upsert: false,
       })
 
@@ -116,12 +151,8 @@ export default function SubmitClassifiedPage() {
         setMessage("Choose a category before posting your listing.")
         return
       }
-      const photo = form.get("photo") as File | null
-
-      let imageUrl = ""
-      if (photo && photo.size > 0) {
-        imageUrl = await uploadPhoto(photo)
-      }
+      const photoFiles = form.getAll("photos").filter((entry): entry is File => entry instanceof File && entry.size > 0).slice(0, 3)
+      const imageUrls = await Promise.all(photoFiles.map(uploadPhoto))
 
       const isJob = categoryMatches(selectedCategory, jobCategoryKeywords)
       const isRealEstate = categoryMatches(selectedCategory, realEstateCategoryKeywords)
@@ -142,8 +173,9 @@ export default function SubmitClassifiedPage() {
         listing_type: isRealEstate ? String(form.get("property_type") || selectedCategory) : isVehicle ? "vehicle" : isJob ? "job" : null,
         town: String(form.get("town") || ""),
         location: String(form.get("town") || ""),
-        image_url: imageUrl,
-        photo_urls: imageUrl ? [imageUrl] : [],
+        image_url: imageUrls[0] || "",
+        photos: imageUrls,
+        photo_urls: imageUrls,
         description: String(form.get("description") || ""),
         contact_name: String(form.get("contact_name") || user.email || "HGN Marketplace User"),
         contact_email: String(form.get("contact_email") || user.email || ""),
@@ -183,7 +215,7 @@ export default function SubmitClassifiedPage() {
         setMessage(error.message)
       } else {
         setMessage(autoApproved ? "Listing posted live." : "Listing submitted for review.")
-        setPreview("")
+        setPreviews([])
         formElement.reset()
         setCategory("")
       }
@@ -356,22 +388,28 @@ export default function SubmitClassifiedPage() {
         ) : null}
 
         <label className="text-sm font-bold">
-          Photo
+          Photos <span className="font-normal text-slate-500">up to 3</span>
           <input
-            name="photo"
+            name="photos"
             type="file"
             accept="image/*"
+            multiple
             onChange={(event) => {
-              const file = event.currentTarget.files?.[0]
-              if (file) setPreview(URL.createObjectURL(file))
+              const files = Array.from(event.currentTarget.files || []).slice(0, 3)
+              setPreviews(files.map((file) => URL.createObjectURL(file)))
             }}
             className="mt-2 w-full rounded-2xl border px-4 py-3"
           />
+          <span className="mt-2 block text-xs font-normal leading-5 text-slate-500">Choose up to three photos. Each is automatically resized and converted before upload to keep Marketplace fast and storage efficient.</span>
         </label>
 
-        {preview ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={preview} alt="Preview" className="max-h-72 rounded-3xl border object-cover" />
+        {previews.length ? (
+          <div className="grid grid-cols-3 gap-3">
+            {previews.map((preview, index) => (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img key={preview} src={preview} alt={`Photo ${index + 1} preview`} className="aspect-square w-full rounded-2xl border object-cover" />
+            ))}
+          </div>
         ) : null}
 
         <textarea name="description" required placeholder="Description" rows={6} className="w-full rounded-2xl border px-4 py-3" />

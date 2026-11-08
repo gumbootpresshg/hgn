@@ -72,7 +72,10 @@ export function primaryPhoto(item: any) {
 }
 
 export function allPhotos(item: any) {
-  const photos = Array.isArray(item?.photos) ? item.photos.filter(Boolean) : []
-  if (item?.image_url && !photos.includes(item.image_url)) photos.unshift(item.image_url)
-  return photos
+  const photos = [
+    ...(Array.isArray(item?.photos) ? item.photos : []),
+    ...(Array.isArray(item?.photo_urls) ? item.photo_urls : []),
+    item?.image_url,
+  ].filter(Boolean)
+  return Array.from(new Set(photos))
 }

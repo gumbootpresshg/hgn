@@ -2,6 +2,7 @@ import { formatPrice } from "@/lib/marketplace-options"
 import Link from "next/link"
 import { supabase } from "@/lib/supabase"
 import { allPhotos, categoryIcon, categoryLabel, isPostedToday, normalizedCategory } from "@/lib/marketplace"
+import MarketplaceShareActions from "@/components/MarketplaceShareActions"
 
 export const revalidate = 0
 
@@ -91,6 +92,8 @@ export default async function MarketplaceListingPage({ params }: { params: Promi
               {item.phone ? <a href={`tel:${item.phone}`} className="rounded-full border px-5 py-3 text-sm font-bold">Call seller</a> : null}
             </div>
           </div>
+
+          <MarketplaceShareActions title={item.title || "Haida Gwaii Marketplace listing"} />
         </section>
       </article>
     </main>
