@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 
 type Setting = Record<string, any>
-const types = [["town", "Towns / locations"], ["marketplace_category", "Marketplace categories"], ["real_estate_type", "Real estate types"]]
+const types = [["town", "Towns / locations"], ["marketplace_category", "Marketplace categories"], ["marketplace_review_keyword", "Safety review keywords"], ["real_estate_type", "Real estate types"]]
 
 export default function ClassifiedSettingsPage() {
   const [items, setItems] = useState<Setting[]>([])
@@ -44,13 +44,13 @@ export default function ClassifiedSettingsPage() {
     <main className="mx-auto max-w-5xl space-y-8 px-6 py-10">
       <section className="rounded-3xl border bg-white p-8 shadow-sm">
         <h1 className="text-4xl font-bold tracking-tight">Classified Settings</h1>
-        <p className="mt-3 text-slate-600">This is the live source for the public Marketplace filters and listing form. Hide or delete a town/category here to remove it from new listings and the public filter.</p>
+        <p className="mt-3 text-slate-600">This is the live source for the public Marketplace filters and listing form. Hide a town or category here to remove it from new listings and the public filter. Listings normally go live immediately; active safety review keywords hold only matching listings for review.</p>
         {message ? <p className="mt-4 rounded-2xl bg-amber-50 p-4 text-sm text-amber-900">{message}</p> : null}
       </section>
       <section className="rounded-2xl border bg-white p-5 shadow-sm">
         <div className="grid gap-3 md:grid-cols-3">
           <select value={settingType} onChange={(e) => setSettingType(e.target.value)} className="rounded-2xl border px-4 py-3">{types.map(([v,t]) => <option key={v} value={v}>{t}</option>)}</select>
-          <input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Name" className="rounded-2xl border px-4 py-3" />
+          <input value={label} onChange={(e) => setLabel(e.target.value)} placeholder={settingType === "marketplace_review_keyword" ? "Keyword or phrase" : "Name"} className="rounded-2xl border px-4 py-3" />
           <button onClick={add} className="rounded-full bg-slate-950 px-5 py-3 text-sm font-bold text-white">Add</button>
         </div>
       </section>

@@ -1,4 +1,4 @@
-import { formatPrice, haidaGwaiiCommunities } from "@/lib/marketplace-options"
+import { formatPrice, haidaGwaiiCommunities, marketplaceCategories } from "@/lib/marketplace-options"
 import { nonNewsPageMetadata } from "@/lib/page-metadata"
 export const metadata = nonNewsPageMetadata("Marketplace", "Browse local classifieds, jobs, services and items for sale on Haida Gwaii.", "/marketplace")
 import Link from "next/link"
@@ -33,7 +33,7 @@ export default async function MarketplacePage({
 
   const [{ data, error }, { data: settings }] = await Promise.all([
     supabase.from("classifieds").select("*").in("status", ["approved", "published", "public", "live", "active"]).is("deleted_at", null).order("is_featured", { ascending: false }).order("created_at", { ascending: false }).limit(300),
-    supabase.from("classified_settings").select("setting_type,label,slug,sort_order").eq("is_active", true).order("sort_order", { ascending: true }),
+    supabase.from("classified_settings").select("setting_type,label,slug,sort_order,is_active").order("sort_order", { ascending: true }),
   ])
 
   const allListings = data || []
@@ -50,15 +50,29 @@ export default async function MarketplacePage({
     return true
   })
 
-  const configuredTowns = (settings || []).filter((item: any) => item.setting_type === "town").map((item: any) => item.label)
+  const configuredTowns = (settings || []).filter((item: any) => item.setting_type === "town" && item.is_active).map((item: any) => item.label)
   // Keep the full island list visible even before a town has its first listing.
   const towns = Array.from(new Set([
     ...haidaGwaiiCommunities,
     ...configuredTowns,
     ...allListings.map((item: any) => item.town || item.location).filter(Boolean),
   ]))
-  const configuredCategories = (settings || []).filter((item: any) => item.setting_type === "marketplace_category" && item.slug !== "all").map((item: any) => ({ label: item.label, slug: item.slug, icon: categoryIcon(item.slug) }))
-  const publicCategories = configuredCategories.length ? configuredCategories : []
+  const categorySettings = (settings || []).filter((item: any) => item.setting_type === "marketplace_category" && item.slug !== "all")
+  const settingsBySlug = new Map(categorySettings.map((item: any) => [item.slug, item]))
+  const coreCategorySlugs = new Set(marketplaceCategories.map((item) => item.value))
+  // The static list keeps the Marketplace usable if a prior settings migration
+  // missed a category. A setting can still deliberately hide or rename a category.
+  const publicCategories = [
+    ...marketplaceCategories
+      .filter((item) => settingsBySlug.get(item.value)?.is_active !== false)
+      .map((item) => {
+        const setting = settingsBySlug.get(item.value)
+        return { label: setting?.label || item.label, slug: item.value, icon: categoryIcon(item.value) }
+      }),
+    ...categorySettings
+      .filter((item: any) => item.is_active && !coreCategorySlugs.has(item.slug) && !["notices", "farm-industrial", "realty"].includes(item.slug))
+      .map((item: any) => ({ label: item.label, slug: item.slug, icon: categoryIcon(item.slug) })),
+  ]
   const promoted = allListings.filter((item: any) => item.is_featured).slice(0, 3)
 
   function countFor(slug: string) {

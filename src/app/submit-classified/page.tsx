@@ -160,7 +160,6 @@ export default function SubmitClassifiedPage() {
 
       const rawPrice = isJob ? "" : String(form.get("price") || "").replace(/[^0-9.]/g, "")
       const priceAmount = rawPrice ? Number(rawPrice) : null
-      const autoApproved = Boolean(permissions?.verified_plus)
       const now = new Date().toISOString()
 
       const payload: Record<string, any> = {
@@ -179,7 +178,9 @@ export default function SubmitClassifiedPage() {
         contact_name: String(form.get("contact_name") || user.email || "HGN Marketplace User"),
         contact_email: String(form.get("contact_email") || user.email || ""),
         phone: String(form.get("phone") || ""),
-        status: autoApproved ? "active" : "pending",
+        // The database safety rule changes this to pending only when a configured
+        // review keyword appears in the title or description.
+        status: "active",
         updated_at: now,
       }
 
@@ -209,11 +210,15 @@ export default function SubmitClassifiedPage() {
         payload.colour = String(form.get("colour") || "")
       }
 
-      const { error } = await supabase.from("classifieds").insert(payload)
+      const { data: savedListing, error } = await supabase
+        .from("classifieds")
+        .insert(payload)
+        .select("status")
+        .single()
       if (error) {
         setMessage(error.message)
       } else {
-        setMessage(autoApproved ? "Listing posted live." : "Listing submitted for review.")
+        setMessage(String(savedListing?.status || "").toLowerCase() === "pending" ? "Listing submitted for a quick safety review." : "Listing posted live.")
         setPreviews([])
         formElement.reset()
         setCategory("")
@@ -245,9 +250,8 @@ export default function SubmitClassifiedPage() {
         <p className="text-sm font-semibold tracking-[0.18em] text-hgnBlue">Marketplace</p>
         <h1 className="mt-3 text-4xl font-black tracking-tight">Post a Listing</h1>
         <p className="mt-3 text-slate-600">
-          Choose a category and the form will show the fields needed for jobs, real estate, vehicles, or regular marketplace listings.
+          Choose a category and the form will show the fields needed for jobs, real estate, vehicles, or regular marketplace listings. Most listings go live right away; only listings matching a safety-review keyword are held for review.
         </p>
-        {permissions?.verified_plus ? <span className="mt-4 inline-flex rounded-full bg-hgnBlue px-3 py-1 text-xs font-black text-white">Verified Plus</span> : null}
         <Link href="/marketplace/my-listings" className="mt-4 block text-sm font-bold text-hgnBlue">Manage my listings →</Link>
       </section>
 
@@ -417,7 +421,7 @@ export default function SubmitClassifiedPage() {
         <input name="phone" placeholder="Phone, optional" className="w-full rounded-2xl border px-4 py-3" />
 
         <button disabled={saving} className="rounded-full bg-slate-950 px-6 py-3 text-sm font-bold text-white disabled:opacity-50">
-          {saving ? "Submitting..." : permissions?.verified_plus ? "Post Listing" : "Submit for Review"}
+          {saving ? "Posting..." : "Post Listing"}
         </button>
         {message ? <p className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-700">{message}</p> : null}
       </form>
