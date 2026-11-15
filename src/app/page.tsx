@@ -5,7 +5,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { supabase } from "@/lib/supabase"
 import { smartExcerpt } from "@/lib/text"
-import { isColumn, isLocalNews, isOpinion, isSports, sortArticlesNewest } from "@/lib/article-routing"
+import { isColumn, isEditorial, isLocalNews, isOpinion, isSports, sortArticlesNewest } from "@/lib/article-routing"
 import { getArticleImage } from "@/lib/article-images"
 import { formatFreshness, formatPublishingDate, getPublishingSettings, type PublishingSettings } from "@/lib/publishing-settings"
 
@@ -182,23 +182,37 @@ export default async function Home() {
   const frontPageHref = managedRelatedArticle ? `/articles/${managedRelatedArticle.slug}` : null
   const chronological = sortArticlesNewest((latestStories || []) as Article[])
   const featured = sortArticlesNewest(((featuredStories || []) as Article[]).filter((a) => a.slug !== main?.slug))
-  const secondary = featured.slice(0, 2)
-  const opinion = chronological.find((article) => isOpinion(article) && article.slug !== main?.slug)
+  // The upper-right is the next news priority after the lead. A manually
+  // featured local-news story wins; otherwise use the newest eligible news story.
+  const secondNews = [...featured, ...chronological].find((article, index, items) =>
+    article.slug !== main?.slug &&
+    isLocalNews(article) &&
+    items.findIndex((candidate) => candidate.slug === article.slug) === index,
+  )
+  const editorial = chronological.find((article) => isEditorial(article) && article.slug !== main?.slug)
+  // Columns have their own dedicated section below. This is the latest opinion
+  // piece that is not a column or an editorial.
+  const opinion = chronological.find((article) =>
+    isOpinion(article) && !isColumn(article) && !isEditorial(article) && article.slug !== main?.slug,
+  )
+  const photoRailStories = [
+    editorial ? { article: editorial, label: "Editorial", href: "/opinion/editorials" } : null,
+    opinion ? { article: opinion, label: "Opinion", href: "/opinion" } : null,
+  ].filter((item): item is { article: Article; label: string; href: string } => Boolean(item))
 
   // Desktop composition is de-duplicated by reserving each visible story as it is assigned.
   // Manual/prominent slots win first; Latest Headlines then takes the newest unused stories;
   // lower news sections are built only from what remains.
   const desktopUsed = new Set<string>()
   if (main?.slug) desktopUsed.add(main.slug)
-  secondary.forEach((article) => desktopUsed.add(article.slug))
+  if (secondNews?.slug) desktopUsed.add(secondNews.slug)
+  if (editorial?.slug) desktopUsed.add(editorial.slug)
   if (opinion?.slug) desktopUsed.add(opinion.slug)
 
   // The Latest strip is a news-only headline feed. Columns, obituaries, opinion,
   // sports and other verticals have their own dedicated places on the homepage.
   const briefs = chronological.filter((article) => isLocalNews(article) && !desktopUsed.has(article.slug)).slice(0, 5)
   briefs.forEach((article) => desktopUsed.add(article.slug))
-
-  const photoRailStories = secondary
 
   // Desktop should read like an edited newspaper, not a long local-news feed. Reserve
   // fresh Sports and Columns stories before filling the next local-news blocks so variety
@@ -383,9 +397,9 @@ export default async function Home() {
                 </div>
                 {photoRailStories.length ? (
                   <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                    {photoRailStories.map((article) => (
+                    {photoRailStories.map(({ article, label }) => (
                       <Link key={article.id} href={`/articles/${article.slug}`} className="group border-t border-stone-300 pt-3">
-                        <p className="newspaper-kicker">{article.category || article.section || "News"}</p>
+                        <p className="newspaper-kicker text-hgnRed">{label}</p>
                         <h2 className="mt-1 font-serif text-xl font-bold leading-[1.08] group-hover:text-hgnRed">{article.title}</h2>
                         <StoryMeta article={article} settings={publishingSettings} />
                       </Link>
@@ -413,9 +427,9 @@ export default async function Home() {
 
                 {photoRailStories.length ? (
                   <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                    {photoRailStories.map((article) => (
+                    {photoRailStories.map(({ article, label }) => (
                       <Link key={article.id} href={`/articles/${article.slug}`} className="group border-t border-stone-300 pt-3">
-                        <p className="newspaper-kicker">{article.category || article.section || "News"}</p>
+                        <p className="newspaper-kicker text-hgnRed">{label}</p>
                         <h2 className="mt-1 font-serif text-xl font-bold leading-[1.08] group-hover:text-hgnRed">{article.title}</h2>
                         <StoryMeta article={article} settings={publishingSettings} />
                       </Link>
@@ -511,13 +525,13 @@ export default async function Home() {
         </div>
 
         <aside className="space-y-5 md:space-y-7 lg:border-l lg:border-stone-300 lg:pl-7">
-          {opinion ? (
-            <Link href={`/articles/${opinion.slug}`} className="group block">
-              <p className="newspaper-kicker text-hgnRed">Opinion</p>
-              <h2 className="mt-2 font-serif text-2xl font-bold leading-[1.06] group-hover:text-hgnRed sm:text-3xl">{opinion.title}</h2>
-              <p className="mt-3 text-sm leading-6 text-stone-600">{plainExcerpt(opinion, 170)}</p>
+          {secondNews ? (
+            <Link href={`/articles/${secondNews.slug}`} className="group block">
+              <p className="newspaper-kicker text-hgnRed">News</p>
+              <h2 className="mt-2 font-serif text-2xl font-bold leading-[1.06] group-hover:text-hgnRed sm:text-3xl">{secondNews.title}</h2>
+              <p className="mt-3 text-sm leading-6 text-stone-600">{plainExcerpt(secondNews, 170)}</p>
               <span className="mt-3 inline-block text-[11px] font-bold uppercase tracking-[0.12em]">Read more →</span>
-              <StoryMeta article={opinion} settings={publishingSettings} />
+              <StoryMeta article={secondNews} settings={publishingSettings} />
             </Link>
           ) : null}
           <div className="border-t border-stone-300 pt-4">
