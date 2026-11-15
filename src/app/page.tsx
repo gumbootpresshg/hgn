@@ -397,12 +397,15 @@ export default async function Home() {
                 </div>
                 {photoRailStories.length ? (
                   <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                    {photoRailStories.map(({ article, label }) => (
-                      <Link key={article.id} href={`/articles/${article.slug}`} className="group border-t border-stone-300 pt-3">
-                        <p className="newspaper-kicker text-hgnRed">{label}</p>
-                        <h2 className="mt-1 font-serif text-xl font-bold leading-[1.08] group-hover:text-hgnRed">{article.title}</h2>
-                        <StoryMeta article={article} settings={publishingSettings} />
-                      </Link>
+                    {photoRailStories.map(({ article, label, href }) => (
+                      <section key={article.id} className="border-t border-stone-300 pt-3">
+                        <div className="flex items-center justify-between gap-2"><Link href={href} className="newspaper-kicker text-hgnRed hover:underline">{label}</Link><Link href={href} className="text-[10px] font-bold uppercase tracking-[0.08em] hover:text-hgnRed">View all →</Link></div>
+                        <Link href={`/articles/${article.slug}`} className="group block">
+                          <h2 className="mt-1 font-serif text-xl font-bold leading-[1.08] group-hover:text-hgnRed">{article.title}</h2>
+                          <p className="mt-2 line-clamp-3 text-sm leading-6 text-stone-600">{plainExcerpt(article, 155)}</p>
+                          <StoryMeta article={article} settings={publishingSettings} />
+                        </Link>
+                      </section>
                     ))}
                   </div>
                 ) : null}
@@ -427,12 +430,15 @@ export default async function Home() {
 
                 {photoRailStories.length ? (
                   <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                    {photoRailStories.map(({ article, label }) => (
-                      <Link key={article.id} href={`/articles/${article.slug}`} className="group border-t border-stone-300 pt-3">
-                        <p className="newspaper-kicker text-hgnRed">{label}</p>
-                        <h2 className="mt-1 font-serif text-xl font-bold leading-[1.08] group-hover:text-hgnRed">{article.title}</h2>
-                        <StoryMeta article={article} settings={publishingSettings} />
-                      </Link>
+                    {photoRailStories.map(({ article, label, href }) => (
+                      <section key={article.id} className="border-t border-stone-300 pt-3">
+                        <div className="flex items-center justify-between gap-2"><Link href={href} className="newspaper-kicker text-hgnRed hover:underline">{label}</Link><Link href={href} className="text-[10px] font-bold uppercase tracking-[0.08em] hover:text-hgnRed">View all →</Link></div>
+                        <Link href={`/articles/${article.slug}`} className="group block">
+                          <h2 className="mt-1 font-serif text-xl font-bold leading-[1.08] group-hover:text-hgnRed">{article.title}</h2>
+                          <p className="mt-2 line-clamp-3 text-sm leading-6 text-stone-600">{plainExcerpt(article, 155)}</p>
+                          <StoryMeta article={article} settings={publishingSettings} />
+                        </Link>
+                      </section>
                     ))}
                   </div>
                 ) : null}
