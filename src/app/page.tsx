@@ -4,6 +4,7 @@ import AdSlot from "@/components/AdSlot"
 import Link from "next/link"
 import Image from "next/image"
 import { supabase } from "@/lib/supabase"
+import { serviceClient } from "@/lib/newsletters/server"
 import { smartExcerpt } from "@/lib/text"
 import { isColumn, isEditorial, isLocalNews, isOpinion, isSports, sortArticlesNewest } from "@/lib/article-routing"
 import { getArticleImage } from "@/lib/article-images"
@@ -63,6 +64,8 @@ type Article = {
   featured?: boolean | null
   front_page_main?: boolean | null
 }
+
+type ContestWinner = { photo_url: string; title?: string | null; display_name?: string | null }
 
 function plainExcerpt(article: Article, length = 190) {
   return smartExcerpt(article.excerpt || article.body, length)
@@ -130,6 +133,18 @@ function StoryMeta({ article, settings }: { article: Article; settings: Publishi
   return <p className="mt-3 text-[11px] uppercase tracking-[0.08em] text-stone-500">By {article.author_name || "Haida Gwaii News"}{date ? ` · ${date}` : ""}</p>
 }
 
+function ContestSpotlight({ winner }: { winner: ContestWinner | null }) {
+  if (!winner?.photo_url) return null
+  const name = winner.title || winner.display_name || "The winning pumpkin"
+  return <section className="border-y border-stone-400 py-5">
+    <Link href="/pumpkin-carve-off" className="group grid grid-cols-[104px_1fr] gap-4">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={winner.photo_url} alt={name} className="aspect-square h-full w-full border border-stone-300 object-cover" />
+      <div className="min-w-0"><p className="newspaper-kicker text-hgnRed">Contest results</p><h2 className="mt-1 font-serif text-2xl font-bold leading-[1.05] group-hover:text-hgnRed">Great Haida Gwaii Pumpkin Carve-Off</h2><p className="mt-2 text-sm leading-5 text-stone-600">See the winning pumpkin and every 2026 entry.</p><span className="mt-3 inline-block text-[10px] font-bold uppercase tracking-[0.1em]">View final results →</span></div>
+    </Link>
+  </section>
+}
+
 export default async function Home() {
   const publishingSettings = await getPublishingSettings()
   const [{ data: frontPageSettings }, { data: mainStories }, { data: featuredStories }, { data: latestStories }] = await Promise.all([
@@ -140,6 +155,21 @@ export default async function Home() {
   ])
 
   const settings = (frontPageSettings || null) as FrontPageSettings | null
+  let contestWinner: ContestWinner | null = null
+  try {
+    const contestDb = serviceClient()
+    const { data: contest } = await contestDb.from("hgn_pumpkin_contests").select("id").eq("status", "results").order("created_at", { ascending: false }).limit(1).maybeSingle()
+    if (contest?.id) {
+      const { data: entries } = await contestDb.from("hgn_pumpkin_entries").select("id,photo_url,title,display_name").eq("contest_id", contest.id).eq("status", "approved")
+      const ids = (entries || []).map((entry: any) => entry.id)
+      const { data: votes } = ids.length ? await contestDb.from("hgn_pumpkin_votes").select("entry_id").in("entry_id", ids) : { data: [] as any[] }
+      const totals = new Map<string, number>()
+      ;(votes || []).forEach((vote: any) => totals.set(vote.entry_id, (totals.get(vote.entry_id) || 0) + 1))
+      contestWinner = [...(entries || [])].sort((a: any, b: any) => (totals.get(b.id) || 0) - (totals.get(a.id) || 0))[0] || null
+    }
+  } catch {
+    // The optional contest card must never prevent the news homepage loading.
+  }
   let managedLead = settings?.lead_article_id ? (latestStories || []).find((article: Article) => article.id === settings.lead_article_id) as Article | undefined : undefined
   if (settings?.lead_article_id && !managedLead) {
     const { data } = await supabase.from("articles").select("*").eq("id", settings.lead_article_id).eq("status", "published").maybeSingle()
@@ -345,6 +375,8 @@ export default async function Home() {
 
         <HomePoll />
 
+        <ContestSpotlight winner={contestWinner} />
+
         {mobileMoreNews.length ? (
           <section className="border-b border-stone-400 py-5">
             <div className="newspaper-section-heading"><h2>More Local News</h2><Link href="/articles">All stories →</Link></div>
@@ -399,7 +431,7 @@ export default async function Home() {
                   <div className="mt-4 grid gap-4 sm:grid-cols-2">
                     {photoRailStories.map(({ article, label, href }) => (
                       <section key={article.id} className="border-t border-stone-300 pt-3">
-                        <div className="flex items-center justify-between gap-2"><Link href={href} className="newspaper-kicker text-hgnRed hover:underline">{label}</Link><Link href={href} className="text-[10px] font-bold uppercase tracking-[0.08em] hover:text-hgnRed">View all →</Link></div>
+                        <div className="flex items-center justify-between gap-2"><Link href={href} className="newspaper-kicker text-hgnRed hover:underline">{label}</Link><Link href={href} className="text-[9px] font-semibold hover:text-hgnRed">View all →</Link></div>
                         <Link href={`/articles/${article.slug}`} className="group block">
                           <h2 className="mt-1 font-serif text-xl font-bold leading-[1.08] group-hover:text-hgnRed">{article.title}</h2>
                           <p className="mt-2 line-clamp-3 text-sm leading-6 text-stone-600">{plainExcerpt(article, 155)}</p>
@@ -432,7 +464,7 @@ export default async function Home() {
                   <div className="mt-4 grid gap-4 sm:grid-cols-2">
                     {photoRailStories.map(({ article, label, href }) => (
                       <section key={article.id} className="border-t border-stone-300 pt-3">
-                        <div className="flex items-center justify-between gap-2"><Link href={href} className="newspaper-kicker text-hgnRed hover:underline">{label}</Link><Link href={href} className="text-[10px] font-bold uppercase tracking-[0.08em] hover:text-hgnRed">View all →</Link></div>
+                        <div className="flex items-center justify-between gap-2"><Link href={href} className="newspaper-kicker text-hgnRed hover:underline">{label}</Link><Link href={href} className="text-[9px] font-semibold hover:text-hgnRed">View all →</Link></div>
                         <Link href={`/articles/${article.slug}`} className="group block">
                           <h2 className="mt-1 font-serif text-xl font-bold leading-[1.08] group-hover:text-hgnRed">{article.title}</h2>
                           <p className="mt-2 line-clamp-3 text-sm leading-6 text-stone-600">{plainExcerpt(article, 155)}</p>
@@ -555,6 +587,7 @@ export default async function Home() {
             </div>
           </div>
             <HomePoll />
+            <ContestSpotlight winner={contestWinner} />
           <section className="border-y border-stone-400 py-5">
             <p className="newspaper-kicker text-hgnRed">Support local journalism</p>
             <h2 className="mt-2 font-serif text-3xl font-bold leading-tight">Independent reporting matters.</h2>
