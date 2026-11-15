@@ -106,20 +106,20 @@ export default function HomePoll({ variant = "home" }: HomePollProps) {
   const community = variant === "community"
 
   return (
-    <section className={community ? "rounded-[1.75rem] border border-stone-300 bg-white/75 p-5 shadow-[0_14px_34px_rgba(16,24,32,.08)] backdrop-blur-sm sm:p-8" : "border-y border-stone-400 py-3 sm:py-5"}>
+    <section className={community ? "rounded-[1.75rem] border border-stone-300 bg-white/75 p-5 shadow-[0_14px_34px_rgba(16,24,32,.08)] backdrop-blur-sm sm:p-8" : "border-y border-stone-400 py-2 sm:py-3"}>
       <p className={community ? "newspaper-kicker text-hgnRed" : "newspaper-kicker text-hgnRed"}>Reader Poll</p>
-      <h2 className={`mt-2 max-w-[28ch] font-serif font-bold leading-[1.04] text-hgnNavy ${community ? "text-3xl sm:text-4xl" : "text-[1.75rem] sm:text-3xl"}`}>{poll.question}</h2>
-      {poll.description ? <p className={`mt-3 leading-6 text-slate-600 ${community ? "max-w-2xl text-base" : "text-sm"}`}>{poll.description}</p> : null}
+      <h2 className={`mt-1 max-w-[28ch] font-serif font-bold text-hgnNavy ${community ? "text-3xl leading-[1.04] sm:text-4xl" : "text-[1.4rem] leading-[1.08] sm:text-[1.65rem]"}`}>{poll.question}</h2>
+      {poll.description ? <p className={`mt-2 leading-6 text-slate-600 ${community ? "max-w-2xl text-base" : "text-sm"}`}>{poll.description}</p> : null}
 
-      <div className={`grid ${community ? "mt-6 gap-2.5" : "mt-3 gap-1.5 sm:gap-3"}`}>
+      <div className={`grid ${community ? "mt-6 gap-2.5" : "mt-2 gap-0"}`}>
         {(poll.poll_options || []).map((option) => {
           const count = votes[option.id] || 0
           const percent = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0
 
           return (
-            <div key={option.id} className={community ? "rounded-xl border border-stone-300 bg-[#fffefa]/80 px-3 py-2.5 transition hover:border-hgnBlue" : "border-b border-stone-300 px-1 py-1 sm:px-0 sm:py-3"}>
+            <div key={option.id} className={community ? "rounded-xl border border-stone-300 bg-[#fffefa]/80 px-3 py-2.5 transition hover:border-hgnBlue" : "border-b border-stone-300 py-0 last:border-b-0"}>
               {!voted ? (
-                <button onClick={() => vote(option.id)} className="min-h-12 w-full px-2 text-left text-sm font-bold text-hgnNavy hover:text-hgnBlue focus:outline-none focus:ring-2 focus:ring-hgnBlue/50">
+                <button onClick={() => vote(option.id)} className="w-full py-2.5 text-left text-sm font-bold leading-5 text-hgnNavy hover:text-hgnBlue focus:outline-none focus:ring-2 focus:ring-hgnBlue/50">
                   {option.label}
                 </button>
               ) : (
