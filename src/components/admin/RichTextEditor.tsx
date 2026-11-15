@@ -7,6 +7,18 @@ type RichTextEditorProps = {
   onChange: (value: string) => void;
 };
 
+type MediaSettings = {
+  id: string;
+  align: "center" | "left" | "right";
+  size: "full" | "large" | "medium" | "small";
+  crop: "original" | "landscape" | "square" | "portrait";
+  border: boolean;
+  caption: string;
+  credit: string;
+  alt: string;
+  isGallery: boolean;
+};
+
 function textToParagraphHtml(text: string) {
   const blocks = text
     .replace(/\r\n/g, "\n")
@@ -56,6 +68,7 @@ export default function RichTextEditor({ value, onChange }: RichTextEditorProps)
   const savedRangeRef = useRef<Range | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadMessage, setUploadMessage] = useState("");
+  const [selectedMedia, setSelectedMedia] = useState<MediaSettings | null>(null);
 
   useEffect(() => {
     const editor = editorRef.current;
@@ -129,6 +142,57 @@ export default function RichTextEditor({ value, onChange }: RichTextEditorProps)
     rememberSelection();
   }
 
+  function mediaSettingsFor(figure: HTMLElement): MediaSettings {
+    const id = figure.dataset.mediaId || crypto.randomUUID();
+    figure.dataset.mediaId = id;
+    const caption = figure.querySelector<HTMLElement>(".article-caption")?.textContent || "";
+    const credit = figure.querySelector<HTMLElement>(".article-credit")?.textContent?.replace(/^Photo:\s*/i, "") || "";
+    const image = figure.querySelector<HTMLImageElement>("img");
+    return {
+      id,
+      align: (figure.dataset.align as MediaSettings["align"]) || "center",
+      size: (figure.dataset.size as MediaSettings["size"]) || "full",
+      crop: (figure.dataset.crop as MediaSettings["crop"]) || "original",
+      border: figure.dataset.border === "true",
+      caption,
+      credit,
+      alt: image?.alt || "",
+      isGallery: figure.dataset.gallery === "true",
+    };
+  }
+
+  function selectFigure(figure: HTMLElement) {
+    const settings = mediaSettingsFor(figure);
+    setSelectedMedia(settings);
+    emitChange();
+  }
+
+  function updateSelectedMedia(change: Partial<MediaSettings>) {
+    if (!selectedMedia || !editorRef.current) return;
+    const figure = editorRef.current.querySelector<HTMLElement>(`figure[data-media-id="${selectedMedia.id}"]`);
+    if (!figure) return;
+    const next = { ...selectedMedia, ...change };
+    figure.dataset.align = next.align;
+    figure.dataset.size = next.size;
+    figure.dataset.crop = next.crop;
+    figure.dataset.border = next.border ? "true" : "false";
+    let figcaption = figure.querySelector<HTMLElement>("figcaption");
+    if (!figcaption) {
+      figcaption = document.createElement("figcaption");
+      figure.append(figcaption);
+    }
+    figcaption.innerHTML = `<span class="article-caption"></span><span class="article-credit"></span>`;
+    const caption = figcaption.querySelector<HTMLElement>(".article-caption");
+    const credit = figcaption.querySelector<HTMLElement>(".article-credit");
+    if (caption) caption.textContent = next.caption;
+    if (credit) credit.textContent = next.credit ? `Photo: ${next.credit}` : "";
+    figure.querySelectorAll<HTMLImageElement>("img").forEach((image, index) => {
+      image.alt = next.alt || (next.isGallery ? `Article gallery photo ${index + 1}` : "Article photo");
+    });
+    setSelectedMedia(next);
+    emitChange();
+  }
+
   async function uploadAndInsert(files: File[]) {
     const images = files.filter((file) => file.type.startsWith("image/"));
     if (!images.length) return;
@@ -152,11 +216,14 @@ export default function RichTextEditor({ value, onChange }: RichTextEditorProps)
         uploaded.push(data.publicUrl);
       }
 
-      const imagesHtml = uploaded.map((url, index) => `<img src="${url}" alt="Article photo ${index + 1}" loading="lazy" decoding="async" />`).join("");
+      const mediaId = crypto.randomUUID();
+      const imagesHtml = uploaded.map((url, index) => `<img src="${url}" alt="${uploaded.length > 1 ? `Article gallery photo ${index + 1}` : "Article photo"}" loading="lazy" decoding="async" />`).join("");
       const html = uploaded.length === 1
-        ? `<figure>${imagesHtml}<figcaption>Photo</figcaption></figure><p><br></p>`
-        : `<figure data-gallery="true">${imagesHtml}<figcaption>Photo gallery</figcaption></figure><p><br></p>`;
+        ? `<figure data-media-id="${mediaId}" data-align="center" data-size="full" data-crop="original" data-border="false">${imagesHtml}<figcaption><span class="article-caption"></span><span class="article-credit"></span></figcaption></figure><p><br></p>`
+        : `<figure data-media-id="${mediaId}" data-gallery="true" data-align="center" data-size="full" data-crop="original" data-border="false">${imagesHtml}<figcaption><span class="article-caption"></span><span class="article-credit"></span></figcaption></figure><p><br></p>`;
       insertHtml(html);
+      const figure = editorRef.current?.querySelector<HTMLElement>(`figure[data-media-id="${mediaId}"]`);
+      if (figure) selectFigure(figure);
       setUploadMessage(uploaded.length === 1 ? "Photo added to the article." : `${uploaded.length} photos added as a gallery.`);
     } catch (error: any) {
       setUploadMessage(`Could not upload image${images.length === 1 ? "" : "s"}: ${error?.message || "please try again."}`);
@@ -208,6 +275,13 @@ export default function RichTextEditor({ value, onChange }: RichTextEditorProps)
     void uploadAndInsert(files);
   }
 
+  function handleEditorClick(event: React.MouseEvent<HTMLDivElement>) {
+    const target = event.target as HTMLElement;
+    const figure = target.closest("figure");
+    if (figure && editorRef.current?.contains(figure)) selectFigure(figure);
+    else setSelectedMedia(null);
+  }
+
   return (
     <div className="grid gap-3">
       <div className="flex flex-wrap gap-2 rounded-2xl border bg-slate-50 p-2">
@@ -225,6 +299,32 @@ export default function RichTextEditor({ value, onChange }: RichTextEditorProps)
       <input ref={imageInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={(event) => { const files = Array.from(event.target.files || []); event.currentTarget.value = ""; void uploadAndInsert(files.slice(0, 1)); }} />
       <input ref={galleryInputRef} type="file" multiple accept="image/jpeg,image/png,image/webp" className="hidden" onChange={(event) => { const files = Array.from(event.target.files || []); event.currentTarget.value = ""; void uploadAndInsert(files); }} />
 
+      {selectedMedia ? (
+        <section className="rounded-2xl border border-hgnBlue/30 bg-sky-50 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div><p className="text-sm font-black text-hgnNavy">{selectedMedia.isGallery ? "Gallery settings" : "Photo settings"}</p><p className="text-xs text-slate-600">Click another photo in the story to edit it.</p></div>
+            <button type="button" onClick={() => setSelectedMedia(null)} className="rounded-lg border bg-white px-3 py-1.5 text-xs font-black">Close</button>
+          </div>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <label className="grid gap-1 text-xs font-black uppercase tracking-wide">Position
+              <select value={selectedMedia.align} onChange={(event) => updateSelectedMedia({ align: event.target.value as MediaSettings["align"] })}><option value="center">Full line</option><option value="left">Wrap text right</option><option value="right">Wrap text left</option></select>
+            </label>
+            <label className="grid gap-1 text-xs font-black uppercase tracking-wide">Display size
+              <select value={selectedMedia.size} onChange={(event) => updateSelectedMedia({ size: event.target.value as MediaSettings["size"] })}><option value="full">Full width</option><option value="large">Large</option><option value="medium">Medium</option><option value="small">Small</option></select>
+            </label>
+            <label className="grid gap-1 text-xs font-black uppercase tracking-wide">Crop shape
+              <select value={selectedMedia.crop} onChange={(event) => updateSelectedMedia({ crop: event.target.value as MediaSettings["crop"] })}><option value="original">Original</option><option value="landscape">Landscape crop</option><option value="square">Square crop</option><option value="portrait">Portrait crop</option></select>
+            </label>
+            <label className="flex items-end gap-2 pb-2 text-sm font-black"><input type="checkbox" checked={selectedMedia.border} onChange={(event) => updateSelectedMedia({ border: event.target.checked })} className="h-4 w-4" />Add border</label>
+          </div>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <label className="grid gap-1 text-sm font-bold">Caption<input value={selectedMedia.caption} onChange={(event) => updateSelectedMedia({ caption: event.target.value })} placeholder="Optional caption" /></label>
+            <label className="grid gap-1 text-sm font-bold">Photo credit<input value={selectedMedia.credit} onChange={(event) => updateSelectedMedia({ credit: event.target.value })} placeholder="Optional photographer or source" /></label>
+          </div>
+          <label className="mt-3 grid gap-1 text-sm font-bold">Photo description <span className="font-normal text-slate-500">(for readers using screen readers)</span><input value={selectedMedia.alt} onChange={(event) => updateSelectedMedia({ alt: event.target.value })} placeholder="Describe what is in the photo" /></label>
+        </section>
+      ) : null}
+
       <div
         ref={editorRef}
         contentEditable
@@ -233,6 +333,7 @@ export default function RichTextEditor({ value, onChange }: RichTextEditorProps)
         onBlur={emitChange}
         onKeyUp={rememberSelection}
         onMouseUp={rememberSelection}
+        onClick={handleEditorClick}
         onPaste={handlePaste}
         onDragOver={(event) => { if (Array.from(event.dataTransfer.types).includes("Files")) event.preventDefault(); }}
         onDrop={handleDrop}

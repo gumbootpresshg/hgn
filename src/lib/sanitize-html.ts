@@ -43,7 +43,7 @@ export function sanitizeArticleHtml(value?: string | null) {
     allowedAttributes: {
       a: ["href", "title", "target", "rel"],
       img: ["src", "alt", "title", "width", "height", "loading", "decoding"],
-      figure: ["data-gallery"],
+      figure: ["data-gallery", "data-align", "data-size", "data-crop", "data-border"],
       span: ["class"],
     },
     allowedSchemes: ["http", "https", "mailto", "tel"],
@@ -70,5 +70,8 @@ export function sanitizeArticleHtml(value?: string | null) {
   })
 
   const withoutEmptyFigures = cleaned.replace(/<figure\b[^>]*>[\s\S]*?<\/figure>/gi, (figure) => /<img\b/i.test(figure) ? figure : "")
-  return restorePlainTextParagraphs(withoutEmptyFigures)
+  // The first inline-media release inserted the placeholder word “Photo”.
+  // It is not a real caption and should never appear on the published story.
+  const withoutPlaceholderCaptions = withoutEmptyFigures.replace(/<figcaption>\s*Photo\s*<\/figcaption>/gi, "<figcaption></figcaption>")
+  return restorePlainTextParagraphs(withoutPlaceholderCaptions)
 }
