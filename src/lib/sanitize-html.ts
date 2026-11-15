@@ -43,6 +43,7 @@ export function sanitizeArticleHtml(value?: string | null) {
     allowedAttributes: {
       a: ["href", "title", "target", "rel"],
       img: ["src", "alt", "title", "width", "height", "loading", "decoding"],
+      figure: ["data-gallery"],
       span: ["class"],
     },
     allowedSchemes: ["http", "https", "mailto", "tel"],

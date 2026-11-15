@@ -73,6 +73,14 @@ label { @apply text-sm font-semibold text-stone-700; }
 .article-body h3 { margin: 1.5rem 0 .5rem; color: #171717; font-family: Georgia, "Times New Roman", serif; font-size: 1.4rem; font-weight: 700; line-height: 1.2; }
 .article-body a { color: var(--navy); font-weight: 700; text-decoration: underline; }
 .article-body img { max-width: 100%; height: auto; margin: 1.5rem 0; border-radius: 0; }
+.article-body figure { margin: 2rem 0; }
+.article-body figure > img { display: block; width: 100%; margin: 0; }
+.article-body figure[data-gallery="true"] { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; }
+.article-body figure[data-gallery="true"] > img { aspect-ratio: 4 / 3; width: 100%; object-fit: cover; }
+.article-body figure[data-gallery="true"] > img:first-child:last-of-type { grid-column: 1 / -1; }
+.article-body figure figcaption { margin-top: .5rem; color: #64748b; font-family: Arial, Helvetica, sans-serif; font-size: .8rem; line-height: 1.4; }
+.article-body figure[data-gallery="true"] figcaption { grid-column: 1 / -1; }
+@media (max-width: 520px) { .article-body figure[data-gallery="true"] { grid-template-columns: 1fr; } }
 .article-body blockquote { margin: 1.5rem 0; border-left: 3px solid var(--accent); padding-left: 1.25rem; color: #57534e; font-family: Georgia, "Times New Roman", serif; font-size: 1.35rem; font-weight: 700; line-height: 1.5; }
 
 /* Bring legacy card-heavy pages into the newspaper system without changing their functionality. */
