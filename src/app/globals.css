@@ -85,6 +85,9 @@ label { @apply text-sm font-semibold text-stone-700; }
 .article-body figure[data-crop="landscape"] > img { aspect-ratio: 16 / 9; object-fit: cover; }
 .article-body figure[data-crop="square"] > img { aspect-ratio: 1 / 1; object-fit: cover; }
 .article-body figure[data-crop="portrait"] > img { aspect-ratio: 3 / 4; object-fit: cover; }
+.article-body figure[data-crop="custom"] { overflow: hidden; }
+.article-body figure[data-crop="custom"] > img { height: 100%; object-fit: cover; }
+[contenteditable="true"] figure[data-selected-media="true"] { outline: 2px solid var(--navy); outline-offset: 3px; cursor: grab; }
 .article-body figure[data-gallery="true"] { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; }
 .article-body figure[data-gallery="true"] > img { aspect-ratio: 4 / 3; width: 100%; object-fit: cover; }
 .article-body figure[data-gallery="true"] > img:first-child:last-of-type { grid-column: 1 / -1; }

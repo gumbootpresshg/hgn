@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type ClipboardEvent, type DragEvent } from "react";
+import { useEffect, useRef, useState, type ClipboardEvent, type DragEvent, type PointerEvent } from "react";
 
 type RichTextEditorProps = {
   value: string;
@@ -11,7 +11,7 @@ type MediaSettings = {
   id: string;
   align: "center" | "left" | "right";
   size: "full" | "large" | "medium" | "small";
-  crop: "original" | "landscape" | "square" | "portrait";
+  crop: "original" | "landscape" | "square" | "portrait" | "custom";
   border: boolean;
   caption: string;
   credit: string;
@@ -66,9 +66,11 @@ export default function RichTextEditor({ value, onChange }: RichTextEditorProps)
   const imageInputRef = useRef<HTMLInputElement | null>(null);
   const galleryInputRef = useRef<HTMLInputElement | null>(null);
   const savedRangeRef = useRef<Range | null>(null);
+  const draggedMediaIdRef = useRef<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadMessage, setUploadMessage] = useState("");
   const [selectedMedia, setSelectedMedia] = useState<MediaSettings | null>(null);
+  const [mediaRect, setMediaRect] = useState<DOMRect | null>(null);
 
   useEffect(() => {
     const editor = editorRef.current;
@@ -78,7 +80,17 @@ export default function RichTextEditor({ value, onChange }: RichTextEditorProps)
       editor.innerHTML = value || "";
       lastExternalValue.current = value || "";
     }
+    editor.querySelectorAll<HTMLElement>("figure").forEach((figure) => { figure.draggable = true; });
   }, [value]);
+
+  useEffect(() => {
+    const refresh = () => refreshMediaRect();
+    window.addEventListener("resize", refresh);
+    window.addEventListener("scroll", refresh, true);
+    return () => { window.removeEventListener("resize", refresh); window.removeEventListener("scroll", refresh, true); };
+  // selectedMedia deliberately triggers a fresh measurement after the photo is selected.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedMedia?.id]);
 
   function emitChange() {
     const html = editorRef.current?.innerHTML || "";
@@ -88,6 +100,16 @@ export default function RichTextEditor({ value, onChange }: RichTextEditorProps)
 
   function focusEditor() {
     editorRef.current?.focus();
+  }
+
+  function selectedFigure() {
+    if (!selectedMedia || !editorRef.current) return null;
+    return editorRef.current.querySelector<HTMLElement>(`figure[data-media-id="${selectedMedia.id}"]`);
+  }
+
+  function refreshMediaRect() {
+    const figure = selectedFigure();
+    setMediaRect(figure ? figure.getBoundingClientRect() : null);
   }
 
   function rememberSelection() {
@@ -163,8 +185,12 @@ export default function RichTextEditor({ value, onChange }: RichTextEditorProps)
 
   function selectFigure(figure: HTMLElement) {
     const settings = mediaSettingsFor(figure);
+    figure.draggable = true;
+    editorRef.current?.querySelectorAll<HTMLElement>("figure[data-selected-media]").forEach((item) => delete item.dataset.selectedMedia);
+    figure.dataset.selectedMedia = "true";
     setSelectedMedia(settings);
     emitChange();
+    window.requestAnimationFrame(refreshMediaRect);
   }
 
   function updateSelectedMedia(change: Partial<MediaSettings>) {
@@ -191,6 +217,70 @@ export default function RichTextEditor({ value, onChange }: RichTextEditorProps)
     });
     setSelectedMedia(next);
     emitChange();
+    window.requestAnimationFrame(refreshMediaRect);
+  }
+
+  function toggleCropMode() {
+    const figure = selectedFigure();
+    if (!figure || !selectedMedia) return;
+    const image = figure.querySelector<HTMLImageElement>("img");
+    if (figure.dataset.crop === "custom") {
+      figure.dataset.crop = "original";
+      figure.style.height = "";
+      if (image) image.style.objectPosition = "";
+      setUploadMessage("Crop mode off. The full photo is showing again.");
+    } else {
+      const rect = figure.getBoundingClientRect();
+      figure.dataset.crop = "custom";
+      figure.style.height = `${Math.max(140, Math.round(rect.height || rect.width * 0.75))}px`;
+      if (image) image.style.objectPosition = "50% 50%";
+      setUploadMessage("Crop mode is on. Drag the photo to choose the crop; drag the lower-right corner to resize the crop frame.");
+    }
+    setSelectedMedia(mediaSettingsFor(figure));
+    emitChange();
+    window.requestAnimationFrame(refreshMediaRect);
+  }
+
+  function beginResize(event: PointerEvent<HTMLButtonElement>) {
+    const figure = selectedFigure();
+    if (!figure) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const startX = event.clientX;
+    const startY = event.clientY;
+    const startWidth = figure.getBoundingClientRect().width;
+    const startHeight = figure.getBoundingClientRect().height;
+    const editorWidth = editorRef.current?.getBoundingClientRect().width || 1000;
+    const customCrop = figure.dataset.crop === "custom";
+    const move = (moveEvent: globalThis.PointerEvent) => {
+      const width = Math.max(140, Math.min(editorWidth, Math.round(startWidth + moveEvent.clientX - startX)));
+      figure.style.width = `${width}px`;
+      if (customCrop) figure.style.height = `${Math.max(120, Math.round(startHeight + moveEvent.clientY - startY))}px`;
+      refreshMediaRect();
+    };
+    const end = () => { window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", end); emitChange(); refreshMediaRect(); };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", end, { once: true });
+  }
+
+  function beginCropMove(event: PointerEvent<HTMLButtonElement>) {
+    const figure = selectedFigure();
+    const image = figure?.querySelector<HTMLImageElement>("img");
+    if (!figure || !image || figure.dataset.crop !== "custom") return;
+    event.preventDefault();
+    event.stopPropagation();
+    const startX = event.clientX;
+    const startY = event.clientY;
+    const [originX = 50, originY = 50] = image.style.objectPosition.split(" ").map((value) => Number.parseFloat(value) || 50);
+    const rect = figure.getBoundingClientRect();
+    const move = (moveEvent: globalThis.PointerEvent) => {
+      const x = Math.max(0, Math.min(100, originX - ((moveEvent.clientX - startX) / rect.width) * 100));
+      const y = Math.max(0, Math.min(100, originY - ((moveEvent.clientY - startY) / rect.height) * 100));
+      image.style.objectPosition = `${x}% ${y}%`;
+    };
+    const end = () => { window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", end); emitChange(); };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", end, { once: true });
   }
 
   async function uploadAndInsert(files: File[]) {
@@ -269,8 +359,23 @@ export default function RichTextEditor({ value, onChange }: RichTextEditorProps)
 
   function handleDrop(event: DragEvent<HTMLDivElement>) {
     const files = Array.from(event.dataTransfer.files || []);
-    if (!files.some((file) => file.type.startsWith("image/"))) return;
     event.preventDefault();
+    const movingId = draggedMediaIdRef.current;
+    if (movingId && editorRef.current) {
+      const movingFigure = editorRef.current.querySelector<HTMLElement>(`figure[data-media-id="${movingId}"]`);
+      const target = event.target as HTMLElement;
+      const targetBlock = target.closest("p,h2,h3,h4,blockquote,ul,ol,figure");
+      if (movingFigure && targetBlock && targetBlock !== movingFigure && editorRef.current.contains(targetBlock)) {
+        const rect = targetBlock.getBoundingClientRect();
+        targetBlock.insertAdjacentElement(event.clientY > rect.top + rect.height / 2 ? "afterend" : "beforebegin", movingFigure);
+        selectFigure(movingFigure);
+        setUploadMessage("Photo moved in the story.");
+      }
+      draggedMediaIdRef.current = null;
+      emitChange();
+      return;
+    }
+    if (!files.some((file) => file.type.startsWith("image/"))) return;
     placeDropCaret(event);
     void uploadAndInsert(files);
   }
@@ -279,7 +384,22 @@ export default function RichTextEditor({ value, onChange }: RichTextEditorProps)
     const target = event.target as HTMLElement;
     const figure = target.closest("figure");
     if (figure && editorRef.current?.contains(figure)) selectFigure(figure);
-    else setSelectedMedia(null);
+    else {
+      editorRef.current?.querySelectorAll<HTMLElement>("figure[data-selected-media]").forEach((item) => delete item.dataset.selectedMedia);
+      setSelectedMedia(null);
+      setMediaRect(null);
+    }
+  }
+
+  function handleDragStart(event: DragEvent<HTMLDivElement>) {
+    const target = event.target as HTMLElement;
+    const figure = target.closest<HTMLElement>("figure");
+    if (!figure || !editorRef.current?.contains(figure)) return;
+    const settings = mediaSettingsFor(figure);
+    draggedMediaIdRef.current = settings.id;
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", settings.id);
+    selectFigure(figure);
   }
 
   return (
@@ -312,9 +432,7 @@ export default function RichTextEditor({ value, onChange }: RichTextEditorProps)
             <label className="grid gap-1 text-xs font-black uppercase tracking-wide">Display size
               <select value={selectedMedia.size} onChange={(event) => updateSelectedMedia({ size: event.target.value as MediaSettings["size"] })}><option value="full">Full width</option><option value="large">Large</option><option value="medium">Medium</option><option value="small">Small</option></select>
             </label>
-            <label className="grid gap-1 text-xs font-black uppercase tracking-wide">Crop shape
-              <select value={selectedMedia.crop} onChange={(event) => updateSelectedMedia({ crop: event.target.value as MediaSettings["crop"] })}><option value="original">Original</option><option value="landscape">Landscape crop</option><option value="square">Square crop</option><option value="portrait">Portrait crop</option></select>
-            </label>
+            <div className="grid gap-1 text-xs font-black uppercase tracking-wide"><span>Crop</span><button type="button" onClick={toggleCropMode} className="rounded border bg-white px-3 py-2 text-sm font-black normal-case">{selectedMedia.crop === "custom" ? "Finish crop" : "Crop photo"}</button></div>
             <label className="flex items-end gap-2 pb-2 text-sm font-black"><input type="checkbox" checked={selectedMedia.border} onChange={(event) => updateSelectedMedia({ border: event.target.checked })} className="h-4 w-4" />Add border</label>
           </div>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -323,6 +441,13 @@ export default function RichTextEditor({ value, onChange }: RichTextEditorProps)
           </div>
           <label className="mt-3 grid gap-1 text-sm font-bold">Photo description <span className="font-normal text-slate-500">(for readers using screen readers)</span><input value={selectedMedia.alt} onChange={(event) => updateSelectedMedia({ alt: event.target.value })} placeholder="Describe what is in the photo" /></label>
         </section>
+      ) : null}
+
+      {selectedMedia && mediaRect ? (
+        <div className="fixed z-50 pointer-events-none" style={{ left: mediaRect.left, top: mediaRect.top, width: mediaRect.width, height: mediaRect.height }}>
+          {selectedMedia.crop === "custom" ? <button type="button" aria-label="Drag photo within crop" onPointerDown={beginCropMove} className="pointer-events-auto absolute left-2 top-2 cursor-move rounded bg-slate-950/80 px-2 py-1 text-xs font-black text-white">Drag photo</button> : null}
+          <button type="button" aria-label="Drag to resize photo" onPointerDown={beginResize} className="pointer-events-auto absolute -bottom-2 -right-2 h-5 w-5 cursor-nwse-resize border-2 border-white bg-hgnBlue shadow" />
+        </div>
       ) : null}
 
       <div
@@ -334,6 +459,7 @@ export default function RichTextEditor({ value, onChange }: RichTextEditorProps)
         onKeyUp={rememberSelection}
         onMouseUp={rememberSelection}
         onClick={handleEditorClick}
+        onDragStart={handleDragStart}
         onPaste={handlePaste}
         onDragOver={(event) => { if (Array.from(event.dataTransfer.types).includes("Files")) event.preventDefault(); }}
         onDrop={handleDrop}

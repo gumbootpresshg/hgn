@@ -42,12 +42,16 @@ export function sanitizeArticleHtml(value?: string | null) {
     allowedTags,
     allowedAttributes: {
       a: ["href", "title", "target", "rel"],
-      img: ["src", "alt", "title", "width", "height", "loading", "decoding"],
-      figure: ["data-gallery", "data-align", "data-size", "data-crop", "data-border"],
+      figure: ["data-gallery", "data-align", "data-size", "data-crop", "data-border", "style"],
+      img: ["src", "alt", "title", "width", "height", "loading", "decoding", "style"],
       span: ["class"],
     },
     allowedSchemes: ["http", "https", "mailto", "tel"],
     allowedSchemesByTag: { img: ["http", "https"] },
+    allowedStyles: {
+      figure: { width: [/^\d+(?:\.\d+)?px$/], height: [/^\d+(?:\.\d+)?px$/] },
+      img: { "object-position": [/^\d+(?:\.\d+)?%\s+\d+(?:\.\d+)?%$/] },
+    },
     transformTags: {
       // contentEditable and pasted Word/Google Docs text commonly use <div>
       // for each paragraph. Preserve the break, but publish semantic <p>s.
