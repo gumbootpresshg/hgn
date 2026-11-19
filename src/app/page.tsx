@@ -548,35 +548,42 @@ export default async function Home() {
           </section>
 
           {(desktopSports.length || desktopColumns.length) ? (
-            <section className="grid border-b border-stone-400 py-6 md:grid-cols-2 md:gap-7">
+            <section className="border-b border-stone-400 py-6">
+              <div className="grid md:grid-cols-2 md:gap-x-7">
               <div className="min-w-0 md:border-r md:border-stone-300 md:pr-7">
                 <div className="newspaper-section-heading">
                   <h2>Sports</h2>
                   <Link href="/sports">All sports →</Link>
                 </div>
-                {desktopSports.length ? desktopSports.map((article) => (
-                  <Link key={article.id} href={`/articles/${article.slug}`} className="group block border-b border-stone-200 py-4 last:border-b-0">
-                    <h3 className="font-serif text-xl font-bold leading-tight group-hover:text-hgnRed">{article.title}</h3>
-                    <p className="mt-2 line-clamp-2 text-sm leading-6 text-stone-600">{plainExcerpt(article, 120)}</p>
-                    <StoryMeta article={article} settings={publishingSettings} />
-                  </Link>
-                )) : <p className="py-4 text-sm text-stone-500">More sports coverage coming soon.</p>}
               </div>
-
               <div className="min-w-0 pt-6 md:pt-0">
                 <div className="newspaper-section-heading">
                   <h2>Columns</h2>
                   <Link href="/columns">All columns →</Link>
                 </div>
-                {desktopColumns.length ? desktopColumns.map((article) => (
-                  <Link key={article.id} href={`/articles/${article.slug}`} className="group block border-b border-stone-200 py-4 last:border-b-0">
-                    <p className="newspaper-kicker text-hgnRed">{article.column_name || article.subcategory || "Column"}</p>
-                    <h3 className="mt-1 font-serif text-xl font-bold leading-tight group-hover:text-hgnRed">{article.title}</h3>
-                    <p className="mt-2 line-clamp-2 text-sm leading-6 text-stone-600">{plainExcerpt(article, 120)}</p>
-                    <StoryMeta article={article} settings={publishingSettings} />
-                  </Link>
-                )) : <p className="py-4 text-sm text-stone-500">More columns coming soon.</p>}
               </div>
+              </div>
+              {Array.from({ length: Math.max(desktopSports.length, desktopColumns.length) }).map((_, index) => {
+                const sport = desktopSports[index]
+                const column = desktopColumns[index]
+                return <div key={index} className="grid md:grid-cols-2 md:gap-x-7">
+                  <div className="min-w-0 border-t border-stone-200 py-4 md:border-r md:border-stone-300 md:pr-7">
+                    {sport ? <Link href={`/articles/${sport.slug}`} className="group block">
+                      <h3 className="font-serif text-xl font-bold leading-tight group-hover:text-hgnRed">{sport.title}</h3>
+                      <p className="mt-2 line-clamp-2 text-sm leading-6 text-stone-600">{plainExcerpt(sport, 120)}</p>
+                      <StoryMeta article={sport} settings={publishingSettings} />
+                    </Link> : null}
+                  </div>
+                  <div className="min-w-0 border-t border-stone-200 py-4">
+                    {column ? <Link href={`/articles/${column.slug}`} className="group block">
+                      <p className="newspaper-kicker text-hgnRed">{column.column_name || column.subcategory || "Column"}</p>
+                      <h3 className="mt-1 font-serif text-xl font-bold leading-tight group-hover:text-hgnRed">{column.title}</h3>
+                      <p className="mt-2 line-clamp-2 text-sm leading-6 text-stone-600">{plainExcerpt(column, 120)}</p>
+                      <StoryMeta article={column} settings={publishingSettings} />
+                    </Link> : null}
+                  </div>
+                </div>
+              })}
             </section>
           ) : null}
 
