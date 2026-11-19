@@ -549,8 +549,8 @@ export default async function Home() {
 
           {(desktopSports.length || desktopColumns.length) ? (
             <section className="border-b border-stone-400 py-6">
-              <div className="grid md:grid-cols-2 md:gap-x-7">
-              <div className="min-w-0 md:border-r md:border-stone-300 md:pr-7">
+              <div className="grid md:grid-cols-2 md:gap-x-12">
+              <div className="min-w-0">
                 <div className="newspaper-section-heading">
                   <h2>Sports</h2>
                   <Link href="/sports">All sports →</Link>
@@ -566,15 +566,15 @@ export default async function Home() {
               {Array.from({ length: Math.max(desktopSports.length, desktopColumns.length) }).map((_, index) => {
                 const sport = desktopSports[index]
                 const column = desktopColumns[index]
-                return <div key={index} className="grid md:grid-cols-2 md:gap-x-7">
-                  <div className="min-w-0 border-t border-stone-200 py-4 md:border-r md:border-stone-300 md:pr-7">
+                return <div key={index} className="grid md:grid-cols-2 md:gap-x-12">
+                  <div className="min-w-0 py-3">
                     {sport ? <Link href={`/articles/${sport.slug}`} className="group block">
                       <h3 className="font-serif text-xl font-bold leading-tight group-hover:text-hgnRed">{sport.title}</h3>
                       <p className="mt-2 line-clamp-2 text-sm leading-6 text-stone-600">{plainExcerpt(sport, 120)}</p>
                       <StoryMeta article={sport} settings={publishingSettings} />
                     </Link> : null}
                   </div>
-                  <div className="min-w-0 border-t border-stone-200 py-4">
+                  <div className="min-w-0 py-3">
                     {column ? <Link href={`/articles/${column.slug}`} className="group block">
                       <p className="newspaper-kicker text-hgnRed">{column.column_name || column.subcategory || "Column"}</p>
                       <h3 className="mt-1 font-serif text-xl font-bold leading-tight group-hover:text-hgnRed">{column.title}</h3>
