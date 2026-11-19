@@ -16,16 +16,18 @@ export default async function ColumnsPage() {
 
   const { data: articleRows } = await supabase
     .from("articles")
-    .select("column_slug,column_name,column,status")
+    .select("column_slug,column_name,column,author_name,category,section,subcategory,type,vertical,title,slug,status")
     .in("status", ["published", "approved", "public", "live", "active"])
     .limit(1000);
 
   const publishedColumns = articleRows || [];
   function hasPublishedArticle(column: { name: string; slug: string }) {
-    const names = [column.name, column.slug].filter(Boolean).map((value) => slugify(value));
+    const names = [column.name, column.slug].filter(Boolean).map((value) => slugify(value)).filter(Boolean);
     return publishedColumns.some((article: any) => {
-      const articleValues = [article.column_slug, article.column_name, article.column].filter(Boolean).map((value) => slugify(String(value)));
-      return articleValues.includes(column.slug) || articleValues.some((value) => names.includes(value));
+      const articleValues = [article.column_slug, article.column_name, article.column, article.author_name, article.category, article.section, article.subcategory, article.type, article.vertical, article.title, article.slug]
+        .filter(Boolean)
+        .map((value) => slugify(String(value)));
+      return articleValues.some((value) => names.some((name) => value === name || value.includes(name)));
     });
   }
 

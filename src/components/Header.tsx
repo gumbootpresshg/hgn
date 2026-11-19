@@ -4,7 +4,7 @@ import Link from "next/link"
 import { ChevronDown, Menu, Search, UserRound, X } from "lucide-react"
 import { usePathname } from "next/navigation"
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
-import { slugify } from "@/lib/article-routing"
+import { officialColumnNames, slugify } from "@/lib/article-routing"
 import { useSiteTheme } from "@/components/theme/SiteThemeProvider"
 import { supabase } from "@/lib/supabase"
 import { defaultNavigation, type SiteNavEntry, type SitePlatformConfig, type Visibility } from "@/lib/site-platform-config"
@@ -205,21 +205,29 @@ export function Header({ initialPlatformConfig }: { initialPlatformConfig?: Site
           .order("display_name", { ascending: true }),
         supabase
           .from("articles")
-          .select("column_slug,column_name,column,status")
+          .select("column_slug,column_name,column,author_name,category,section,subcategory,type,vertical,title,slug,status")
           .in("status", ["published", "approved", "public", "live", "active"])
           .limit(1000),
       ])
       if (!active) return
       const publishedColumns = articleRows || []
-      const liveColumns = (columnRows || []).filter((item: any) => {
-        const slug = String(item.slug || "")
-        const names = [item.display_name, item.name].filter(Boolean).map((value) => slugify(String(value)))
-        return Boolean(slug) && publishedColumns.some((article: any) => {
-          const articleValues = [article.column_slug, article.column_name, article.column].filter(Boolean).map((value) => slugify(String(value)))
-          return articleValues.includes(slug) || articleValues.some((value) => names.includes(value))
+      // Older imported stories often identify their series in the title or
+      // byline, not in column_slug. Match those forms too, so established
+      // columnists don't disappear simply because their archive predates the
+      // current editor fields.
+      const candidates = (columnRows || []).length
+        ? (columnRows || []).map((item: any) => ({ slug: item.slug, label: item.display_name || item.name }))
+        : officialColumnNames.map((label) => ({ slug: slugify(label), label }))
+      const liveColumns = candidates.filter((item: any) => {
+        const targets = [item.slug, item.label].filter(Boolean).map((value) => slugify(String(value))).filter(Boolean)
+        return targets.length > 0 && publishedColumns.some((article: any) => {
+          const articleValues = [article.column_slug, article.column_name, article.column, article.author_name, article.category, article.section, article.subcategory, article.type, article.vertical, article.title, article.slug]
+            .filter(Boolean)
+            .map((value) => slugify(String(value)))
+          return articleValues.some((value) => targets.some((target) => value === target || value.includes(target)))
         })
       })
-      setColumns(liveColumns.map((item: any) => ({ href: `/columns/${item.slug}`, label: item.display_name || item.name })))
+      setColumns(liveColumns.map((item: any) => ({ href: `/columns/${item.slug}`, label: item.label })))
     })()
     return () => { active = false }
   }, [])
