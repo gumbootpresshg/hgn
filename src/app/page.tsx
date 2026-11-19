@@ -68,6 +68,14 @@ type Article = {
 
 type ContestWinner = { photo_url: string; title?: string | null; display_name?: string | null }
 
+function isOnTheRecord(article: Article) {
+  const fields = [article.category, article.section, article.subcategory, article.slug]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase()
+  return fields.includes("on the record") || fields.includes("on-the-record")
+}
+
 function plainExcerpt(article: Article, length = 190) {
   return smartExcerpt(article.excerpt || article.body, length)
 }
@@ -221,10 +229,11 @@ export default async function Home() {
     items.findIndex((candidate) => candidate.slug === article.slug) === index,
   )
   const editorial = chronological.find((article) => isEditorial(article) && article.slug !== main?.slug)
+  const onTheRecord = chronological.find((article) => isOnTheRecord(article) && article.slug !== main?.slug)
   // Columns have their own dedicated section below. This is the latest opinion
   // piece that is not a column or an editorial.
   const opinion = chronological.find((article) =>
-    isOpinion(article) && !isColumn(article) && !isEditorial(article) && article.slug !== main?.slug,
+    isOpinion(article) && !isColumn(article) && !isEditorial(article) && !isOnTheRecord(article) && article.slug !== main?.slug,
   )
   const photoRailStories = [
     editorial ? { article: editorial, label: "Editorial", href: "/opinion/editorials" } : null,
@@ -239,6 +248,7 @@ export default async function Home() {
   if (secondNews?.slug) desktopUsed.add(secondNews.slug)
   if (editorial?.slug) desktopUsed.add(editorial.slug)
   if (opinion?.slug) desktopUsed.add(opinion.slug)
+  if (onTheRecord?.slug) desktopUsed.add(onTheRecord.slug)
 
   // The Latest strip is a news-only headline feed. Columns, obituaries, opinion,
   // sports and other verticals have their own dedicated places on the homepage.
@@ -265,6 +275,7 @@ export default async function Home() {
   const mobileUsed = new Set<string>()
   if (main?.slug) mobileUsed.add(main.slug)
   if (opinion?.slug) mobileUsed.add(opinion.slug)
+  if (onTheRecord?.slug) mobileUsed.add(onTheRecord.slug)
 
   const mobileLatest = chronological.filter((article) => !mobileUsed.has(article.slug)).slice(0, 4)
   mobileLatest.forEach((article) => mobileUsed.add(article.slug))
@@ -354,6 +365,17 @@ export default async function Home() {
           <section className="border-b border-stone-400 py-5">
             <div className="newspaper-section-heading"><h2>Sports</h2><Link href="/sports">All sports →</Link></div>
             {mobileSports.map((article) => <Link key={article.id} href={`/articles/${article.slug}`} className="block border-b border-stone-200 py-3 last:border-b-0"><h3 className="font-serif text-xl font-bold leading-tight">{article.title}</h3><StoryMeta article={article} settings={publishingSettings} /></Link>)}
+          </section>
+        ) : null}
+
+        {onTheRecord ? (
+          <section className="border-b border-stone-400 py-5">
+            <div className="newspaper-section-heading"><h2>On the Record</h2><Link href="/opinion/on-the-record">View all →</Link></div>
+            <Link href={`/articles/${onTheRecord.slug}`} className="group block">
+              <h3 className="font-serif text-xl font-bold leading-tight group-hover:text-hgnRed">{onTheRecord.title}</h3>
+              <p className="mt-2 line-clamp-2 text-sm leading-6 text-stone-600">{plainExcerpt(onTheRecord, 130)}</p>
+              <StoryMeta article={onTheRecord} settings={publishingSettings} />
+            </Link>
           </section>
         ) : null}
 
@@ -495,6 +517,16 @@ export default async function Home() {
                     <StoryMeta article={article} settings={publishingSettings} />
                   </Link>
                 )) : <p className="py-4 text-sm text-stone-500">More sports coverage coming soon.</p>}
+                {onTheRecord ? (
+                  <section className="mt-4 border-t border-stone-300 pt-4">
+                    <div className="newspaper-section-heading"><h2>On the Record</h2><Link href="/opinion/on-the-record">View all →</Link></div>
+                    <Link href={`/articles/${onTheRecord.slug}`} className="group block pt-2">
+                      <h3 className="font-serif text-xl font-bold leading-tight group-hover:text-hgnRed">{onTheRecord.title}</h3>
+                      <p className="mt-2 line-clamp-2 text-sm leading-6 text-stone-600">{plainExcerpt(onTheRecord, 130)}</p>
+                      <StoryMeta article={onTheRecord} settings={publishingSettings} />
+                    </Link>
+                  </section>
+                ) : null}
               </div>
 
               <div className="min-w-0 pt-6 md:pt-0">
