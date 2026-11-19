@@ -537,7 +537,7 @@ export default async function Home() {
 
           <section className="grid border-b border-stone-400 py-5 md:grid-cols-2">
             {secondaryStripStories.map((article, index) => (
-              <Link key={article.id} href={`/articles/${article.slug}`} className={`group block py-4 md:px-5 ${index > 0 ? "border-t border-stone-300 md:border-l md:border-t-0" : ""} ${index > 1 ? "md:border-t md:pt-5" : "md:pt-0"}`}>
+              <Link key={article.id} href={`/articles/${article.slug}`} className={`group block py-4 md:px-5 ${index > 0 ? "border-t border-stone-300 md:border-t-0" : ""} ${index > 1 ? "md:border-t md:pt-5" : "md:pt-0"}`}>
                 <p className="newspaper-kicker">{article.category || article.section || "Local"}</p>
                 <h2 className="mt-2 font-serif text-2xl font-bold leading-[1.05] group-hover:text-hgnRed">{article.title}</h2>
                 <p className="mt-3 text-sm leading-6 text-stone-600">{plainExcerpt(article, 150)}</p>
