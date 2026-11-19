@@ -603,33 +603,25 @@ export default async function Home() {
               <h2>More Local News</h2>
               <Link href="/articles">All news →</Link>
             </div>
-            <div className="grid gap-x-7 md:grid-cols-2">
-              {[moreLocalStories.filter((_, index) => index % 2 === 0), moreLocalStories.filter((_, index) => index % 2 === 1)].map((column, columnIndex) => (
-                <div key={columnIndex} className="min-w-0">
-                  {column.map((article, index) => (
-                    <div key={article.id}>
-                      {(() => {
-                        const image = getArticleImage(article)
-                        return (
-                          <Link href={`/articles/${article.slug}`} className={`group grid gap-4 border-b border-stone-300 py-5 ${image ? "grid-cols-[1fr_116px]" : "grid-cols-1"}`}>
-                            <div>
-                              <p className="newspaper-kicker">{article.category || article.section || "News"}</p>
-                              <h3 className="mt-1 font-serif text-xl font-bold leading-tight group-hover:text-hgnRed">{article.title}</h3>
-                              <p className="mt-2 text-sm leading-6 text-stone-600">{plainExcerpt(article, 125)}</p>
-                              <span className="mt-3 inline-block text-[11px] font-bold uppercase tracking-[0.12em]">Read more →</span>
-                              <StoryMeta article={article} settings={publishingSettings} />
-                            </div>
-                            {image ? <div className="aspect-[4/3] overflow-hidden bg-stone-200">
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img src={image} alt={article.image_alt || article.title} className="h-full w-full object-cover" />
-                            </div> : null}
-                          </Link>
-                        )
-                      })()}
+            <div className="grid md:grid-cols-2 md:gap-x-7">
+              {moreLocalStories.map((article, index) => {
+                const image = getArticleImage(article)
+                return (
+                  <Link key={article.id} href={`/articles/${article.slug}`} className={`group grid gap-4 border-b border-stone-300 py-5 ${index % 2 ? "md:border-l md:border-stone-300 md:pl-7" : "md:pr-7"} ${image ? "grid-cols-[1fr_116px]" : "grid-cols-1"}`}>
+                    <div>
+                      <p className="newspaper-kicker">{article.category || article.section || "News"}</p>
+                      <h3 className="mt-1 font-serif text-xl font-bold leading-tight group-hover:text-hgnRed">{article.title}</h3>
+                      <p className="mt-2 line-clamp-3 text-sm leading-6 text-stone-600">{plainExcerpt(article, 125)}</p>
+                      <span className="mt-3 inline-block text-[11px] font-bold uppercase tracking-[0.12em]">Read more →</span>
+                      <StoryMeta article={article} settings={publishingSettings} />
                     </div>
-                  ))}
-                </div>
-              ))}
+                    {image ? <div className="aspect-[4/3] overflow-hidden bg-stone-200">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={image} alt={article.image_alt || article.title} className="h-full w-full object-cover" />
+                    </div> : null}
+                  </Link>
+                )
+              })}
             </div>
             <div className="mt-3 border-t border-stone-300 pt-1">
               <AdSlot placement="home_middle" fallbackHouseAd className="mx-auto max-w-4xl" />
