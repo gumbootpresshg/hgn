@@ -14,6 +14,21 @@ export default async function ColumnsPage() {
     .order("sort_order", { ascending: true })
     .order("display_name", { ascending: true });
 
+  const { data: articleRows } = await supabase
+    .from("articles")
+    .select("column_slug,column_name,column,status")
+    .in("status", ["published", "approved", "public", "live", "active"])
+    .limit(1000);
+
+  const publishedColumns = articleRows || [];
+  function hasPublishedArticle(column: { name: string; slug: string }) {
+    const names = [column.name, column.slug].filter(Boolean).map((value) => slugify(value));
+    return publishedColumns.some((article: any) => {
+      const articleValues = [article.column_slug, article.column_name, article.column].filter(Boolean).map((value) => slugify(String(value)));
+      return articleValues.includes(column.slug) || articleValues.some((value) => names.includes(value));
+    });
+  }
+
   const databaseColumns = (data || []).map((row: any) => ({
     id: row.id,
     name: row.display_name || row.name,
@@ -21,9 +36,10 @@ export default async function ColumnsPage() {
     description: row.description,
   })).filter((row: any) => row.name && row.slug);
 
-  const columns = databaseColumns.length
+  const columnCandidates = databaseColumns.length
     ? databaseColumns
     : officialColumnNames.map((name) => ({ id: slugify(name), name, slug: slugify(name), description: null }));
+  const columns = columnCandidates.filter(hasPublishedArticle);
 
   return (
     <main className="mx-auto max-w-5xl space-y-8 px-6 py-10">
@@ -33,7 +49,7 @@ export default async function ColumnsPage() {
         <p className="mt-3 text-slate-600">Recurring columns and voices from Haida Gwaii News.</p>
       </section>
 
-      <section className="grid gap-4 md:grid-cols-2">
+      {columns.length ? <section className="grid gap-4 md:grid-cols-2">
         {columns.map((column: any) => (
           <Link key={column.id} href={`/columns/${column.slug}`} className="rounded-2xl border bg-white p-5 shadow-sm hover:border-hgnBlue">
             <h2 className="text-xl font-black">{column.name}</h2>
@@ -41,7 +57,7 @@ export default async function ColumnsPage() {
             <p className="mt-3 text-sm font-bold text-hgnBlue">View this column →</p>
           </Link>
         ))}
-      </section>
+      </section> : <p className="rounded-2xl border bg-white p-6 text-slate-600">Columns will appear here as soon as their first article is published.</p>}
     </main>
   );
 }

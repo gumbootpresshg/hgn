@@ -19,12 +19,6 @@ const utilityLinks = [
   { href: "/contact", label: "Contact" },
 ]
 
-const fallbackColumns = [
-  "Tlellagram", "Living Out Loud", "Life on the Gwaii", "GKNS Chronicles", "Off Island Antics",
-  "Wisdom Beyond", "Island Cuisine", "Science Matters", "Backseat Life-ing", "Book Talk",
-  "Gallivanting", "Terry's Take", "Sandspit Shingle", "Masset Matters",
-]
-
 type NavLink = { href: string; label: string; children?: NavLink[] }
 type NavItem = { label: string; href?: string; children?: NavLink[] }
 
@@ -166,8 +160,7 @@ export function Header({ initialPlatformConfig }: { initialPlatformConfig?: Site
   const [mobileOpen, setMobileOpen] = useState(false)
   const [openDesktopMenu, setOpenDesktopMenu] = useState<string | null>(null)
   const [today, setToday] = useState("")
-  const fallbackColumnLinks = useMemo(() => fallbackColumns.map((name) => ({ href: `/columns/${slugify(name)}`, label: name })), [])
-  const [columns, setColumns] = useState<NavLink[]>(fallbackColumnLinks)
+  const [columns, setColumns] = useState<NavLink[]>([])
   const [configuredNav] = useState<SiteNavEntry[] | null>(() => initialPlatformConfig?.navigation || null)
   const [audience, setAudience] = useState<HeaderAudience>({ loggedIn: false, member: false, staff: false })
 
@@ -203,14 +196,30 @@ export function Header({ initialPlatformConfig }: { initialPlatformConfig?: Site
   useEffect(() => {
     let active = true
     ;(async () => {
-      const { data } = await supabase
-        .from("columnists")
-        .select("display_name,name,slug")
-        .eq("is_active", true)
-        .order("sort_order", { ascending: true })
-        .order("display_name", { ascending: true })
-      if (!active || !data?.length) return
-      setColumns(data.map((item: any) => ({ href: `/columns/${item.slug}`, label: item.display_name || item.name })))
+      const [{ data: columnRows }, { data: articleRows }] = await Promise.all([
+        supabase
+          .from("columnists")
+          .select("display_name,name,slug")
+          .eq("is_active", true)
+          .order("sort_order", { ascending: true })
+          .order("display_name", { ascending: true }),
+        supabase
+          .from("articles")
+          .select("column_slug,column_name,column,status")
+          .in("status", ["published", "approved", "public", "live", "active"])
+          .limit(1000),
+      ])
+      if (!active) return
+      const publishedColumns = articleRows || []
+      const liveColumns = (columnRows || []).filter((item: any) => {
+        const slug = String(item.slug || "")
+        const names = [item.display_name, item.name].filter(Boolean).map((value) => slugify(String(value)))
+        return Boolean(slug) && publishedColumns.some((article: any) => {
+          const articleValues = [article.column_slug, article.column_name, article.column].filter(Boolean).map((value) => slugify(String(value)))
+          return articleValues.includes(slug) || articleValues.some((value) => names.includes(value))
+        })
+      })
+      setColumns(liveColumns.map((item: any) => ({ href: `/columns/${item.slug}`, label: item.display_name || item.name })))
     })()
     return () => { active = false }
   }, [])
@@ -273,10 +282,13 @@ export function Header({ initialPlatformConfig }: { initialPlatformConfig?: Site
     const isRetiredGuideLink = (item: { id: string; href?: string }) => item.id === "guide" || ["/explore", "/visitor-guide", "/visitor-mode", "/business-directory"].some((prefix) => item.href?.startsWith(prefix))
     const visible = source.filter((item) => item.enabled && canSeeVisibility(item.visibility, audience) && !isRetiredGuideLink(item))
     return visible.map((item) => {
-      const children = (item.children || []).filter((child) => child.enabled && canSeeVisibility(child.visibility, audience) && !isRetiredGuideLink(child)).map((child) => {
-        if (child.id === "columns") return { href: child.href || "/columns", label: child.label, children: columns }
-        return { href: child.href || "/", label: child.label }
-      })
+      const children = (item.children || [])
+        .filter((child) => child.enabled && canSeeVisibility(child.visibility, audience) && !isRetiredGuideLink(child))
+        .map((child) => {
+          if (child.id === "columns") return columns.length ? { href: child.href || "/columns", label: child.label, children: columns } : null
+          return { href: child.href || "/", label: child.label }
+        })
+        .filter((child): child is NavLink => Boolean(child))
       return children.length ? { label: item.label, children } : { label: item.label, href: item.href || "/" }
     })
   }, [audience, columns, configuredNav])

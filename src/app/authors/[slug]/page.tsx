@@ -28,6 +28,7 @@ type ArticleRow = {
   category?: string | null;
   subcategory?: string | null;
   column_name?: string | null;
+  column_slug?: string | null;
   published_at?: string | null;
 };
 
@@ -46,14 +47,14 @@ export default async function AuthorProfilePage({ params }: PageProps) {
   const [{ data: articles }, { data: coauthoredRows }, { data: columns }, publishingSettings] = await Promise.all([
     supabase
       .from("articles")
-      .select("id,title,slug,excerpt,category,subcategory,column_name,published_at")
+      .select("id,title,slug,excerpt,category,subcategory,column_name,column_slug,published_at")
       .eq("status", "published")
       .eq("writer_id", typedAuthor.id)
       .order("published_at", { ascending: false })
       .limit(100),
     supabase
       .from("hgn_article_authors")
-      .select("article:articles(id,title,slug,excerpt,category,subcategory,column_name,published_at,status)")
+      .select("article:articles(id,title,slug,excerpt,category,subcategory,column_name,column_slug,published_at,status)")
       .eq("author_id", typedAuthor.id)
       .limit(100),
     supabase
@@ -72,6 +73,12 @@ export default async function AuthorProfilePage({ params }: PageProps) {
     if (story?.id && story.status === "published") storiesById.set(story.id, story);
   }
   const stories = [...storiesById.values()].sort((a, b) => new Date(b.published_at || 0).getTime() - new Date(a.published_at || 0).getTime()).slice(0, 100);
+  const liveColumns = (columns || []).filter((column: any) => stories.some((story) => {
+    const values = [story.column_slug, story.column_name].filter(Boolean).map((value) => String(value).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, ""));
+    const columnSlug = String(column.slug || "").toLowerCase();
+    const columnName = String(column.display_name || column.name || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+    return values.includes(columnSlug) || values.includes(columnName);
+  }));
 
   const personJsonLd = { "@context": "https://schema.org", "@type": "Person", name: typedAuthor.display_name, url: absoluteUrl(`/authors/${typedAuthor.slug}`), ...(typedAuthor.photo_url ? { image: absoluteUrl(typedAuthor.photo_url) } : {}), ...(typedAuthor.short_bio ? { description: typedAuthor.short_bio } : {}), worksFor: { "@type": "NewsMediaOrganization", name: SITE.name, url: SITE.url } };
 
@@ -93,9 +100,9 @@ export default async function AuthorProfilePage({ params }: PageProps) {
             {typedAuthor.public_email ? <a href={`mailto:${typedAuthor.public_email}`} className="hover:underline">Email</a> : null}
             {typedAuthor.website_url ? <a href={typedAuthor.website_url} target="_blank" rel="noreferrer" className="hover:underline">Website</a> : null}
           </div>
-          {(columns || []).length ? (
+          {liveColumns.length ? (
             <div className="mt-5 flex flex-wrap gap-2">
-              {(columns || []).map((column: any) => <Link key={column.id} href={`/columns/${column.slug}`} className="rounded-full border border-stone-300 px-3 py-1.5 text-sm font-bold hover:bg-stone-100">{column.display_name || column.name}</Link>)}
+              {liveColumns.map((column: any) => <Link key={column.id} href={`/columns/${column.slug}`} className="rounded-full border border-stone-300 px-3 py-1.5 text-sm font-bold hover:bg-stone-100">{column.display_name || column.name}</Link>)}
             </div>
           ) : null}
         </div>

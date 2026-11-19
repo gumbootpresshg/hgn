@@ -45,6 +45,7 @@ export const defaultNavigation: SiteNavEntry[] = [
     { id: "columns", label: "Columns", href: "/columns", enabled: true, visibility: "public" },
     { id: "letters", label: "Letters to the Editor", href: "/letters", enabled: true, visibility: "public" },
     { id: "guest-opinion", label: "Submit a Guest Opinion", href: "/submit-guest-opinion", enabled: true, visibility: "public" },
+    { id: "on-the-record", label: "On the Record", href: "/opinion/on-the-record", enabled: true, visibility: "public" },
   ]},
   { id: "weather", label: "Weather", href: "/weather", enabled: true, visibility: "public" },
   { id: "community", label: "Community", enabled: true, visibility: "public", children: [
@@ -115,8 +116,12 @@ export const defaultSitePlatformConfig: SitePlatformConfig = { navigation: defau
 
 function addNewGamesLinks(navigation: SiteNavEntry[], sections: SiteSectionConfig[], footer: SiteFooterConfig) {
   const nav = navigation.map((entry) => {
-    if (entry.id !== "community") return entry
     const children = [...(entry.children || [])]
+    if (entry.id === "opinion") {
+      if (!children.some((child) => child.id === "on-the-record")) children.push({ id: "on-the-record", label: "On the Record", href: "/opinion/on-the-record", enabled: true, visibility: "public" as Visibility })
+      return { ...entry, children }
+    }
+    if (entry.id !== "community") return entry
     if (!children.some((child) => child.id === "games")) children.push({ id: "games", label: "Games", href: "/games", enabled: true, visibility: "public" as Visibility })
     if (!children.some((child) => child.id === "contests")) children.push({ id: "contests", label: "Contests", href: "/contests", enabled: true, visibility: "public" as Visibility })
     if (!children.some((child) => child.id === "bc-election-2026")) children.push({ id: "bc-election-2026", label: "B.C. Election Results", href: "/bc-election-2026", enabled: true, visibility: "public" as Visibility })
