@@ -593,9 +593,9 @@ export default async function Home() {
                 <h2>On the Record</h2>
                 <Link href="/opinion/on-the-record">View all →</Link>
               </div>
-              <div className="grid gap-0 md:grid-cols-2 md:divide-x md:divide-stone-300">
+              <div className="grid gap-x-10 md:grid-cols-2">
                 {onTheRecordStories.map((article, index) => (
-                  <Link key={article.id} href={`/articles/${article.slug}`} className={`group block py-4 ${index ? "border-t border-stone-200 md:border-t-0 md:pl-6" : "md:pr-6"}`}>
+                  <Link key={article.id} href={`/articles/${article.slug}`} className={`group block py-4 ${index ? "border-t border-stone-200 md:border-t-0" : ""}`}>
                     <h3 className="font-serif text-2xl font-bold leading-[1.08] group-hover:text-hgnRed">{article.title}</h3>
                     <p className="mt-2 line-clamp-3 text-sm leading-6 text-stone-600">{plainExcerpt(article, 160)}</p>
                     <StoryMeta article={article} settings={publishingSettings} />
@@ -614,7 +614,7 @@ export default async function Home() {
               {moreLocalStories.map((article, index) => {
                 const image = getArticleImage(article)
                 return (
-                  <Link key={article.id} href={`/articles/${article.slug}`} className={`group grid gap-4 border-b border-stone-300 py-5 ${index % 2 ? "md:border-l md:border-stone-300 md:pl-7" : "md:pr-7"} ${image ? "grid-cols-[1fr_116px]" : "grid-cols-1"}`}>
+                  <Link key={article.id} href={`/articles/${article.slug}`} className={`group grid gap-4 border-b border-stone-300 py-5 ${image ? "grid-cols-[1fr_116px]" : "grid-cols-1"}`}>
                     <div>
                       <p className="newspaper-kicker">{article.category || article.section || "News"}</p>
                       <h3 className="mt-1 font-serif text-xl font-bold leading-tight group-hover:text-hgnRed">{article.title}</h3>
