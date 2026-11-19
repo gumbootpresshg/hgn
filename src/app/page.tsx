@@ -7,7 +7,7 @@ import Image from "next/image"
 import { supabase } from "@/lib/supabase"
 import { serviceClient } from "@/lib/newsletters/server"
 import { smartExcerpt } from "@/lib/text"
-import { isColumn, isEditorial, isLocalNews, isOpinion, isSports, sortArticlesNewest } from "@/lib/article-routing"
+import { isColumn, isEditorial, isLetter, isLocalNews, isOpinion, isSports, sortArticlesNewest } from "@/lib/article-routing"
 import { getArticleImage } from "@/lib/article-images"
 import { formatFreshness, formatPublishingDate, getPublishingSettings, type PublishingSettings } from "@/lib/publishing-settings"
 
@@ -228,25 +228,23 @@ export default async function Home() {
     isLocalNews(article) &&
     items.findIndex((candidate) => candidate.slug === article.slug) === index,
   )
-  const editorial = chronological.find((article) => isEditorial(article) && article.slug !== main?.slug)
+  const editorials = chronological.filter((article) => isEditorial(article) && article.slug !== main?.slug).slice(0, 2)
+  const editorial = editorials[0]
+  const latestLetter = chronological.find((article) => isLetter(article) && article.slug !== main?.slug)
   const onTheRecord = chronological.find((article) => isOnTheRecord(article) && article.slug !== main?.slug)
   // Columns have their own dedicated section below. This is the latest opinion
   // piece that is not a column or an editorial.
   const opinion = chronological.find((article) =>
     isOpinion(article) && !isColumn(article) && !isEditorial(article) && !isOnTheRecord(article) && article.slug !== main?.slug,
   )
-  const photoRailStories = [
-    editorial ? { article: editorial, label: "Editorial", href: "/opinion/editorials" } : null,
-    opinion ? { article: opinion, label: "Opinion", href: "/opinion" } : null,
-  ].filter((item): item is { article: Article; label: string; href: string } => Boolean(item))
-
   // Desktop composition is de-duplicated by reserving each visible story as it is assigned.
   // Manual/prominent slots win first; Latest Headlines then takes the newest unused stories;
   // lower news sections are built only from what remains.
   const desktopUsed = new Set<string>()
   if (main?.slug) desktopUsed.add(main.slug)
   if (secondNews?.slug) desktopUsed.add(secondNews.slug)
-  if (editorial?.slug) desktopUsed.add(editorial.slug)
+  editorials.forEach((article) => desktopUsed.add(article.slug))
+  if (latestLetter?.slug) desktopUsed.add(latestLetter.slug)
   if (opinion?.slug) desktopUsed.add(opinion.slug)
   if (onTheRecord?.slug) desktopUsed.add(onTheRecord.slug)
 
@@ -440,18 +438,24 @@ export default async function Home() {
                   </div>
                   {frontPageVideoDescription ? <p className="mt-3 text-sm leading-6 text-stone-600">{frontPageVideoDescription}</p> : null}
                 </div>
-                {photoRailStories.length ? (
+                {editorials.length || latestLetter ? (
                   <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                    {photoRailStories.map(({ article, label, href }) => (
-                      <section key={article.id} className="border-t border-stone-300 pt-3">
-                        <div className="flex items-center justify-between gap-2"><Link href={href} className="newspaper-kicker text-hgnRed hover:underline">{label}</Link><Link href={href} className="text-[9px] font-semibold hover:text-hgnRed">View all →</Link></div>
-                        <Link href={`/articles/${article.slug}`} className="group block">
-                          <h2 className="mt-1 font-serif text-xl font-bold leading-[1.08] group-hover:text-hgnRed">{article.title}</h2>
-                          <p className="mt-2 line-clamp-3 text-sm leading-6 text-stone-600">{plainExcerpt(article, 155)}</p>
-                          <StoryMeta article={article} settings={publishingSettings} />
-                        </Link>
-                      </section>
-                    ))}
+                    {editorials.length ? <section className="border-t border-stone-300 pt-3">
+                      <div className="flex items-center justify-between gap-2"><Link href="/opinion/editorials" className="newspaper-kicker text-hgnRed hover:underline">Editorial</Link><Link href="/opinion/editorials" className="text-[9px] font-semibold hover:text-hgnRed">View all →</Link></div>
+                      {editorials.map((article, index) => <Link key={article.id} href={`/articles/${article.slug}`} className={`group block ${index ? "mt-4 border-t border-stone-200 pt-4" : ""}`}>
+                        <h2 className="mt-1 font-serif text-xl font-bold leading-[1.08] group-hover:text-hgnRed">{article.title}</h2>
+                        <p className="mt-2 line-clamp-2 text-sm leading-6 text-stone-600">{plainExcerpt(article, 135)}</p>
+                        <StoryMeta article={article} settings={publishingSettings} />
+                      </Link>)}
+                    </section> : null}
+                    {latestLetter ? <section className="border-t border-stone-300 pt-3">
+                      <div className="flex items-center justify-between gap-2"><Link href="/letters" className="newspaper-kicker text-hgnRed hover:underline">Letter to the Editor</Link><Link href="/letters" className="text-[9px] font-semibold hover:text-hgnRed">View all →</Link></div>
+                      <Link href={`/articles/${latestLetter.slug}`} className="group block">
+                        <h2 className="mt-1 font-serif text-xl font-bold leading-[1.08] group-hover:text-hgnRed">{latestLetter.title}</h2>
+                        <p className="mt-2 line-clamp-3 text-sm leading-6 text-stone-600">{plainExcerpt(latestLetter, 155)}</p>
+                        <StoryMeta article={latestLetter} settings={publishingSettings} />
+                      </Link>
+                    </section> : null}
                   </div>
                 ) : null}
               </div>
@@ -473,18 +477,24 @@ export default async function Home() {
                   </figure>
                 )}
 
-                {photoRailStories.length ? (
+                {editorials.length || latestLetter ? (
                   <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                    {photoRailStories.map(({ article, label, href }) => (
-                      <section key={article.id} className="border-t border-stone-300 pt-3">
-                        <div className="flex items-center justify-between gap-2"><Link href={href} className="newspaper-kicker text-hgnRed hover:underline">{label}</Link><Link href={href} className="text-[9px] font-semibold hover:text-hgnRed">View all →</Link></div>
-                        <Link href={`/articles/${article.slug}`} className="group block">
-                          <h2 className="mt-1 font-serif text-xl font-bold leading-[1.08] group-hover:text-hgnRed">{article.title}</h2>
-                          <p className="mt-2 line-clamp-3 text-sm leading-6 text-stone-600">{plainExcerpt(article, 155)}</p>
-                          <StoryMeta article={article} settings={publishingSettings} />
-                        </Link>
-                      </section>
-                    ))}
+                    {editorials.length ? <section className="border-t border-stone-300 pt-3">
+                      <div className="flex items-center justify-between gap-2"><Link href="/opinion/editorials" className="newspaper-kicker text-hgnRed hover:underline">Editorial</Link><Link href="/opinion/editorials" className="text-[9px] font-semibold hover:text-hgnRed">View all →</Link></div>
+                      {editorials.map((article, index) => <Link key={article.id} href={`/articles/${article.slug}`} className={`group block ${index ? "mt-4 border-t border-stone-200 pt-4" : ""}`}>
+                        <h2 className="mt-1 font-serif text-xl font-bold leading-[1.08] group-hover:text-hgnRed">{article.title}</h2>
+                        <p className="mt-2 line-clamp-2 text-sm leading-6 text-stone-600">{plainExcerpt(article, 135)}</p>
+                        <StoryMeta article={article} settings={publishingSettings} />
+                      </Link>)}
+                    </section> : null}
+                    {latestLetter ? <section className="border-t border-stone-300 pt-3">
+                      <div className="flex items-center justify-between gap-2"><Link href="/letters" className="newspaper-kicker text-hgnRed hover:underline">Letter to the Editor</Link><Link href="/letters" className="text-[9px] font-semibold hover:text-hgnRed">View all →</Link></div>
+                      <Link href={`/articles/${latestLetter.slug}`} className="group block">
+                        <h2 className="mt-1 font-serif text-xl font-bold leading-[1.08] group-hover:text-hgnRed">{latestLetter.title}</h2>
+                        <p className="mt-2 line-clamp-3 text-sm leading-6 text-stone-600">{plainExcerpt(latestLetter, 155)}</p>
+                        <StoryMeta article={latestLetter} settings={publishingSettings} />
+                      </Link>
+                    </section> : null}
                   </div>
                 ) : null}
               </div>
