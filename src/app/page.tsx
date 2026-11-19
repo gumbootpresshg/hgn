@@ -176,7 +176,7 @@ export default async function Home() {
     supabase.from("articles").select("*").eq("status", "published").eq("front_page_main", true).order("published_at", { ascending: false }).limit(1),
     supabase.from("articles").select("*").eq("status", "published").eq("featured", true).order("published_at", { ascending: false }).limit(8),
     supabase.from("articles").select("*").eq("status", "published").order("published_at", { ascending: false }).limit(80),
-    supabase.from("letters_to_editor").select("id,name,subject,edited_subject,message,body,letter,edited_body,published_at,created_at,status").in("status", ["approved", "published", "public", "active", "live"]).order("published_at", { ascending: false, nullsFirst: false }).order("created_at", { ascending: false }).limit(1),
+    supabase.from("letters_to_editor").select("id,name,subject,edited_subject,message,body,letter,edited_body,published_at,created_at,status").in("status", ["approved", "published", "public", "active", "live"]).order("published_at", { ascending: false, nullsFirst: false }).order("created_at", { ascending: false }).limit(2),
   ])
 
   const settings = (frontPageSettings || null) as FrontPageSettings | null
@@ -247,20 +247,23 @@ export default async function Home() {
   const editorials = chronological.filter((article) => isEditorial(article) && article.slug !== main?.slug).slice(0, 2)
   const editorial = editorials[0]
   const latestArticleLetter = chronological.find((article) => isLetterToEditor(article) && article.slug !== main?.slug)
-  const directLetter = publishedLetters?.[0] as any
-  const latestLetter: HomeLetter | null = directLetter ? {
-    title: directLetter.edited_subject || directLetter.subject || "Letter to the Editor",
-    body: directLetter.edited_body || directLetter.body || directLetter.letter || directLetter.message || "",
-    author: directLetter.name || "Name withheld",
-    publishedAt: directLetter.published_at || directLetter.created_at,
+  const directLetters: HomeLetter[] = ((publishedLetters || []) as any[]).map((item) => ({
+    title: item.edited_subject || item.subject || "Letter to the Editor",
+    body: item.edited_body || item.body || item.letter || item.message || "",
+    author: item.name || "Name withheld",
+    publishedAt: item.published_at || item.created_at,
     href: "/letters",
-  } : latestArticleLetter ? {
+  }))
+  const articleLetter: HomeLetter | null = latestArticleLetter ? {
     title: latestArticleLetter.title,
     body: latestArticleLetter.excerpt || latestArticleLetter.body || "",
     author: latestArticleLetter.author_name || "Name withheld",
     publishedAt: latestArticleLetter.published_at,
     href: `/articles/${latestArticleLetter.slug}`,
   } : null
+  const latestLetters = [...directLetters, ...(articleLetter ? [articleLetter] : [])]
+    .sort((a, b) => new Date(b.publishedAt || 0).getTime() - new Date(a.publishedAt || 0).getTime())
+    .slice(0, 2)
   const onTheRecordStories = chronological.filter((article) => isOnTheRecord(article) && article.slug !== main?.slug).slice(0, 2)
   const onTheRecord = onTheRecordStories[0]
   // Columns have their own dedicated section below. This is the latest opinion
@@ -469,7 +472,7 @@ export default async function Home() {
                   </div>
                   {frontPageVideoDescription ? <p className="mt-3 text-sm leading-6 text-stone-600">{frontPageVideoDescription}</p> : null}
                 </div>
-                {editorials.length || latestLetter ? (
+                {editorials.length || latestLetters.length ? (
                   <div className="mt-4 grid gap-4 sm:grid-cols-2">
                     {editorials.length ? <section className="border-t border-stone-300 pt-3">
                       <div className="flex items-center justify-between gap-2"><Link href="/opinion/editorials" className="newspaper-kicker text-hgnRed hover:underline">Editorial</Link><Link href="/opinion/editorials" className="text-[9px] font-semibold hover:text-hgnRed">View all →</Link></div>
@@ -480,12 +483,12 @@ export default async function Home() {
                       </Link>)}
                     </section> : null}
                     <section className="border-t border-stone-300 pt-3">
-                      <div className="flex items-center justify-between gap-2"><Link href="/letters" className="newspaper-kicker text-hgnRed hover:underline">Letter to the Editor</Link><Link href="/letters" className="text-[9px] font-semibold hover:text-hgnRed">View all →</Link></div>
-                      {latestLetter ? <Link href={latestLetter.href} className="group block">
-                        <h2 className="mt-1 font-serif text-xl font-bold leading-[1.08] group-hover:text-hgnRed">{latestLetter.title}</h2>
-                        <p className="mt-2 line-clamp-3 text-sm leading-6 text-stone-600">{smartExcerpt(latestLetter.body, 155)}</p>
-                        <LetterMeta letter={latestLetter} settings={publishingSettings} />
-                      </Link> : <p className="mt-3 text-sm leading-6 text-stone-500">Reader letters will appear here.</p>}
+                      <div className="flex items-center justify-between gap-2"><Link href="/letters" className="whitespace-nowrap text-[10px] font-black uppercase tracking-[0.13em] text-hgnRed hover:underline">Letters to the Editor</Link><Link href="/letters" className="shrink-0 text-[9px] font-semibold hover:text-hgnRed">View all →</Link></div>
+                      {latestLetters.length ? latestLetters.map((letter, index) => <Link key={`${letter.title}-${index}`} href={letter.href} className={`group block ${index ? "mt-4 border-t border-stone-200 pt-4" : ""}`}>
+                        <h2 className="mt-1 font-serif text-xl font-bold leading-[1.08] group-hover:text-hgnRed">{letter.title}</h2>
+                        <p className="mt-2 line-clamp-2 text-sm leading-6 text-stone-600">{smartExcerpt(letter.body, 135)}</p>
+                        <LetterMeta letter={letter} settings={publishingSettings} />
+                      </Link>) : <p className="mt-3 text-sm leading-6 text-stone-500">Reader letters will appear here.</p>}
                     </section>
                   </div>
                 ) : null}
@@ -508,7 +511,7 @@ export default async function Home() {
                   </figure>
                 )}
 
-                {editorials.length || latestLetter ? (
+                {editorials.length || latestLetters.length ? (
                   <div className="mt-4 grid gap-4 sm:grid-cols-2">
                     {editorials.length ? <section className="border-t border-stone-300 pt-3">
                       <div className="flex items-center justify-between gap-2"><Link href="/opinion/editorials" className="newspaper-kicker text-hgnRed hover:underline">Editorial</Link><Link href="/opinion/editorials" className="text-[9px] font-semibold hover:text-hgnRed">View all →</Link></div>
@@ -519,12 +522,12 @@ export default async function Home() {
                       </Link>)}
                     </section> : null}
                     <section className="border-t border-stone-300 pt-3">
-                      <div className="flex items-center justify-between gap-2"><Link href="/letters" className="newspaper-kicker text-hgnRed hover:underline">Letter to the Editor</Link><Link href="/letters" className="text-[9px] font-semibold hover:text-hgnRed">View all →</Link></div>
-                      {latestLetter ? <Link href={latestLetter.href} className="group block">
-                        <h2 className="mt-1 font-serif text-xl font-bold leading-[1.08] group-hover:text-hgnRed">{latestLetter.title}</h2>
-                        <p className="mt-2 line-clamp-3 text-sm leading-6 text-stone-600">{smartExcerpt(latestLetter.body, 155)}</p>
-                        <LetterMeta letter={latestLetter} settings={publishingSettings} />
-                      </Link> : <p className="mt-3 text-sm leading-6 text-stone-500">Reader letters will appear here.</p>}
+                      <div className="flex items-center justify-between gap-2"><Link href="/letters" className="whitespace-nowrap text-[10px] font-black uppercase tracking-[0.13em] text-hgnRed hover:underline">Letters to the Editor</Link><Link href="/letters" className="shrink-0 text-[9px] font-semibold hover:text-hgnRed">View all →</Link></div>
+                      {latestLetters.length ? latestLetters.map((letter, index) => <Link key={`${letter.title}-${index}`} href={letter.href} className={`group block ${index ? "mt-4 border-t border-stone-200 pt-4" : ""}`}>
+                        <h2 className="mt-1 font-serif text-xl font-bold leading-[1.08] group-hover:text-hgnRed">{letter.title}</h2>
+                        <p className="mt-2 line-clamp-2 text-sm leading-6 text-stone-600">{smartExcerpt(letter.body, 135)}</p>
+                        <LetterMeta letter={letter} settings={publishingSettings} />
+                      </Link>) : <p className="mt-3 text-sm leading-6 text-stone-500">Reader letters will appear here.</p>}
                     </section>
                   </div>
                 ) : null}
