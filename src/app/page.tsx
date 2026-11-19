@@ -76,6 +76,15 @@ function isOnTheRecord(article: Article) {
   return fields.includes("on the record") || fields.includes("on-the-record")
 }
 
+function isLetterToEditor(article: Article) {
+  if (isLetter(article)) return true
+  return [article.category, article.section, article.subcategory, article.type, article.vertical, article.slug]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase()
+    .includes("letter")
+}
+
 function plainExcerpt(article: Article, length = 190) {
   return smartExcerpt(article.excerpt || article.body, length)
 }
@@ -230,8 +239,9 @@ export default async function Home() {
   )
   const editorials = chronological.filter((article) => isEditorial(article) && article.slug !== main?.slug).slice(0, 2)
   const editorial = editorials[0]
-  const latestLetter = chronological.find((article) => isLetter(article) && article.slug !== main?.slug)
-  const onTheRecord = chronological.find((article) => isOnTheRecord(article) && article.slug !== main?.slug)
+  const latestLetter = chronological.find((article) => isLetterToEditor(article) && article.slug !== main?.slug)
+  const onTheRecordStories = chronological.filter((article) => isOnTheRecord(article) && article.slug !== main?.slug).slice(0, 2)
+  const onTheRecord = onTheRecordStories[0]
   // Columns have their own dedicated section below. This is the latest opinion
   // piece that is not a column or an editorial.
   const opinion = chronological.find((article) =>
@@ -246,7 +256,7 @@ export default async function Home() {
   editorials.forEach((article) => desktopUsed.add(article.slug))
   if (latestLetter?.slug) desktopUsed.add(latestLetter.slug)
   if (opinion?.slug) desktopUsed.add(opinion.slug)
-  if (onTheRecord?.slug) desktopUsed.add(onTheRecord.slug)
+  onTheRecordStories.forEach((article) => desktopUsed.add(article.slug))
 
   // The Latest strip is a news-only headline feed. Columns, obituaries, opinion,
   // sports and other verticals have their own dedicated places on the homepage.
@@ -448,14 +458,14 @@ export default async function Home() {
                         <StoryMeta article={article} settings={publishingSettings} />
                       </Link>)}
                     </section> : null}
-                    {latestLetter ? <section className="border-t border-stone-300 pt-3">
+                    <section className="border-t border-stone-300 pt-3">
                       <div className="flex items-center justify-between gap-2"><Link href="/letters" className="newspaper-kicker text-hgnRed hover:underline">Letter to the Editor</Link><Link href="/letters" className="text-[9px] font-semibold hover:text-hgnRed">View all →</Link></div>
-                      <Link href={`/articles/${latestLetter.slug}`} className="group block">
+                      {latestLetter ? <Link href={`/articles/${latestLetter.slug}`} className="group block">
                         <h2 className="mt-1 font-serif text-xl font-bold leading-[1.08] group-hover:text-hgnRed">{latestLetter.title}</h2>
                         <p className="mt-2 line-clamp-3 text-sm leading-6 text-stone-600">{plainExcerpt(latestLetter, 155)}</p>
                         <StoryMeta article={latestLetter} settings={publishingSettings} />
-                      </Link>
-                    </section> : null}
+                      </Link> : <p className="mt-3 text-sm leading-6 text-stone-500">Reader letters will appear here.</p>}
+                    </section>
                   </div>
                 ) : null}
               </div>
@@ -487,14 +497,14 @@ export default async function Home() {
                         <StoryMeta article={article} settings={publishingSettings} />
                       </Link>)}
                     </section> : null}
-                    {latestLetter ? <section className="border-t border-stone-300 pt-3">
+                    <section className="border-t border-stone-300 pt-3">
                       <div className="flex items-center justify-between gap-2"><Link href="/letters" className="newspaper-kicker text-hgnRed hover:underline">Letter to the Editor</Link><Link href="/letters" className="text-[9px] font-semibold hover:text-hgnRed">View all →</Link></div>
-                      <Link href={`/articles/${latestLetter.slug}`} className="group block">
+                      {latestLetter ? <Link href={`/articles/${latestLetter.slug}`} className="group block">
                         <h2 className="mt-1 font-serif text-xl font-bold leading-[1.08] group-hover:text-hgnRed">{latestLetter.title}</h2>
                         <p className="mt-2 line-clamp-3 text-sm leading-6 text-stone-600">{plainExcerpt(latestLetter, 155)}</p>
                         <StoryMeta article={latestLetter} settings={publishingSettings} />
-                      </Link>
-                    </section> : null}
+                      </Link> : <p className="mt-3 text-sm leading-6 text-stone-500">Reader letters will appear here.</p>}
+                    </section>
                   </div>
                 ) : null}
               </div>
@@ -527,16 +537,6 @@ export default async function Home() {
                     <StoryMeta article={article} settings={publishingSettings} />
                   </Link>
                 )) : <p className="py-4 text-sm text-stone-500">More sports coverage coming soon.</p>}
-                {onTheRecord ? (
-                  <section className="mt-4 border-t border-stone-300 pt-4">
-                    <div className="newspaper-section-heading"><h2>On the Record</h2><Link href="/opinion/on-the-record">View all →</Link></div>
-                    <Link href={`/articles/${onTheRecord.slug}`} className="group block pt-2">
-                      <h3 className="font-serif text-xl font-bold leading-tight group-hover:text-hgnRed">{onTheRecord.title}</h3>
-                      <p className="mt-2 line-clamp-2 text-sm leading-6 text-stone-600">{plainExcerpt(onTheRecord, 130)}</p>
-                      <StoryMeta article={onTheRecord} settings={publishingSettings} />
-                    </Link>
-                  </section>
-                ) : null}
               </div>
 
               <div className="min-w-0 pt-6 md:pt-0">
@@ -552,6 +552,24 @@ export default async function Home() {
                     <StoryMeta article={article} settings={publishingSettings} />
                   </Link>
                 )) : <p className="py-4 text-sm text-stone-500">More columns coming soon.</p>}
+              </div>
+            </section>
+          ) : null}
+
+          {onTheRecordStories.length ? (
+            <section className="border-b border-stone-400 py-6">
+              <div className="newspaper-section-heading">
+                <h2>On the Record</h2>
+                <Link href="/opinion/on-the-record">View all →</Link>
+              </div>
+              <div className="grid gap-0 md:grid-cols-2 md:divide-x md:divide-stone-300">
+                {onTheRecordStories.map((article, index) => (
+                  <Link key={article.id} href={`/articles/${article.slug}`} className={`group block py-4 ${index ? "border-t border-stone-200 md:border-t-0 md:pl-6" : "md:pr-6"}`}>
+                    <h3 className="font-serif text-2xl font-bold leading-[1.08] group-hover:text-hgnRed">{article.title}</h3>
+                    <p className="mt-2 line-clamp-3 text-sm leading-6 text-stone-600">{plainExcerpt(article, 160)}</p>
+                    <StoryMeta article={article} settings={publishingSettings} />
+                  </Link>
+                ))}
               </div>
             </section>
           ) : null}

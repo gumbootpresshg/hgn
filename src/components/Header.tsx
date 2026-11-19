@@ -227,7 +227,11 @@ export function Header({ initialPlatformConfig }: { initialPlatformConfig?: Site
           return articleValues.some((value) => targets.some((target) => value === target || value.includes(target)))
         })
       })
-      setColumns(liveColumns.map((item: any) => ({ href: `/columns/${item.slug}`, label: item.label })))
+      // Do not let incomplete legacy metadata remove the whole Columns menu.
+      // The live-match list is preferred, but active configured columns remain
+      // available while older stories are being progressively connected.
+      const visibleColumns = liveColumns.length ? liveColumns : candidates
+      setColumns(visibleColumns.map((item: any) => ({ href: `/columns/${item.slug}`, label: item.label })))
     })()
     return () => { active = false }
   }, [])
