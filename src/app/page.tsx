@@ -67,6 +67,7 @@ type Article = {
 }
 
 type ContestWinner = { photo_url: string; title?: string | null; display_name?: string | null }
+type HomeLetter = { title: string; body: string; author: string; publishedAt?: string | null; href: string }
 
 function isOnTheRecord(article: Article) {
   const fields = [article.category, article.section, article.subcategory, article.slug]
@@ -87,6 +88,11 @@ function isLetterToEditor(article: Article) {
 
 function plainExcerpt(article: Article, length = 190) {
   return smartExcerpt(article.excerpt || article.body, length)
+}
+
+function LetterMeta({ letter, settings }: { letter: HomeLetter; settings: PublishingSettings }) {
+  const date = formatPublishingDate(letter.publishedAt, settings)
+  return <p className="mt-3 text-[11px] uppercase tracking-[0.08em] text-stone-500">By {letter.author}{date ? ` · ${date}` : ""}</p>
 }
 
 function articleDate(article: Article, settings: PublishingSettings) {
@@ -165,11 +171,12 @@ function ContestSpotlight({ winner }: { winner: ContestWinner | null }) {
 
 export default async function Home() {
   const publishingSettings = await getPublishingSettings()
-  const [{ data: frontPageSettings }, { data: mainStories }, { data: featuredStories }, { data: latestStories }] = await Promise.all([
+  const [{ data: frontPageSettings }, { data: mainStories }, { data: featuredStories }, { data: latestStories }, { data: publishedLetters }] = await Promise.all([
     supabase.from("front_page_settings").select("*").eq("id", "current").maybeSingle(),
     supabase.from("articles").select("*").eq("status", "published").eq("front_page_main", true).order("published_at", { ascending: false }).limit(1),
     supabase.from("articles").select("*").eq("status", "published").eq("featured", true).order("published_at", { ascending: false }).limit(8),
     supabase.from("articles").select("*").eq("status", "published").order("published_at", { ascending: false }).limit(80),
+    supabase.from("letters_to_editor").select("id,name,subject,edited_subject,message,body,letter,edited_body,published_at,created_at,status").in("status", ["approved", "published", "public", "active", "live"]).order("published_at", { ascending: false, nullsFirst: false }).order("created_at", { ascending: false }).limit(1),
   ])
 
   const settings = (frontPageSettings || null) as FrontPageSettings | null
@@ -239,7 +246,21 @@ export default async function Home() {
   )
   const editorials = chronological.filter((article) => isEditorial(article) && article.slug !== main?.slug).slice(0, 2)
   const editorial = editorials[0]
-  const latestLetter = chronological.find((article) => isLetterToEditor(article) && article.slug !== main?.slug)
+  const latestArticleLetter = chronological.find((article) => isLetterToEditor(article) && article.slug !== main?.slug)
+  const directLetter = publishedLetters?.[0] as any
+  const latestLetter: HomeLetter | null = directLetter ? {
+    title: directLetter.edited_subject || directLetter.subject || "Letter to the Editor",
+    body: directLetter.edited_body || directLetter.body || directLetter.letter || directLetter.message || "",
+    author: directLetter.name || "Name withheld",
+    publishedAt: directLetter.published_at || directLetter.created_at,
+    href: "/letters",
+  } : latestArticleLetter ? {
+    title: latestArticleLetter.title,
+    body: latestArticleLetter.excerpt || latestArticleLetter.body || "",
+    author: latestArticleLetter.author_name || "Name withheld",
+    publishedAt: latestArticleLetter.published_at,
+    href: `/articles/${latestArticleLetter.slug}`,
+  } : null
   const onTheRecordStories = chronological.filter((article) => isOnTheRecord(article) && article.slug !== main?.slug).slice(0, 2)
   const onTheRecord = onTheRecordStories[0]
   // Columns have their own dedicated section below. This is the latest opinion
@@ -254,7 +275,7 @@ export default async function Home() {
   if (main?.slug) desktopUsed.add(main.slug)
   if (secondNews?.slug) desktopUsed.add(secondNews.slug)
   editorials.forEach((article) => desktopUsed.add(article.slug))
-  if (latestLetter?.slug) desktopUsed.add(latestLetter.slug)
+  if (latestArticleLetter?.slug) desktopUsed.add(latestArticleLetter.slug)
   if (opinion?.slug) desktopUsed.add(opinion.slug)
   onTheRecordStories.forEach((article) => desktopUsed.add(article.slug))
 
@@ -460,10 +481,10 @@ export default async function Home() {
                     </section> : null}
                     <section className="border-t border-stone-300 pt-3">
                       <div className="flex items-center justify-between gap-2"><Link href="/letters" className="newspaper-kicker text-hgnRed hover:underline">Letter to the Editor</Link><Link href="/letters" className="text-[9px] font-semibold hover:text-hgnRed">View all →</Link></div>
-                      {latestLetter ? <Link href={`/articles/${latestLetter.slug}`} className="group block">
+                      {latestLetter ? <Link href={latestLetter.href} className="group block">
                         <h2 className="mt-1 font-serif text-xl font-bold leading-[1.08] group-hover:text-hgnRed">{latestLetter.title}</h2>
-                        <p className="mt-2 line-clamp-3 text-sm leading-6 text-stone-600">{plainExcerpt(latestLetter, 155)}</p>
-                        <StoryMeta article={latestLetter} settings={publishingSettings} />
+                        <p className="mt-2 line-clamp-3 text-sm leading-6 text-stone-600">{smartExcerpt(latestLetter.body, 155)}</p>
+                        <LetterMeta letter={latestLetter} settings={publishingSettings} />
                       </Link> : <p className="mt-3 text-sm leading-6 text-stone-500">Reader letters will appear here.</p>}
                     </section>
                   </div>
@@ -499,10 +520,10 @@ export default async function Home() {
                     </section> : null}
                     <section className="border-t border-stone-300 pt-3">
                       <div className="flex items-center justify-between gap-2"><Link href="/letters" className="newspaper-kicker text-hgnRed hover:underline">Letter to the Editor</Link><Link href="/letters" className="text-[9px] font-semibold hover:text-hgnRed">View all →</Link></div>
-                      {latestLetter ? <Link href={`/articles/${latestLetter.slug}`} className="group block">
+                      {latestLetter ? <Link href={latestLetter.href} className="group block">
                         <h2 className="mt-1 font-serif text-xl font-bold leading-[1.08] group-hover:text-hgnRed">{latestLetter.title}</h2>
-                        <p className="mt-2 line-clamp-3 text-sm leading-6 text-stone-600">{plainExcerpt(latestLetter, 155)}</p>
-                        <StoryMeta article={latestLetter} settings={publishingSettings} />
+                        <p className="mt-2 line-clamp-3 text-sm leading-6 text-stone-600">{smartExcerpt(latestLetter.body, 155)}</p>
+                        <LetterMeta letter={latestLetter} settings={publishingSettings} />
                       </Link> : <p className="mt-3 text-sm leading-6 text-stone-500">Reader letters will appear here.</p>}
                     </section>
                   </div>
