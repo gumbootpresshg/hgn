@@ -7,6 +7,7 @@ import { adminGroups, adminTools, normalizeAdminRole, type AdminRole } from "@/l
 import { supabase } from "@/lib/supabase"
 
 const NEW_WINDOW_MS = 30 * 24 * 60 * 60 * 1000
+type SignupPreview = { id: string; email?: string | null; display_name?: string | null; name?: string | null; created_at?: string | null }
 
 export default function AdminDashboardPage() {
   const [role, setRole] = useState<AdminRole>("publisher")
@@ -15,6 +16,7 @@ export default function AdminDashboardPage() {
   const [showAll, setShowAll] = useState(false)
   const [openGroups, setOpenGroups] = useState<Set<string>>(new Set())
   const [incoming, setIncoming] = useState({ unread: 0, submissions: 0, members: 0, subscribers: 0 })
+  const [latestSignups, setLatestSignups] = useState<{ members: SignupPreview[]; subscribers: SignupPreview[] }>({ members: [], subscribers: [] })
 
   useEffect(() => {
     let active = true
@@ -34,11 +36,13 @@ export default function AdminDashboardPage() {
     let active = true
     void (async () => {
       const since = new Date(Date.now() - NEW_WINDOW_MS).toISOString()
-      const [contacts, signups, members, subscribers, letters, events, tips, obits] = await Promise.all([
+      const [contacts, signups, members, subscribers, latestMembers, latestSubscribers, letters, events, tips, obits] = await Promise.all([
         supabase.from("submission_inbox").select("id", { count: "exact", head: true }).eq("submission_type", "contact_message").is("archived_at", null).is("read_at", null).gte("created_at", since),
         supabase.from("submission_inbox").select("id", { count: "exact", head: true }).in("submission_type", ["account_signup", "newsletter_signup"]).eq("status", "new").gte("created_at", since),
-        supabase.from("hgn_profiles").select("id", { count: "exact", head: true }).gte("created_at", since),
-        supabase.from("subscribers").select("id", { count: "exact", head: true }).eq("status", "active").gte("created_at", since),
+        supabase.from("hgn_profiles").select("id", { count: "exact", head: true }),
+        supabase.from("subscribers").select("id", { count: "exact", head: true }),
+        supabase.from("hgn_profiles").select("id,display_name,email,created_at").order("created_at", { ascending: false }).limit(5),
+        supabase.from("subscribers").select("id,name,email,created_at").order("created_at", { ascending: false }).limit(5),
         supabase.from("letters_to_editor").select("id", { count: "exact", head: true }).in("status", ["new", "pending", "submitted", "review"]).gte("created_at", since),
         supabase.from("event_submissions").select("id, admin_notes").in("status", ["new", "pending", "submitted", "review"]).gte("created_at", since),
         supabase.from("story_tips").select("id", { count: "exact", head: true }).in("status", ["new", "pending", "submitted", "review"]).gte("created_at", since),
@@ -54,6 +58,7 @@ export default function AdminDashboardPage() {
         members: members.count || 0,
         subscribers: subscribers.count || 0,
       })
+      if (active) setLatestSignups({ members: (latestMembers.data || []) as SignupPreview[], subscribers: (latestSubscribers.data || []) as SignupPreview[] })
     })()
     return () => { active = false }
   }, [])
@@ -102,15 +107,20 @@ export default function AdminDashboardPage() {
         <p className="mt-2 text-sm text-slate-600">Items that need editorial or community review.</p>
       </Link>
       <Link href="/admin/members" className="rounded-2xl border bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-hgnBlue hover:shadow-md">
-        <p className="text-xs font-black uppercase tracking-[.18em] text-hgnBlue">New in the last 30 days</p>
+        <p className="text-xs font-black uppercase tracking-[.18em] text-hgnBlue">All reader accounts</p>
         <div className="mt-2 flex items-end justify-between gap-4"><h2 className="font-serif text-3xl font-bold">Reader accounts</h2><strong className="text-4xl">{incoming.members}</strong></div>
-        <p className="mt-2 text-sm text-slate-600">New HGN logins, member status and account details.</p>
+        <p className="mt-2 text-sm text-slate-600">Every HGN login, member status and account detail.</p>
       </Link>
       <Link href="/admin/subscribers" className="rounded-2xl border bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-hgnBlue hover:shadow-md">
-        <p className="text-xs font-black uppercase tracking-[.18em] text-hgnBlue">New in the last 30 days</p>
+        <p className="text-xs font-black uppercase tracking-[.18em] text-hgnBlue">All newsletter signups</p>
         <div className="mt-2 flex items-end justify-between gap-4"><h2 className="font-serif text-3xl font-bold">Newsletter signups</h2><strong className="text-4xl">{incoming.subscribers}</strong></div>
-        <p className="mt-2 text-sm text-slate-600">New email subscribers and their welcome-email status.</p>
+        <p className="mt-2 text-sm text-slate-600">Every signup, including unsubscribed readers and welcome status.</p>
       </Link>
+    </section>
+
+    <section className="grid gap-4 lg:grid-cols-2">
+      <SignupPanel title="Latest reader accounts" href="/admin/members" empty="No reader accounts yet." rows={latestSignups.members} />
+      <SignupPanel title="Latest newsletter signups" href="/admin/subscribers" empty="No newsletter signups yet." rows={latestSignups.subscribers} />
     </section>
 
     <section>
@@ -144,4 +154,17 @@ export default function AdminDashboardPage() {
       </div>
     </section>
   </main>
+}
+
+function SignupPanel({ title, href, empty, rows }: { title: string; href: string; empty: string; rows: SignupPreview[] }) {
+  return <section className="rounded-2xl border bg-white p-5 shadow-sm">
+    <div className="flex items-center justify-between gap-3"><h2 className="font-serif text-2xl font-bold">{title}</h2><Link href={href} className="text-sm font-bold text-hgnBlue hover:underline">View all →</Link></div>
+    {rows.length ? <div className="mt-4 divide-y">{rows.map(row => <div key={row.id} className="py-3 first:pt-0 last:pb-0"><strong className="block truncate">{row.display_name || row.name || "Name not provided"}</strong><div className="mt-0.5 flex flex-wrap justify-between gap-x-3 gap-y-1 text-sm text-slate-600"><span className="truncate">{row.email || "No email"}</span><span className="whitespace-nowrap text-xs">{signupDate(row.created_at)}</span></div></div>)}</div> : <p className="mt-4 text-sm text-slate-500">{empty}</p>}
+  </section>
+}
+
+function signupDate(value?: string | null) {
+  if (!value) return "Date unavailable"
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? "Date unavailable" : date.toLocaleDateString("en-CA", { month: "short", day: "numeric", year: "numeric" })
 }
