@@ -34,8 +34,9 @@ export default function AdminDashboardPage() {
     let active = true
     void (async () => {
       const since = new Date(Date.now() - NEW_WINDOW_MS).toISOString()
-      const [contacts, letters, events, tips, obits] = await Promise.all([
+      const [contacts, signups, letters, events, tips, obits] = await Promise.all([
         supabase.from("submission_inbox").select("id", { count: "exact", head: true }).eq("submission_type", "contact_message").is("archived_at", null).is("read_at", null).gte("created_at", since),
+        supabase.from("submission_inbox").select("id", { count: "exact", head: true }).in("submission_type", ["account_signup", "newsletter_signup"]).eq("status", "new").gte("created_at", since),
         supabase.from("letters_to_editor").select("id", { count: "exact", head: true }).in("status", ["new", "pending", "submitted", "review"]).gte("created_at", since),
         supabase.from("event_submissions").select("id, admin_notes").in("status", ["new", "pending", "submitted", "review"]).gte("created_at", since),
         supabase.from("story_tips").select("id", { count: "exact", head: true }).in("status", ["new", "pending", "submitted", "review"]).gte("created_at", since),
@@ -45,7 +46,7 @@ export default function AdminDashboardPage() {
       // Automated AI Desk event research is intentionally excluded there, so
       // it must never inflate this count.
       const readerEvents = (events.data || []).filter((event: any) => !/^(AI Desk research promotion|Created from AI Desk item)/.test(String(event.admin_notes || ""))).length
-      if (active) setIncoming({ unread: contacts.count || 0, submissions: (letters.count || 0) + readerEvents + (tips.count || 0) + (obits.count || 0) })
+      if (active) setIncoming({ unread: contacts.count || 0, submissions: (signups.count || 0) + (letters.count || 0) + readerEvents + (tips.count || 0) + (obits.count || 0) })
     })()
     return () => { active = false }
   }, [])

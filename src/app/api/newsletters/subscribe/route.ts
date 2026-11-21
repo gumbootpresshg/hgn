@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { serviceClient } from "@/lib/newsletters/server";
 import { sendWelcomeEmail } from "@/lib/newsletters/welcome";
+import { recordSignupNotice } from "@/lib/signup-notifications";
 
 export const runtime = "nodejs";
 
@@ -59,6 +60,11 @@ export async function POST(req: NextRequest) {
     if (result.error || !result.data) return NextResponse.json({ error: result.error?.message || "The signup could not be saved." }, { status: 500 });
 
     const welcome = isNew ? await sendWelcomeEmail(db, result.data) : { sent: false, reason: "Your subscription preferences were updated." };
+    if (isNew) {
+      // A public newsletter signup should be as visible as any other incoming
+      // reader submission, while repeat preference changes stay quiet.
+      await recordSignupNotice(db, { kind: "newsletter_signup", subscriberId: result.data.id, email, name: result.data.name });
+    }
     return NextResponse.json({ ok: true, welcome });
   } catch (error: any) {
     return NextResponse.json({ error: error?.message || "Newsletter signup is temporarily unavailable." }, { status: 500 });

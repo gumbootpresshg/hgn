@@ -73,6 +73,20 @@ export default function SignupPage() {
             },
             { onConflict: "user_id" }
           )
+
+        // Account creation used to finish silently. Record a reviewable item and
+        // send the publisher alert after Supabase has created the actual user.
+        // This is deliberately non-blocking: a reader account remains valid even
+        // if email delivery is temporarily unavailable.
+        try {
+          await fetch("/api/account-signups/notify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ user_id: data.user.id, email, display_name: displayName, account_type: accountType }),
+          })
+        } catch {
+          // The account is already created; the server-side inbox remains best-effort.
+        }
       }
 
       if (data.session) {
