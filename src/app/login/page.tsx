@@ -10,6 +10,7 @@ export default function LoginPage() {
   const router = useRouter()
   const [message, setMessage] = useState("")
   const [saving, setSaving] = useState(false)
+  const [canResendConfirmation, setCanResendConfirmation] = useState(false)
 
   useEffect(() => {
     async function loadExistingUser() {
@@ -22,6 +23,7 @@ export default function LoginPage() {
   async function login(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setMessage("")
+    setCanResendConfirmation(false)
     setSaving(true)
 
     try {
@@ -36,6 +38,7 @@ export default function LoginPage() {
 
       if (error) {
         setMessage(error.message)
+        setCanResendConfirmation(/confirm/i.test(error.message || ""))
         return
       }
 
@@ -44,6 +47,22 @@ export default function LoginPage() {
       }
 
       router.push("/account")
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function resendConfirmation() {
+    const form = document.querySelector("form")
+    const values = form ? new FormData(form) : null
+    const email = String(values?.get("email") || "").trim()
+    const password = String(values?.get("password") || "")
+    if (!email || !password) { setMessage("Enter your email and password first, then choose resend confirmation."); return }
+    setSaving(true)
+    try {
+      const response = await fetch("/api/auth/resend-confirmation", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, password }) })
+      const result = await response.json().catch(() => ({}))
+      setMessage(result.sent ? "Confirmation email sent. Check your inbox and spam folder, then use the link to sign in." : "We could not resend a confirmation email. Please contact HGN for help.")
     } finally {
       setSaving(false)
     }
@@ -65,7 +84,7 @@ export default function LoginPage() {
           </button>
         </form>
 
-        {message ? <p className="mt-4 rounded-2xl bg-slate-50 p-4 text-sm text-slate-700">{message}</p> : null}
+        {message ? <div className="mt-4 rounded-2xl bg-slate-50 p-4 text-sm text-slate-700"><p>{message}</p>{canResendConfirmation ? <button type="button" onClick={() => void resendConfirmation()} disabled={saving} className="mt-3 font-bold text-hgnBlue hover:underline disabled:opacity-50">Resend confirmation email</button> : null}</div> : null}
 
         <div className="mt-5 flex flex-wrap gap-4 text-sm">
           <Link href="/signup" className="font-bold text-hgnBlue">Create account</Link>

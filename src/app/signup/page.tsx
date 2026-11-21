@@ -55,6 +55,7 @@ export default function SignupPage() {
         return
       }
 
+      let confirmationSent = false
       if (data.user) {
         await ensureHgnProfile({
           ...data.user,
@@ -87,12 +88,26 @@ export default function SignupPage() {
         } catch {
           // The account is already created; the server-side inbox remains best-effort.
         }
+
+        try {
+          const confirmation = await fetch("/api/auth/resend-confirmation", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password }),
+          })
+          const confirmationResult = await confirmation.json().catch(() => ({}))
+          confirmationSent = confirmation.ok && confirmationResult.sent === true
+        } catch {
+          // The user can use the resend option on the sign-in page if needed.
+        }
       }
 
       if (data.session) {
         router.push("/account")
       } else {
-        setMessage("Account created. Check your email to confirm your account, then sign in.")
+        setMessage(confirmationSent
+          ? "Account created. Check your email for the secure confirmation link, then sign in."
+          : "Account created, but we could not send the confirmation email. Try signing in below to resend it, or contact HGN for help.")
       }
     } finally {
       setSaving(false)
