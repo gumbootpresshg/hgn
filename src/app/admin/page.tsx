@@ -14,7 +14,7 @@ export default function AdminDashboardPage() {
   const [query, setQuery] = useState("")
   const [showAll, setShowAll] = useState(false)
   const [openGroups, setOpenGroups] = useState<Set<string>>(new Set())
-  const [incoming, setIncoming] = useState({ unread: 0, submissions: 0 })
+  const [incoming, setIncoming] = useState({ unread: 0, submissions: 0, members: 0, subscribers: 0 })
 
   useEffect(() => {
     let active = true
@@ -34,9 +34,11 @@ export default function AdminDashboardPage() {
     let active = true
     void (async () => {
       const since = new Date(Date.now() - NEW_WINDOW_MS).toISOString()
-      const [contacts, signups, letters, events, tips, obits] = await Promise.all([
+      const [contacts, signups, members, subscribers, letters, events, tips, obits] = await Promise.all([
         supabase.from("submission_inbox").select("id", { count: "exact", head: true }).eq("submission_type", "contact_message").is("archived_at", null).is("read_at", null).gte("created_at", since),
         supabase.from("submission_inbox").select("id", { count: "exact", head: true }).in("submission_type", ["account_signup", "newsletter_signup"]).eq("status", "new").gte("created_at", since),
+        supabase.from("hgn_profiles").select("id", { count: "exact", head: true }).gte("created_at", since),
+        supabase.from("subscribers").select("id", { count: "exact", head: true }).eq("status", "active").gte("created_at", since),
         supabase.from("letters_to_editor").select("id", { count: "exact", head: true }).in("status", ["new", "pending", "submitted", "review"]).gte("created_at", since),
         supabase.from("event_submissions").select("id, admin_notes").in("status", ["new", "pending", "submitted", "review"]).gte("created_at", since),
         supabase.from("story_tips").select("id", { count: "exact", head: true }).in("status", ["new", "pending", "submitted", "review"]).gte("created_at", since),
@@ -46,7 +48,12 @@ export default function AdminDashboardPage() {
       // Automated AI Desk event research is intentionally excluded there, so
       // it must never inflate this count.
       const readerEvents = (events.data || []).filter((event: any) => !/^(AI Desk research promotion|Created from AI Desk item)/.test(String(event.admin_notes || ""))).length
-      if (active) setIncoming({ unread: contacts.count || 0, submissions: (signups.count || 0) + (letters.count || 0) + readerEvents + (tips.count || 0) + (obits.count || 0) })
+      if (active) setIncoming({
+        unread: contacts.count || 0,
+        submissions: (signups.count || 0) + (letters.count || 0) + readerEvents + (tips.count || 0) + (obits.count || 0),
+        members: members.count || 0,
+        subscribers: subscribers.count || 0,
+      })
     })()
     return () => { active = false }
   }, [])
@@ -83,7 +90,7 @@ export default function AdminDashboardPage() {
       </div>
     </section>
 
-    <section className="grid gap-4 sm:grid-cols-2">
+    <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
       <Link href="/admin/inbox" className="rounded-2xl border bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-hgnBlue hover:shadow-md">
         <p className="text-xs font-black uppercase tracking-[.18em] text-hgnBlue">New in the last 30 days</p>
         <div className="mt-2 flex items-end justify-between gap-4"><h2 className="font-serif text-3xl font-bold">Inbox</h2><strong className="text-4xl">{incoming.unread}</strong></div>
@@ -93,6 +100,16 @@ export default function AdminDashboardPage() {
         <p className="text-xs font-black uppercase tracking-[.18em] text-hgnBlue">New in the last 30 days</p>
         <div className="mt-2 flex items-end justify-between gap-4"><h2 className="font-serif text-3xl font-bold">Submissions</h2><strong className="text-4xl">{incoming.submissions}</strong></div>
         <p className="mt-2 text-sm text-slate-600">Items that need editorial or community review.</p>
+      </Link>
+      <Link href="/admin/members" className="rounded-2xl border bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-hgnBlue hover:shadow-md">
+        <p className="text-xs font-black uppercase tracking-[.18em] text-hgnBlue">New in the last 30 days</p>
+        <div className="mt-2 flex items-end justify-between gap-4"><h2 className="font-serif text-3xl font-bold">Reader accounts</h2><strong className="text-4xl">{incoming.members}</strong></div>
+        <p className="mt-2 text-sm text-slate-600">New HGN logins, member status and account details.</p>
+      </Link>
+      <Link href="/admin/subscribers" className="rounded-2xl border bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-hgnBlue hover:shadow-md">
+        <p className="text-xs font-black uppercase tracking-[.18em] text-hgnBlue">New in the last 30 days</p>
+        <div className="mt-2 flex items-end justify-between gap-4"><h2 className="font-serif text-3xl font-bold">Newsletter signups</h2><strong className="text-4xl">{incoming.subscribers}</strong></div>
+        <p className="mt-2 text-sm text-slate-600">New email subscribers and their welcome-email status.</p>
       </Link>
     </section>
 
