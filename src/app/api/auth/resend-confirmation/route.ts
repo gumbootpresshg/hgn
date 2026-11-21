@@ -10,7 +10,9 @@ function validEmail(value: string) {
 
 async function sendConfirmation(email: string, name: string, actionLink: string) {
   const apiKey = process.env.RESEND_API_KEY
-  const from = process.env.HGN_AUTH_EMAIL_FROM || process.env.HGN_ALERT_EMAIL_FROM || "Haida Gwaii News <onboarding@resend.dev>"
+  // Auth mail must use the verified public HGN sender, not the internal
+  // submission-alert sender (which may be the Resend onboarding address).
+  const from = process.env.HGN_AUTH_EMAIL_FROM || "Haida Gwaii News <noreply@haidagwaiinews.com>"
   if (!apiKey) return false
 
   const displayName = name || "there"
