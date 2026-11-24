@@ -5,7 +5,7 @@ export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
 const WEATHER_ALERTS_URL = "https://api.weather.gc.ca/collections/weather-alerts/items?f=json&limit=1000"
-const WARNING_PAGE = "https://weather.gc.ca/warnings/index_e.html?prov=bc"
+const WARNING_PAGE = "https://weather.gc.ca/?alertsublayers=wx&wbdisable=false"
 const SOURCE_KEY = "environment-canada-haida-gwaii-wind"
 const HGN_AREAS = /haida\s*gwaii|queen\s*charlotte\s*islands|north\s*coast.*haida/i
 

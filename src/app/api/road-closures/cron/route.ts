@@ -73,7 +73,8 @@ export async function GET(request: NextRequest) {
       message: `${text(primary.headline) || "Highway 16 closure"}: ${roadRange(primary)}.${more}`.slice(0, 420),
       weather_summary: text(primary.description).slice(0, 700) || null,
       weather_communities: [],
-      url: text(primary.url) || DRIVEBC_PAGE,
+      // Open511 event URLs are API documents (often raw XML), not reader pages.
+      url: DRIVEBC_PAGE,
       source_name: "DriveBC",
       priority: 95,
       status: "active",
