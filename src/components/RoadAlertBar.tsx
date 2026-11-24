@@ -1,6 +1,6 @@
 "use client"
 
-import { ChevronDown, ExternalLink, MapPin, X } from "lucide-react"
+import { ChevronDown, MapPin, X } from "lucide-react"
 import { useEffect, useState } from "react"
 
 type RoadAlert = {
@@ -42,7 +42,6 @@ export default function RoadAlertBar({ alert }: { alert: RoadAlert }) {
         </div>
         <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 pl-8 sm:pl-9">
           <button type="button" onClick={() => setOpen((value) => !value)} aria-expanded={open} className="inline-flex items-center gap-1 text-sm font-black text-white underline decoration-red-200/80 underline-offset-4 hover:text-red-100">{open ? "Hide alert details" : "Alert details"}<ChevronDown className={open ? "rotate-180 transition-transform" : "transition-transform"} size={16} aria-hidden="true" /></button>
-          {alert.url ? <a href={alert.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-sm font-black text-white underline decoration-red-200/80 underline-offset-4 hover:text-red-100">{alert.source_name || "DriveBC"}<ExternalLink size={14} aria-hidden="true" /></a> : null}
         </div>
         {open ? <div className="mt-3 border-t border-red-200/30 pt-3 pl-8 text-sm leading-6 text-red-50 sm:pl-9"><p>{alert.weather_summary || "DriveBC reports a major closure or disruption on Highway 16. Check the official source before travelling."}</p></div> : null}
       </div>
