@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import WeatherAlertBar from "@/components/WeatherAlertBar";
 
 export async function BreakingAlertBar() {
   const now = new Date().toISOString();
@@ -15,7 +16,9 @@ export async function BreakingAlertBar() {
   const alert = data?.[0];
   if (!alert) return null;
 
-  const tone = alert.kind === "weather" ? "bg-amber-400 text-hgnNavy" : alert.kind === "ferry" ? "bg-sky-500 text-white" : "bg-hgnBlue text-white";
+  if (alert.kind === "weather") return <WeatherAlertBar alert={alert} />;
+
+  const tone = alert.kind === "ferry" ? "bg-sky-500 text-white" : "bg-hgnBlue text-white";
   const inner = (
     <div className={`${tone} border-b border-black/10`}>
       <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-2 text-sm font-black">
