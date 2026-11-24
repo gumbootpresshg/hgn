@@ -40,12 +40,17 @@ function isActive(properties: Record<string, unknown>) {
   return !/ended|cancelled|expired|inactive/.test(status) && (!Number.isFinite(expiryTime) || expiryTime > Date.now())
 }
 
-function matchingWindAlert(feature: EnvironmentCanadaFeature) {
+function matchingHaidaGwaiiAlert(feature: EnvironmentCanadaFeature) {
   const properties = feature.properties || {}
   const area = plainText(properties.feature_name_en)
-  const name = plainText(properties.alert_name_en || properties.alert_short_name_en)
-  const text = plainText(properties.alert_text_en)
-  return HGN_AREAS.test(area) && /wind/i.test(`${name} ${text}`) && isActive(properties)
+  return HGN_AREAS.test(area) && isActive(properties)
+}
+
+function windMeasurements(value: string) {
+  const text = plainText(value)
+  const steady = text.match(/\b((?:(?:north|south|east|west|northeast|northwest|southeast|southwest|variable)[a-z -]*\s+)?winds?\s+(?:of\s+)?\d{1,3}\s*(?:km\/?h|kph|kmh|knots?))\b/i)?.[1] || ""
+  const gusts = text.match(/\b(gust(?:ing)?\s+(?:to|near|up to)?\s*\d{1,3}\s*(?:km\/?h|kph|kmh|knots?))\b/i)?.[1] || ""
+  return { steadyWind: steady, gusts }
 }
 
 export async function GET(request: NextRequest) {
@@ -69,7 +74,7 @@ export async function GET(request: NextRequest) {
     if (!response.ok) throw new Error(`Environment Canada returned HTTP ${response.status}`)
 
     const payload = await response.json() as { features?: EnvironmentCanadaFeature[] }
-    const alert = (payload.features || []).find(matchingWindAlert)
+    const alert = (payload.features || []).find(matchingHaidaGwaiiAlert)
     const { data: existing, error: existingError } = await db.from("site_alerts").select("id").eq("source_key", SOURCE_KEY).maybeSingle()
     if (existingError) throw existingError
 
@@ -84,13 +89,15 @@ export async function GET(request: NextRequest) {
     const alertText = plainText(properties.alert_text_en)
     const what = extractSection(alertText, "What") || firstUsefulSentence(alertText)
     const when = extractSection(alertText, "When")
+    const wind = windMeasurements(alertText)
     const endsAt = String(properties.expiration_datetime || properties.event_end_datetime || "") || null
     const record = {
       label: alertName.toUpperCase(),
       kind: "weather",
       message: `${alertName} for ${area}.`,
       weather_summary: what || "See the official Environment Canada warning for details.",
-      weather_communities: [{ name: area, steadyWind: what || undefined, gusts: "", timing: when || undefined }],
+      // Only populate wind columns with actual measured/forecast speed wording.
+      weather_communities: [{ name: area, steadyWind: wind.steadyWind || undefined, gusts: wind.gusts || undefined, timing: when || undefined }],
       url: WARNING_PAGE,
       source_name: "Environment Canada",
       priority: 90,

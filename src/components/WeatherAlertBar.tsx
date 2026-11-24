@@ -32,6 +32,7 @@ export default function WeatherAlertBar({ alert }: { alert: WeatherAlert }) {
   const [open, setOpen] = useState(false)
   const [dismissed, setDismissed] = useState(false)
   const communities = Array.isArray(alert.weather_communities) ? alert.weather_communities.filter((area) => area?.name) : []
+  const hasWindMeasurements = communities.some((area) => /\b\d{1,3}\s*(?:km\/?h|kph|kmh|knots?)\b/i.test(`${area.steadyWind || ""} ${area.gusts || ""}`))
   const dismissKey = `hgn-weather-alert-dismissed:${alert.id}`
   const endsAt = formatEndsAt(alert.ends_at)
 
@@ -70,12 +71,12 @@ export default function WeatherAlertBar({ alert }: { alert: WeatherAlert }) {
         <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 pl-8 sm:pl-9">
           {communities.length ? (
             <button type="button" onClick={() => setOpen((value) => !value)} aria-expanded={open} className="inline-flex items-center gap-1 text-sm font-black text-amber-950 underline decoration-amber-700/50 underline-offset-4 hover:text-stone-950">
-              {open ? "Hide community conditions" : "Community conditions"}<ChevronDown className={open ? "rotate-180 transition-transform" : "transition-transform"} size={16} aria-hidden="true" />
+              {open ? "Hide alert details" : hasWindMeasurements ? "Wind details" : "Alert details"}<ChevronDown className={open ? "rotate-180 transition-transform" : "transition-transform"} size={16} aria-hidden="true" />
             </button>
           ) : null}
         </div>
 
-        {open && communities.length ? (
+        {open && communities.length && hasWindMeasurements ? (
           <div className="mt-3 overflow-x-auto border-t border-amber-950/20 pt-3 pl-8 sm:pl-9">
             <table className="min-w-[560px] text-left text-sm">
               <thead className="text-xs uppercase tracking-[0.1em] text-stone-600">
@@ -85,6 +86,11 @@ export default function WeatherAlertBar({ alert }: { alert: WeatherAlert }) {
                 {communities.map((area, index) => <tr key={`${area.name}-${index}`} className="border-t border-amber-950/10"><td className="py-2 pr-6 font-bold">{area.name}</td><td className="py-2 pr-6">{area.steadyWind || "—"}</td><td className="py-2 pr-6">{area.gusts || "—"}</td><td className="py-2">{area.timing || "—"}</td></tr>)}
               </tbody>
             </table>
+          </div>
+        ) : null}
+        {open && communities.length && !hasWindMeasurements ? (
+          <div className="mt-3 grid gap-4 border-t border-amber-950/20 pt-3 pl-8 text-sm sm:grid-cols-2 sm:pl-9">
+            {communities.map((area, index) => <div key={`${area.name}-${index}`}><p className="text-xs font-black uppercase tracking-[0.12em] text-stone-600">Affected area</p><p className="mt-1 font-bold text-stone-950">{area.name}</p>{area.timing ? <><p className="mt-3 text-xs font-black uppercase tracking-[0.12em] text-stone-600">Timing</p><p className="mt-1 leading-6 text-stone-800">{area.timing}</p></> : null}</div>)}
           </div>
         ) : null}
       </div>
