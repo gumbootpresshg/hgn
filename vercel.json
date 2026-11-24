@@ -1,6 +1,7 @@
 {
   "crons": [
     { "path": "/api/weather-alerts/cron", "schedule": "*/15 * * * *" },
+    { "path": "/api/road-closures/cron", "schedule": "7,22,37,52 * * * *" },
     { "path": "/api/ai-desk/event-source-discovery/cron", "schedule": "17 16 * * *" },
     { "path": "/api/guide/cron", "schedule": "23 17 * * *" }
   ]
