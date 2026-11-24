@@ -68,7 +68,7 @@ export default function AdminAlerts() {
     <main className="mx-auto max-w-6xl px-4 py-10">
       <p className="text-sm font-black uppercase tracking-[0.18em] text-hgnRed">Reader safety</p>
       <h1 className="mt-2 text-4xl font-black text-hgnNavy sm:text-5xl">Weather & Site Alerts</h1>
-      <p className="mt-3 max-w-3xl text-slate-600">Weather warnings display as a compact, expandable bar above the masthead. Use official wording, then add community conditions only when they differ.</p>
+      <p className="mt-3 max-w-3xl text-slate-600">Environment Canada wind warnings for Haida Gwaii are refreshed automatically. This desk is for other site alerts and for any manual weather update you need to publish.</p>
       {msg ? <div className="mt-4 border border-amber-300 bg-amber-50 p-4 font-semibold text-amber-950">{msg}</div> : null}
 
       <form onSubmit={save} className="hgn-card mt-6 grid gap-4 p-5 sm:p-6 md:grid-cols-2">
@@ -113,7 +113,7 @@ export default function AdminAlerts() {
         <h2 className="text-2xl font-black text-hgnNavy">Alert history</h2>
         <div className="mt-4 grid gap-4">
           {rows.map((row) => <article key={row.id} className="hgn-card p-5">
-            <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-black uppercase tracking-widest text-hgnBlue">{row.status} · {row.kind}</p><h3 className="mt-1 text-xl font-black text-hgnNavy">{row.label}: {row.message}</h3>{row.weather_summary ? <p className="mt-2 text-slate-600">{row.weather_summary}</p> : null}{Array.isArray(row.weather_communities) && row.weather_communities.length ? <p className="mt-2 text-sm text-slate-500">Community details: {communityLines(row.weather_communities).replace(/\n/g, " · ")}</p> : null}<p className="mt-2 text-sm text-slate-500">{row.starts_at || "now"} → {row.ends_at || "open"}</p></div><div className="flex flex-wrap gap-2"><button type="button" onClick={() => setStatus(row.id, "active")} className="hgn-btn-primary">Active</button><button type="button" onClick={() => setStatus(row.id, "paused")} className="hgn-btn-dark">Pause</button><button type="button" onClick={() => setStatus(row.id, "expired")} className="hgn-btn border border-stone-300 bg-white">Expire</button></div></div>
+            <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-black uppercase tracking-widest text-hgnBlue">{row.status} · {row.kind}{row.automated ? " · automatic" : ""}</p><h3 className="mt-1 text-xl font-black text-hgnNavy">{row.label}: {row.message}</h3>{row.weather_summary ? <p className="mt-2 text-slate-600">{row.weather_summary}</p> : null}{Array.isArray(row.weather_communities) && row.weather_communities.length ? <p className="mt-2 text-sm text-slate-500">Community details: {communityLines(row.weather_communities).replace(/\n/g, " · ")}</p> : null}<p className="mt-2 text-sm text-slate-500">{row.starts_at || "now"} → {row.ends_at || "open"}</p></div><div className="flex flex-wrap gap-2"><button type="button" onClick={() => setStatus(row.id, "active")} className="hgn-btn-primary">Active</button><button type="button" onClick={() => setStatus(row.id, "paused")} className="hgn-btn-dark">Pause</button><button type="button" onClick={() => setStatus(row.id, "expired")} className="hgn-btn border border-stone-300 bg-white">Expire</button></div></div>
           </article>)}
         </div>
       </section>
