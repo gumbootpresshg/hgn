@@ -355,7 +355,7 @@ export default async function Home() {
               </section>
             ) : frontPageImage ? (
               <div className="relative mt-5 aspect-[16/9] overflow-hidden">
-                {frontPageHref ? <Link href={frontPageHref} className="block h-full"><Image src={frontPageImage} alt={frontPageAlt || main.title} fill priority sizes="100vw" className="object-cover" /></Link> : <Image src={frontPageImage} alt={frontPageAlt || main.title} fill priority sizes="100vw" className="object-cover" />}
+                {frontPageHref ? <Link href={frontPageHref} className="block h-full"><Image src={frontPageImage} alt={frontPageAlt || main.title} fill priority sizes="100vw" className="object-cover object-top" /></Link> : <Image src={frontPageImage} alt={frontPageAlt || main.title} fill priority sizes="100vw" className="object-cover object-top" />}
                 {(frontPageCaption || frontPageCredit) ? <p className="mt-2 text-[11px] leading-4 text-stone-500">{frontPageCaption || ""}{frontPageCredit ? ` · Photo: ${frontPageCredit}` : ""}</p> : null}
               </div>
             ) : null}
@@ -498,14 +498,14 @@ export default async function Home() {
                 {frontPageHref ? (
                   <Link href={frontPageHref} className="group block">
                     <div className="relative aspect-[16/9] overflow-hidden bg-stone-200">
-                      <Image src={frontPageImage} alt={frontPageAlt || managedRelatedArticle?.title || "Haida Gwaii front-page photograph"} fill priority sizes="(max-width: 1023px) 100vw, 56vw" className="object-cover transition duration-500 group-hover:scale-[1.015]" />
+                      <Image src={frontPageImage} alt={frontPageAlt || managedRelatedArticle?.title || "Haida Gwaii front-page photograph"} fill priority sizes="(max-width: 1023px) 100vw, 56vw" className="object-cover object-top transition duration-500 group-hover:scale-[1.015]" />
                     </div>
                     <p className="mt-2 border-b border-stone-200 pb-2 text-[11px] leading-4 text-stone-500">{frontPageCaption || managedRelatedArticle?.title || "Front-page photograph"}{frontPageCredit ? ` · Photo: ${frontPageCredit}` : ""}</p>
                   </Link>
                 ) : (
                   <figure>
                     <div className="relative aspect-[16/9] overflow-hidden bg-stone-200">
-                      <Image src={frontPageImage} alt={frontPageAlt || "Haida Gwaii front-page photograph"} fill priority sizes="(max-width: 1023px) 100vw, 56vw" className="object-cover" />
+                      <Image src={frontPageImage} alt={frontPageAlt || "Haida Gwaii front-page photograph"} fill priority sizes="(max-width: 1023px) 100vw, 56vw" className="object-cover object-top" />
                     </div>
                     <figcaption className="mt-2 border-b border-stone-200 pb-2 text-[11px] leading-4 text-stone-500">{frontPageCaption || "Front-page photograph"}{frontPageCredit ? ` · Photo: ${frontPageCredit}` : ""}</figcaption>
                   </figure>
