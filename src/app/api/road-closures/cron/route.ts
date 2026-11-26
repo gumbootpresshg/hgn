@@ -16,7 +16,7 @@ type RoadEvent = {
   severity?: string
   status?: string
   url?: string
-  roads?: Array<{ name?: string; from?: string; to?: string }>
+  roads?: Array<{ name?: string; from?: string; to?: string; state?: string }>
   schedule?: Array<{ start_date?: string; end_date?: string }>
 }
 
@@ -29,7 +29,13 @@ function affectsHighway16(event: RoadEvent) {
 
 function isMajorClosure(event: RoadEvent) {
   const value = `${event.headline || ""} ${event.description || ""}`.toLowerCase()
-  return /(?:full |entire |highway |road )?(?:road |highway )?(?:is |remains |are )?(?:fully )?closed\b|full closure|impassable|washout|no through traffic|roadway closed/.test(value)
+  const laneState = (event.roads || []).map((road) => text(road.state).toLowerCase()).join(" ")
+
+  // A washout, debris, or pooling notice can still be passable under traffic
+  // control. Those are important DriveBC updates, but are not a full road
+  // closure banner. Only show this emergency treatment when travel is blocked.
+  if (/all_lanes_open|all lanes open/.test(laneState) || /reduced to one lane|single lane|alternating traffic|traffic control/.test(value)) return false
+  return /\b(?:road|highway)\s+(?:is |remains |are )?(?:fully )?closed\b|\bfull closure\b|\bimpassable\b|\bno through traffic\b|\broadway closed\b/.test(value)
 }
 
 function roadRange(event: RoadEvent) {
